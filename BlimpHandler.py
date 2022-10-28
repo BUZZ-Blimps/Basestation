@@ -184,7 +184,7 @@ class BlimpHandler:
                 self.comms.send(blimpID,"P",data)
                 #print(blimpID,",0:P:",data,sep='')
 
-        #Iterate through blimps and input
+        #Iterate through blimps, input, and barometer data
         for blimpInd in range(0,len(self.blimps)):
             blimp = self.blimps[blimpInd]
             blimpID = blimp.ID
@@ -217,6 +217,10 @@ class BlimpHandler:
                     else:
                         message = "6=0,0,0,0," + str(blimp.grabbing) + "," + str(blimp.shooting)
                         self.comms.send(blimpID,"M",message)
+            #Send barometer data
+            if(currentTime - blimp.lastBarometerSentTime > blimp.barometerSendDelay):
+                blimp.lastBarometerSentTime = currentTime
+                self.comms.send(blimpID,"B",self.baseHeight)
 
         #Iterate through inputs and actions
         for inputIndex in range(0,len(self.inputs)):

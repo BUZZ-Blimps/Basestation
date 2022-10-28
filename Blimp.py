@@ -23,6 +23,8 @@ class Blimp:
         self.heartbeatDisconnectDelay = 5 #seconds
         self.lastTimeInputDataSent = 0
         self.timeInputDelay = 0.05 #seconds
+        self.lastBarometerSentTime = 0
+        self.barometerSendDelay = 1/20 #seconds
 
         self.data = []
         self.receivedState = -1
