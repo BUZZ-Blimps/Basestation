@@ -39,12 +39,26 @@ class BlimpHandler:
                              "192.168.0.102":2,
                              "192.168.0.103":3,
                              "192.168.0.104":4,
-                             "192.168.0.105":5}
-        self.blimpIDNameMap = {1: "Blimp 1",
-                               2: "Blimp 2",
-                               3: "Blimp 3",
-                               4: "Blimp 4",
-                               5: "Blimp 5"}
+                             "192.168.0.105":5,
+
+                             "192.168.0.80":10,
+                             "192.168.0.72":11,
+                             "192.168.0.89":12,
+                             "192.168.0.62":13,
+                             "192.168.0.86":14,
+                             "192.168.0.14":15}
+        self.blimpIDNameMap = {1: "Gelato",
+                               2: "Apple",
+                               3: "Taco",
+                               4: "Oreo",
+                               5: "Ranch",
+
+                               10: "B",
+                               11: "L",
+                               12: "I",
+                               13: "M",
+                               14: "P",
+                               15: "Stealthy Steve"}
         self.blimpNewID = 20
 
         self.lastBlimpAdded = 0
@@ -54,7 +68,7 @@ class BlimpHandler:
 
         self.connections = []
 
-        self.blimpStateStrings = {-1:"O_o",
+        self.blimpStateStrings = {-1:"ATTACK!",
                                   0:"searching",
                                   1:"approach",
                                   2:"catching",

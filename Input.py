@@ -222,7 +222,7 @@ class Input:
 
         leftX = self.getKey(keys[0]) - self.getKey(keys[1])
         leftY = self.getKey(keys[2]) - self.getKey(keys[3])
-        rightX = self.getKey(keys[3]) - self.getKey(keys[4])
+        rightX = 0 #self.getKey(keys[3]) - self.getKey(keys[4])
         rightY = self.getKey(keys[4]) - self.getKey(keys[5])
 
         leftX *= (power+0.3)
