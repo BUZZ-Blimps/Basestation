@@ -26,14 +26,9 @@ class BlimpHandler:
         }
 
         self.blimps = []
-        """
-        tempBlimp = Blimp(50,"Test 50")
-        tempBlimp.lastHeartbeatDetected = 99999999999999
-        self.blimps.append(tempBlimp)
-        tempBlimp2 = Blimp(51, "Test 50")
-        tempBlimp2.lastHeartbeatDetected = 99999999999999
-        self.blimps.append(tempBlimp2)
-        """
+        #self.addFakeBlimp(50,"Fake50")
+        #self.addFakeBlimp(51,"Fake51")
+        #self.addFakeBlimp(52,"Fake52")
 
         self.blimpIPIDMap = {"192.168.0.101":1,
                              "192.168.0.102":2,
@@ -47,11 +42,11 @@ class BlimpHandler:
                              "192.168.0.62":13,
                              "192.168.0.86":14,
                              "192.168.0.14":15}
-        self.blimpIDNameMap = {1: "Gelato",
-                               2: "Apple",
-                               3: "Taco",
-                               4: "Oreo",
-                               5: "Ranch",
+        self.blimpIDNameMap = {1: "Salsa",
+                               2: "Waffle",
+                               3: "Apple",
+                               4: "Milk",
+                               5: "Pasta",
 
                                10: "B",
                                11: "L",
@@ -277,23 +272,33 @@ class BlimpHandler:
 
             if(input.grabAction("connectUp")):
                 blimpIndices = self.getConnectedBlimpIndicesFromInput(input)
-                if(len(blimpIndices) == 1):
-                    blimpIndex = blimpIndices[0]
-                    self.updateConnection(inputIndex,blimpIndex)
-                    if(blimpIndex != 0):
-                        self.updateConnection(inputIndex,blimpIndex-1)
-                elif(len(blimpIndices) == 0):
-                    self.updateConnection(inputIndex,len(self.blimps)-1)
+                if(len(blimpIndices) < 2):
+                    prevIndex = len(self.blimps)
+                    if(len(blimpIndices) == 1):
+                        prevIndex = blimpIndices[0]
+                        self.updateConnection(inputIndex, blimpIndices[0])
+                    while(prevIndex > 0):
+                        nextIndex = prevIndex - 1
+                        connection = self.getConnectionFromBlimpIndex(nextIndex)
+                        if(connection == None):
+                            self.updateConnection(inputIndex, nextIndex)
+                            break
+                        prevIndex = nextIndex
 
             if(input.grabAction("connectDown")):
                 blimpIndices = self.getConnectedBlimpIndicesFromInput(input)
-                if (len(blimpIndices) == 1):
-                    blimpIndex = blimpIndices[0]
-                    self.updateConnection(inputIndex, blimpIndex)
-                    if (blimpIndex != len(self.blimps)-1):
-                        self.updateConnection(inputIndex, blimpIndex + 1)
-                elif (len(blimpIndices) == 0):
-                    self.updateConnection(inputIndex, 0)
+                if(len(blimpIndices) < 2):
+                    prevIndex = -1
+                    if(len(blimpIndices) == 1):
+                        prevIndex = blimpIndices[0]
+                        self.updateConnection(inputIndex, blimpIndices[0])
+                    while(prevIndex < len(self.blimps)-1):
+                        nextIndex = prevIndex + 1
+                        connection = self.getConnectionFromBlimpIndex(nextIndex)
+                        if(connection == None):
+                            self.updateConnection(inputIndex, nextIndex)
+                            break
+                        prevIndex = nextIndex
 
         """
         #Commented out on 10/19/22, delete if not needed
@@ -612,3 +617,10 @@ class BlimpHandler:
         if(name == None):
             name = "Blimp " + str(ID)
         return name
+
+    def addFakeBlimp(self, ID, name):
+        tempBlimp = Blimp(ID,name)
+        tempBlimp.lastHeartbeatDetected = 99999999999999
+        self.blimps.append(tempBlimp)
+        return tempBlimp
+
