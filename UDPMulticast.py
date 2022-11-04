@@ -21,8 +21,8 @@ class UDPHelper:
 
         self.inputMessages = []
         self.looping = False
-        self.verboseOutputReceivedMessages = True
-        self.verboseOutputSentMessages = True
+        self.verboseOutputReceivedMessages = False
+        self.verboseOutputSentMessages = False
 
     def open(self):
         self.thread = Thread(target=self.loopListen)
@@ -55,7 +55,7 @@ class UDPHelper:
                     #
                     self.inputMessages.append((inString,address[0]))
                     if(self.verboseOutputReceivedMessages):
-                        print(inString)
+                        print("\"",inString,"\"",sep='')
 
     # Message format: identifier+targetID+,+sourceID+:+flag+:+message
     def send(self, targetID, flag, message):

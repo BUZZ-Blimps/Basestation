@@ -26,6 +26,8 @@ class BlimpHandler:
         }
 
         self.blimps = []
+        for i in range(50,60):
+            self.addFakeBlimp(i,"Fake"+str(i))
         #self.addFakeBlimp(50,"Fake50")
         #self.addFakeBlimp(51,"Fake51")
         #self.addFakeBlimp(52,"Fake52")
@@ -41,7 +43,9 @@ class BlimpHandler:
                              "192.168.0.89":12,
                              "192.168.0.62":13,
                              "192.168.0.86":14,
-                             "192.168.0.14":15}
+                             "192.168.0.14":15,
+
+                             "192.168.0.20":20}
         self.blimpIDNameMap = {1: "Salsa",
                                2: "Waffle",
                                3: "Apple",
@@ -53,8 +57,10 @@ class BlimpHandler:
                                12: "I",
                                13: "M",
                                14: "P",
-                               15: "Stealthy Steve"}
-        self.blimpNewID = 20
+                               15: "Stealthy Steve",
+
+                               20: "Barometer"}
+        self.blimpNewID = 30
 
         self.lastBlimpAdded = 0
         self.blimpAddDelay = 5 #seconds
@@ -63,7 +69,7 @@ class BlimpHandler:
 
         self.connections = []
 
-        self.blimpStateStrings = {-1:"ATTACK!",
+        self.blimpStateStrings = {-1:"None",
                                   0:"searching",
                                   1:"approach",
                                   2:"catching",
@@ -74,10 +80,21 @@ class BlimpHandler:
                                   7:"shooting",
                                   8:"scored"}
 
-        self.Serial = serial.Serial('/dev/baro_0', 115200)
-
         self.baseHeight = 0
+        self.baroPrioritizeUDP = False
+        self.baroTimeout = 3 #seconds
+
+        self.baroType = None
         self.lastBaroPrint = 0
+        self.baroUDPLastReceivedTime = 0
+        self.baroUDPLastReceivedValue = None
+        self.baroSerialLastReceivedTime = 0
+        self.baroSerialLastReceivedValue = None
+        self.baroSerial = None
+        try:
+            self.baroSerial = serial.Serial('/dev/baro_0', 115200)
+        except(serial.SerialException):
+            print("Serial error!")
 
 
     def close(self):
@@ -124,15 +141,49 @@ class BlimpHandler:
         self.listen()
         self.sendDataToBlimps()
 
+    #Make UI element that shows if baro data is available and what type such as serial or udp
     def updateBaroHeight(self):
-        # get baro data from teensy
-        while self.Serial.in_waiting:
-            recievedString = self.Serial.readline().decode('utf-8')
-            self.baseHeight = float(recievedString)
+        #Handle serial connection
+        #If barometer is disconnected, try to reconnect
+        if(self.baroSerial == None):
+            #Try to reconnect
+            try:
+                self.baroSerial = serial.Serial('/dev/baro_0', 115200)
+                self.baroSerial.open()
+            #If reconnect fails
+            except(serial.SerialException):
+                pass
+
+        if(self.baroSerial != None):
+            # get baro data from teensy
+            try:
+                while self.baroSerial.in_waiting:
+                    receivedString = self.baroSerial.readline().decode('utf-8')
+                    if(self.isFloat(receivedString)):
+                        self.baroSerialLastReceivedValue = float(receivedString)
+                        self.baroSerialLastReceivedTime = time.time()
+                if(time.time() - self.lastBaroPrint > 0.01):
+                    self.lastBaroPrint = time.time()
+                    #print(self.baseHeight)
+            #if port crashes, assume teensy has disconnected
+            except(OSError):
+                self.baroSerial = None
+
+        #Check which data has been received recently
         currentTime = time.time()
-        if(currentTime - self.lastBaroPrint > 0.01):
-            self.lastBaroPrint = currentTime
-            #print(self.baseHeight)
+        baroValidUDP = currentTime-self.baroUDPLastReceivedTime < self.baroTimeout
+        baroValidSerial = currentTime-self.baroSerialLastReceivedTime < self.baroTimeout and self.baroSerial != None
+
+        if(baroValidUDP and (self.baroPrioritizeUDP or not baroValidSerial)):
+            self.baseHeight = self.baroUDPLastReceivedValue
+            self.baroType = "UDP"
+        elif(baroValidSerial and (not self.baroPrioritizeUDP or not baroValidUDP)):
+            self.baseHeight = self.baroSerialLastReceivedValue
+            self.baroType = "Serial"
+        else:
+            self.baseHeight = None
+            self.baroType = None
+
     def checkJoystickCount(self):
         if (pygame.joystick.get_count() != self.joystickCount):
             print("Updating joysticks")
@@ -227,7 +278,7 @@ class BlimpHandler:
                         message = "6=0,0,0,0," + str(blimp.grabbing) + "," + str(blimp.shooting)
                         self.comms.send(blimpID,"M",message)
             #Send barometer data
-            if(currentTime - blimp.lastBarometerSentTime > blimp.barometerSendDelay):
+            if(currentTime - blimp.lastBarometerSentTime > blimp.barometerSendDelay and self.baseHeight != None):
                 blimp.lastBarometerSentTime = currentTime
                 self.comms.send(blimpID,"B",self.baseHeight)
 
@@ -299,6 +350,14 @@ class BlimpHandler:
                             self.updateConnection(inputIndex, nextIndex)
                             break
                         prevIndex = nextIndex
+
+            if (input.grabAction("vibeRight")):
+                input.notify(0.1)
+                print("STOP Vibe")
+
+            if (input.grabAction("vibeLeft")):
+                input.notify(100000)
+                print("STOP Vibe")
 
     def requestRecording(self, blimpIDs):
         if (type(blimpIDs) != list):
@@ -387,9 +446,10 @@ class BlimpHandler:
         colon = msgContent.find(":")
         ID = msgContent[comma+1:colon]
         if(self.isInt(ID)):
+            currentTime = time.time()
             ID = int(ID)
             blimp = self.findBlimp(ID)
-            blimp.lastHeartbeatDetected = time.time()
+            blimp.lastHeartbeatDetected = currentTime
 
             secondColon = msgContent.find(":", colon+1)
             flag = msgContent[colon+1:secondColon]
@@ -404,11 +464,14 @@ class BlimpHandler:
                     nextComma = msgContent.find(",",lastComma+1)
                     blimp.data[i] = float(msgContent[lastComma+1:nextComma])
                     lastComma = nextComma
-            #if(len(blimp.data)>1):
-                #print(blimp.data[0])
             if(flag == "S"):
                 blimp.receivedState = int(msgContent[secondColon+1:])
-                print("Received State:",blimp.receivedState)
+                #print("Received State:",blimp.receivedState)
+            if(flag == "BB"):
+                baroMsg = msgContent[secondColon+1:]
+                if(self.isFloat(baroMsg)):
+                    self.baroUDPLastReceivedTime = currentTime
+                    self.baroUDPLastReceivedValue = float(baroMsg)
 
             for blimp in self.blimps:
                 if(blimp.ID == ID):
@@ -500,6 +563,13 @@ class BlimpHandler:
     def isInt(self, inputString):
         try:
             int(inputString)
+            return True
+        except ValueError:
+            return False
+
+    def isFloat(self, inputString):
+        try:
+            float(inputString)
             return True
         except ValueError:
             return False

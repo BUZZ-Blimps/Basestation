@@ -13,7 +13,7 @@ class Input:
         elif(type=="Controller"):
             self.controller = data #Controller object
 
-        self.recordedInput = ()
+        self.recordedInput = (0,0,0,0,0,0,0,0,0)
 
         self.keyboardActionMapping = {"grab":K_g,
                                       "auto":K_a,
@@ -22,7 +22,9 @@ class Input:
                                       "kill":K_k,
                                       "record":K_r,
                                       "connectDown":None,
-                                      "connectUp":None}
+                                      "connectUp":None,
+                                      "vibeRight":None,
+                                      "vibeLeft":None}
 
         self.controllerActionMapping = {"grab":"BUMPER_RIGHT",
                                         "auto":"TRIGGER_RIGHT",
@@ -31,7 +33,9 @@ class Input:
                                         "kill":"X",
                                         "record":"A",
                                         "connectDown":"DPAD_DOWN",
-                                        "connectUp":"DPAD_UP"}
+                                        "connectUp":"DPAD_UP",
+                                        "vibeRight":"DPAD_RIGHT",
+                                        "vibeLeft":"DPAD_LEFT"}
 
         self.actionElapsedTimeRequired = {"grab":0,
                                           "auto":0,
@@ -40,7 +44,9 @@ class Input:
                                           "kill":1,
                                           "record":0,
                                           "connectDown":0,
-                                          "connectUp":0}
+                                          "connectUp":0,
+                                          "vibeRight":0,
+                                          "vibeLeft":0}
 
         self.controllerInputMapping = {"Xbox 360 Wireless Receiver":  #in use
                                       {"JS_LEFT_X":"A0",
