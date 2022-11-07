@@ -329,11 +329,14 @@ class Display:
         for connection in self.blimpHandler.connections:
             inputIndex = connection.inputIndex
             blimpIndex = connection.blimpIndex
-            inputSurfaceSize = inputs[inputIndex].getNameSurface().get_size()
-            blimpSurfaceSize = blimps[blimpIndex].getNameSurface().get_size()
-            inputPos = (self.align_input_right,int(self.anchor_y_inputText + inputIndex*self.spacing_y_inputText+inputSurfaceSize[1]/2))
-            blimpPos = (self.align_blimps_left,int(self.anchor_y_blimpText + blimpIndex*self.spacing_y_blimpText+blimpSurfaceSize[1]/2))
-            pygame.draw.line(self.screen,lineColor,inputPos,blimpPos,lineThickness)
+            try:
+                inputSurfaceSize = inputs[inputIndex].getNameSurface().get_size()
+                blimpSurfaceSize = blimps[blimpIndex].getNameSurface().get_size()
+                inputPos = (self.align_input_right,int(self.anchor_y_inputText + inputIndex*self.spacing_y_inputText+inputSurfaceSize[1]/2))
+                blimpPos = (self.align_blimps_left,int(self.anchor_y_blimpText + blimpIndex*self.spacing_y_blimpText+blimpSurfaceSize[1]/2))
+                pygame.draw.line(self.screen,lineColor,inputPos,blimpPos,lineThickness)
+            except(IndexError):
+                print("Input Index Error?",inputs,inputIndex)
 
     def drawActiveController(self):
         activeColor = Color(0,255,255)
