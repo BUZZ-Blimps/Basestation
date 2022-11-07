@@ -8,6 +8,7 @@ class Blimp:
         self.shooting = 0
         self.connnected = False
         self.targetGoal = "Y" #"Y","O"
+        self.targetEnemy = "R" #"R","B"
 
         self.receivedAuto = "Null"
         self.receivedStatus = "Null"

@@ -101,6 +101,8 @@ class BlimpHandler:
         self.numMessages = 0
         self.lastCheckedNumMessages = 0
 
+        self.lastUpdateLoop = 0
+
 
     def close(self):
         print("Closing BlimpHandler")
@@ -145,6 +147,11 @@ class BlimpHandler:
         self.checkForDeadBlimps()
         self.listen()
         self.sendDataToBlimps()
+        waitTime = time.time() - self.lastUpdateLoop
+        if(waitTime > 0.01):
+            print(waitTime)
+        self.lastUpdateLoop = time.time()
+
 
     #Make UI element that shows if baro data is available and what type such as serial or udp
     def updateBaroHeight(self):
@@ -218,7 +225,7 @@ class BlimpHandler:
     def listen(self):
         if(time.time() - self.lastCheckedNumMessages > 1):
             self.lastCheckedNumMessages = time.time()
-            #print("NumMessages:",self.numMessages)
+            print("NumMessages:",self.numMessages)
             self.numMessages = 0
 
         readStrings = self.comms.getInputMessages()
