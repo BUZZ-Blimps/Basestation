@@ -98,6 +98,9 @@ class BlimpHandler:
 
         self.plotData = {}
 
+        self.numMessages = 0
+        self.lastCheckedNumMessages = 0
+
 
     def close(self):
         print("Closing BlimpHandler")
@@ -213,9 +216,15 @@ class BlimpHandler:
                     break
 
     def listen(self):
+        if(time.time() - self.lastCheckedNumMessages > 1):
+            self.lastCheckedNumMessages = time.time()
+            print("NumMessages:",self.numMessages)
+            self.numMessages = 0
+
         readStrings = self.comms.getInputMessages()
         #readStrings = []
         while(len(readStrings)>0):
+            self.numMessages += 1
             message = readStrings[0]
             readStrings.pop(0)
             self.checkForNewBlimps(message)
@@ -405,8 +414,8 @@ class BlimpHandler:
         return False
 
     def checkForNewBlimps(self, message):
-        msgContent = message[0];
-        msgAddress = message[1];
+        msgContent = message[0]
+        msgAddress = message[1]
         if (msgContent == "0,N:N:N"):  # New Blimp
             currentTime = time.time()
             if(currentTime - self.lastBlimpAdded > self.blimpAddDelay):
@@ -414,14 +423,14 @@ class BlimpHandler:
                 #Add new blimp!
 
                 #Check if IP matches known blimp
-                newID = self.blimpIPIDMap.get(msgAddress);
+                newID = self.blimpIPIDMap.get(msgAddress)
                 if(newID != None):
                     print("Recognized Blimp",newID)
                 else:
                     #IP doesn't match, assign new ID
                     newID = self.blimpNewID
                     self.blimpNewID += 1
-                    print("Unrecognized Blimp",newID);
+                    print("Unrecognized Blimp",newID)
 
                 if(newID != -1):
                     self.comms.send("N","N",str(newID))
@@ -475,17 +484,26 @@ class BlimpHandler:
                     self.baroUDPLastReceivedTime = currentTime
                     self.baroUDPLastReceivedValue = float(baroMsg)
             if(flag == "T"): #Telemetry
+                pass
+                """
                 msg = msgContent[secondColon+1:]
                 msgEqual = msg.find("=")
                 varName = msg[0:msgEqual]
                 varValue = msg[msgEqual+1:]
-                varData = (time.time(), varValue)
+                if(self.isFloat(varValue)):
+                    varValue = float(varValue)
+                    key = str(blimp.ID) + ":" + varName
+                    if(self.plotData.get(key) == None):
+                        #New variable
+                        self.plotData[key] = [[],varValue,varValue] #[Data points, min, max]
 
-                key = str(blimp.ID) + ":" + varName
-                varPlotData = self.plotData.get(key)
-                if(varPlotData == None):
-                    self.plotData[key] = []
-                self.plotData[key].append(varData)
+                    varPlotData = self.plotData.get(key)
+                    currentData = (time.time(), varValue)
+                    varPlotData[0].append(currentData)
+                    varPlotData[1] = min(varPlotData[1],varValue)
+                    varPlotData[2] = max(varPlotData[2],varValue)
+                    #print(len(varPlotData[0]))
+                """
 
             for blimp in self.blimps:
                 if(blimp.ID == ID):

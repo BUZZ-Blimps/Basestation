@@ -62,6 +62,10 @@ class Display:
         self.anchor_x_plotNames = 25
         self.anchor_y_plotNames = 25
         self.spacing_y_plotNames = 100
+        self.anchor_x_plot = 150
+        self.anchor_y_plot = 50
+        self.width_plot = self.width_screen - self.anchor_x_plot - 50
+        self.height_plot = self.height_screen - self.anchor_y_plot - 50
 
         #Colors
         self.activeColor = Color(0,255,255)
@@ -70,6 +74,9 @@ class Display:
         self.color_inputVisual_joystick = Color(255,255,255)
         self.color_blimpState_autonomous = Color(0,255,0)
         self.color_blimpState_manual = Color(0,0,0)
+        self.color_plot_screenbackground = Color(150,150,150)
+        self.color_plot_graphbackground = Color(200,200,200)
+        self.color_plot_data = Color(0,0,0)
 
         # Game Display
         print("Beginning Program.")
@@ -392,14 +399,32 @@ class Display:
             stringBarometer += "(" + self.blimpHandler.baroType + ") " + str(self.blimpHandler.baseHeight)
         self.screen.blit(self.getTextSurface(stringBarometer, 30),(self.anchor_x_barometer, self.anchor_y_barometer))
     def draw_Plots(self):
-        pygame.draw.rect(self.screen,Color(150,150,150),Rect(0,0,self.width_screen,self.height_screen)) #Draw background
+        pygame.draw.rect(self.screen,self.color_plot_screenbackground,Rect(0,0,self.width_screen,self.height_screen)) #Draw background
 
         plotData = self.blimpHandler.plotData
         plotKeys = list(plotData.keys())
+
+        #Render plot variables
         for keyIndex in range(0,len(plotKeys)):
             key = plotKeys[keyIndex]
             self.screen.blit(self.getTextSurface(key, 30),(self.anchor_x_plotNames, self.anchor_y_plotNames + keyIndex * self.spacing_y_plotNames))
 
+        #Render plot background
+        pygame.draw.rect(self.screen, self.color_plot_graphbackground,Rect(self.anchor_x_plot,self.anchor_y_plot,self.width_plot,self.height_plot))
+
+        #Render active plot
+        if(len(plotKeys) > 0):
+            varPlotData = plotData.get(plotKeys[0])
+            data = varPlotData[0]
+            dataMin = varPlotData[1]
+            dataMax = varPlotData[2]
+
+            if(len(data) > 1):
+                xMin = data[0][0]
+                xMax = data[len(data)-1][0]
+                for dataPoint in data:
+                    dataPointCenter = (self.anchor_x_plot + (dataPoint[0]-xMin)/(xMax-xMin)*self.width_plot, self.anchor_y_plot + self.height_plot/2 - (dataPoint[1]-dataMin)/(dataMax-dataMin)*self.height_plot)
+                    pygame.draw.circle(self.screen,self.color_plot_data,dataPointCenter,2)
 
 
     def getTextSurface(self, text, size, color=None):
