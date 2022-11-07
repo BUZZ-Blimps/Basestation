@@ -58,14 +58,11 @@ class UDPHelper:
 
     # Message format: identifier+targetID+,+sourceID+:+flag+:+message
     def send(self, targetID, flag, message):
-        pass
-        """
         message = ":)" + str(targetID) + ",0:" + flag + ":" + str(message)
         outBytes = message.encode(encoding='utf-8',errors='ignore')
         self.sock.sendto(outBytes, (self.multicast_group, self.multicast_port))
         if(self.verboseOutputSentMessages):
             print("Sending: \"",message,"\"",sep='')
-        """
 
     def close(self):
         print("UDPMulticast closing...")

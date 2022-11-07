@@ -218,7 +218,7 @@ class BlimpHandler:
     def listen(self):
         if(time.time() - self.lastCheckedNumMessages > 1):
             self.lastCheckedNumMessages = time.time()
-            print("NumMessages:",self.numMessages)
+            #print("NumMessages:",self.numMessages)
             self.numMessages = 0
 
         readStrings = self.comms.getInputMessages()
@@ -243,19 +243,8 @@ class BlimpHandler:
                 data = message[1]
                 self.comms.send(blimpID,"P",data)
                 #print(blimpID,",0:P:",data,sep='')currentTime = time.time()
-        #Send parameter messages
-        if(len(self.parameterMessages) > 0):
-            #print("Messages:",len(self.parameterMessages))
-            while(len(self.parameterMessages)>0):
-                message = self.parameterMessages[0]
-                self.parameterMessages.pop(0)
 
-                blimpID = message[0]
-                data = message[1]
-                self.comms.send(blimpID,"P",data)
-                #print(blimpID,",0:P:",data,sep='')
-
-        #Iterate through blimps, input, and barometer data
+        #Iterate through blimps, input, barometer data, target goal
         for blimpInd in range(0,len(self.blimps)):
             blimp = self.blimps[blimpInd]
             blimpID = blimp.ID
@@ -292,6 +281,10 @@ class BlimpHandler:
             if(currentTime - blimp.lastBarometerSentTime > blimp.barometerSendDelay and self.baseHeight != None):
                 blimp.lastBarometerSentTime = currentTime
                 self.comms.send(blimpID,"B",self.baseHeight)
+            #Send target goal info
+            if(currentTime - blimp.lastTargetGoalSentTime > blimp.targetGoalSendDelay):
+                blimp.lastTargetGoalSentTime = currentTime
+                self.comms.send(blimpID,"TG",blimp.targetGoal)
 
         #Iterate through inputs and actions
         for inputIndex in range(0,len(self.inputs)):
@@ -547,6 +540,14 @@ class BlimpHandler:
                 blimp.auto = 1
             elif(data == self.pCodes["autoOff"]):
                 blimp.auto = 0
+    #TG = TargetGoal
+    def pushTGButton(self,blimpID):
+        for blimp in self.blimps:
+            if(blimp.ID == blimpID):
+                if(blimp.targetGoal == "O"):
+                    blimp.targetGoal = "Y"
+                elif(blimp.targetGoal == "Y"):
+                    blimp.targetGoal = "O"
 
         def toggleAuto(self, blimpIDs):
             if(type(blimpIDs)!=list):

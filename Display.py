@@ -48,9 +48,10 @@ class Display:
         self.anchor_x_blimpState = self.anchor_x_blimps + self.width_blimps
         self.anchor_y_blimpState = 15
         self.width_blimpState = 200
-        self.anchor_x_blimpStatus = self.anchor_x_blimpState + self.width_blimpState
-        self.anchor_y_blimpStatus = self.anchor_y_blimpState
-        self.width_blimpStatus = 200
+
+        self.anchor_x_targetGoal = self.anchor_x_blimpState + self.width_blimpState
+        self.anchor_y_targetGoal = self.anchor_y_blimpState
+        self.width_targetGoal = 200
 
         self.anchor_x_blimpStateLegend = self.width_screen - 200
         self.anchor_y_blimpStateLegend = self.height_screen - 100
@@ -77,6 +78,8 @@ class Display:
         self.color_plot_screenbackground = Color(150,150,150)
         self.color_plot_graphbackground = Color(200,200,200)
         self.color_plot_data = Color(0,0,0)
+        self.color_goal_yellow = Color(209,245,66)
+        self.color_goal_orange = Color(245,129,66)
 
         # Game Display
         print("Beginning Program.")
@@ -221,6 +224,10 @@ class Display:
             print("MPB pressed")
             blimpID = int(name[3:])
             self.blimpHandler.pushMPB(blimpID)
+        elif(name[0:2]=="TG"):
+            print("TG button pressed")
+            blimpID = int(name[2:])
+            self.blimpHandler.pushTGButton(blimpID)
 
 
     def posInRange(self,pos,origin,size):
@@ -276,7 +283,7 @@ class Display:
         self.screen.blit(self.getTextSurface("Input:",50),(self.anchor_x_input,self.anchor_y_input))
         self.screen.blit(self.getTextSurface("Blimps:",50),(self.anchor_x_blimps,self.anchor_y_blimps))
         self.screen.blit(self.getTextSurface("State",30),(self.anchor_x_blimpState,self.anchor_y_blimpState))
-        self.screen.blit(self.getTextSurface("Status",30),(self.anchor_x_blimpStatus,self.anchor_y_blimpStatus))
+        self.screen.blit(self.getTextSurface("TargetGoal",20),(self.anchor_x_targetGoal,self.anchor_y_targetGoal))
         #Iterate through inputs
         for i in range(0,len(inputs)):
             #Render inputs
@@ -319,8 +326,20 @@ class Display:
             blimpSurface.fill(Color(255,255,255,50),heartbeatRect,special_flags=BLEND_RGBA_ADD)
             blimpTextX = self.align_blimps_left
             blimpTextY = self.anchor_y_blimpText + i*self.spacing_y_blimpText
+            #Render blimp name
             self.screen.blit(blimpSurface,(blimpTextX,blimpTextY))
+            #Render blimp state
             self.screen.blit(self.stateSurfaceMap[blimp.receivedState],(self.anchor_x_blimpState,blimpTextY))
+            #Render blimp targetGoalColor
+            if(blimp.targetGoal == "Y"):
+                targetGoalColor = self.color_goal_yellow
+            elif(blimp.targetGoal == "O"):
+                targetGoalColor = self.color_goal_orange
+            pygame.draw.rect(self.screen,targetGoalColor,Rect(self.anchor_x_targetGoal+30,blimpTextY,25,25))
+            buttonLabel = "TG" + str(blimp.ID) #TG = TargetGoal
+            if(not self.buttonLabelExists(buttonLabel)):
+                newButton = ((self.anchor_x_targetGoal+30,blimpTextY),(25,25),buttonLabel)
+                self.buttons.append(newButton)
 
         #Render connection line if mouse is to the right of inputs
         newLineColor = Color(255,100,255)
@@ -447,6 +466,8 @@ class Display:
     def removeBlimp(self, blimpID):
         for i in range(0,len(self.buttons)):
             if(self.buttons[i][2]=="MPB"+str(blimpID)):
+                self.buttons.pop(i)
+            if(self.buttons[i][2]=="TG"+str(blimpID)):
                 self.buttons.pop(i)
 
     def getElementY(self, index):

@@ -7,6 +7,7 @@ class Blimp:
         self.grabbing = 0
         self.shooting = 0
         self.connnected = False
+        self.targetGoal = "Y" #"Y","O"
 
         self.receivedAuto = "Null"
         self.receivedStatus = "Null"
@@ -25,6 +26,8 @@ class Blimp:
         self.timeInputDelay = 0.05 #seconds
         self.lastBarometerSentTime = 0
         self.barometerSendDelay = 1/20 #seconds
+        self.lastTargetGoalSentTime = 0
+        self.targetGoalSendDelay = 1 #seconds
 
         self.data = []
         self.receivedState = -1
