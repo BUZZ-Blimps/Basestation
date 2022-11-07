@@ -59,6 +59,10 @@ class Display:
         self.anchor_x_barometer = 50
         self.anchor_y_barometer = self.height_screen - 50
 
+        self.anchor_x_plotNames = 50
+        self.anchor_y_plotNames = 50
+        self.spacing_y_plotNames = 100
+
         #Colors
         self.activeColor = Color(0,255,255)
         self.color_inputVisual_background = Color(100,100,100)
@@ -107,6 +111,9 @@ class Display:
         for key in stateStringMap.keys():
             self.stateSurfaceMap[key] = getTextSurface(stateStringMap[key],30)
 
+        #Render mode
+        self.renderMode = "InputsBlimps" #InputsBlimps, Plots
+
         print("Display Initialized")
 
         self.exclusiveConnections = True
@@ -137,6 +144,13 @@ class Display:
                         if(self.activeController == connection.inputIndex):
                             blimpIDs.append(self.blimpHandler.blimps[connection.blimpIndex].ID)
                     self.blimpHandler.pushMPB(blimpIDs)
+            elif self.getKey(K_SPACE):
+                if(self.renderMode == "InputsBlimps"):
+                    self.renderMode = "Plots"
+                elif(self.renderMode == "Plots"):
+                    self.renderMode = "InputsBlimps"
+                else:
+                    print("wtf")
             elif self.getKey(K_r):
                 if (self.activeController != -1):
                     blimpIDs = []
@@ -234,10 +248,16 @@ class Display:
         self.draw()
 
     def draw(self):
+        if(self.renderMode == "InputsBlimps"):
+            self.draw_InputsBlimps()
+        elif(self.renderMode == "Plots"):
+            self.draw_Plots()
+        pygame.display.update()
+
+    def draw_InputsBlimps(self):
         self.drawConnections()
         #self.drawActiveController()
         self.drawMisc()
-        pygame.display.update()
 
     def drawConnections(self):
         inputs = self.blimpHandler.inputs
@@ -357,6 +377,28 @@ class Display:
             pygame.draw.line(self.screen, whiteColor, CLeftOrigin, self.getClampPoint(CLeftOrigin, CLength, 180-clampValue*90), 5)
             pygame.draw.line(self.screen, whiteColor, CRightOrigin, self.getClampPoint(CRightOrigin, CLength, clampValue*90), 5)
 
+    def drawMisc(self):
+        #self.screen.blit(self.textSurface_Record, (self.anchor_x_keybind,self.anchor_y_keybind))
+        #self.screen.blit(self.textSurface_Panic, (self.anchor_x_keybind,self.anchor_y_keybind+self.spacing_y_keybind))
+        self.screen.blit(self.getTextSurface("Manual",30,self.color_blimpState_manual),(self.anchor_x_blimpStateLegend,self.anchor_y_blimpStateLegend))
+        self.screen.blit(self.getTextSurface("Autonomous",30,self.color_blimpState_autonomous),(self.anchor_x_blimpStateLegend,self.anchor_y_blimpStateLegend+self.spacing_y_blimpStateLegend))
+        stringBarometer = "Barometer: "
+        if(self.blimpHandler.baroType == None):
+            stringBarometer += "Disconnected"
+        else:
+            stringBarometer += "(" + self.blimpHandler.baroType + ") " + str(self.blimpHandler.baseHeight)
+        self.screen.blit(self.getTextSurface(stringBarometer, 30),(self.anchor_x_barometer, self.anchor_y_barometer))
+    def draw_Plots(self):
+        pygame.draw.rect(self.screen,Color(150,150,150),Rect(0,0,self.width_screen,self.height_screen)) #Draw background
+        """
+        plotData = self.blimpHandler.plotData
+        plotKeys = plotData.keys()
+        for keyIndex in range(0,len(plotKeys)):
+            key = plotKeys[keyIndex]
+            self.screen.blit(self.screen, self.getTextSurface(key, 20),(self.anchor_x_plotNames, self.anchor_y_plotNames + keyIndex * self.spacing_y_plotNames))
+        """
+
+
     def getTextSurface(self, text, size, color=None):
         if(color == None):
             color = Color(0,0,0)
@@ -369,17 +411,6 @@ class Display:
             #print(len(self.textSurfaces.keys()))
         return surface
 
-    def drawMisc(self):
-        #self.screen.blit(self.textSurface_Record, (self.anchor_x_keybind,self.anchor_y_keybind))
-        #self.screen.blit(self.textSurface_Panic, (self.anchor_x_keybind,self.anchor_y_keybind+self.spacing_y_keybind))
-        self.screen.blit(self.getTextSurface("Manual",30,self.color_blimpState_manual),(self.anchor_x_blimpStateLegend,self.anchor_y_blimpStateLegend))
-        self.screen.blit(self.getTextSurface("Autonomous",30,self.color_blimpState_autonomous),(self.anchor_x_blimpStateLegend,self.anchor_y_blimpStateLegend+self.spacing_y_blimpStateLegend))
-        stringBarometer = "Barometer: "
-        if(self.blimpHandler.baroType == None):
-            stringBarometer += "Disconnected"
-        else:
-            stringBarometer += "(" + self.blimpHandler.baroType + ") " + str(self.blimpHandler.baseHeight)
-        self.screen.blit(self.getTextSurface(stringBarometer, 30),(self.anchor_x_barometer, self.anchor_y_barometer))
 
     def getClampPoint(self, startingPoint, length, angleDegrees):
         angle = angleDegrees/180*math.pi

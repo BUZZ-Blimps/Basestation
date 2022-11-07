@@ -26,8 +26,8 @@ class BlimpHandler:
         }
 
         self.blimps = []
-        for i in range(50,60):
-            self.addFakeBlimp(i,"Fake"+str(i))
+        #for i in range(50,60):
+            #self.addFakeBlimp(i,"Fake"+str(i))
         #self.addFakeBlimp(50,"Fake50")
         #self.addFakeBlimp(51,"Fake51")
         #self.addFakeBlimp(52,"Fake52")
@@ -36,7 +36,7 @@ class BlimpHandler:
                              "192.168.0.102":2,
                              "192.168.0.103":3,
                              "192.168.0.104":4,
-                             "192.168.0.105":5,
+                             "192.168.0.105":40,
 
                              "192.168.0.80":10,
                              "192.168.0.72":11,
@@ -50,7 +50,7 @@ class BlimpHandler:
                                2: "Waffle",
                                3: "Apple",
                                4: "Milk",
-                               5: "Pasta",
+                               40: "Pasta",
 
                                10: "B",
                                11: "L",
@@ -96,6 +96,8 @@ class BlimpHandler:
         except(serial.SerialException):
             print("Serial error!")
 
+        self.plotData = {}
+
 
     def close(self):
         print("Closing BlimpHandler")
@@ -106,7 +108,7 @@ class BlimpHandler:
         self.inputs = []
 
         #Init WASD Input
-        input_WASD = Input("Keyboard", "WASD", (K_d, K_a, K_w, K_s, K_UP, K_DOWN, K_SPACE, K_e, K_q))
+        input_WASD = Input("Keyboard", "WASD", (K_d, K_a, K_w, K_s, K_UP, K_DOWN, K_c, K_e, K_q))
         self.inputs.append(input_WASD)
         """
         #Init IJKL Input
@@ -464,14 +466,26 @@ class BlimpHandler:
                     nextComma = msgContent.find(",",lastComma+1)
                     blimp.data[i] = float(msgContent[lastComma+1:nextComma])
                     lastComma = nextComma
-            if(flag == "S"):
+            if(flag == "S"): #State
                 blimp.receivedState = int(msgContent[secondColon+1:])
                 #print("Received State:",blimp.receivedState)
-            if(flag == "BB"):
+            if(flag == "BB"): #BarometerBaseline
                 baroMsg = msgContent[secondColon+1:]
                 if(self.isFloat(baroMsg)):
                     self.baroUDPLastReceivedTime = currentTime
                     self.baroUDPLastReceivedValue = float(baroMsg)
+            if(flag == "T"): #Telemetry
+                msg = msgContent[secondColon+1:]
+                msgEqual = msg.find("=")
+                varName = msg[0:msgEqual]
+                varValue = msg[msgEqual+1:]
+                varData = (time.time(), varValue)
+
+                key = str(blimp.ID) + ":" + varName
+                varPlotData = self.plotData.get(key)
+                if(varPlotData == None):
+                    self.plotData[key] = []
+                self.plotData[key].append(varData)
 
             for blimp in self.blimps:
                 if(blimp.ID == ID):

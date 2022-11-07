@@ -51,8 +51,7 @@ class UDPHelper:
             if (inString[0:2] == ":)"):
                 inString = inString[2:]
                 comma = inString.find(",")
-                if(comma == 1 and inString[0]=="0"):
-                    #
+                if(inString[0]=="0" and comma == 1):
                     self.inputMessages.append((inString,address[0]))
                     if(self.verboseOutputReceivedMessages):
                         print("\"",inString,"\"",sep='')
