@@ -221,6 +221,7 @@ class BlimpHandler:
                     # Blimp heartbeat not received for too long; Remove it
                     print(blimp.name, "heartbeat not received; Removing...")
                     self.blimps.pop(i)
+                    self.display.removeBlimp(blimp.ID)
                     blimpsCorrect = False
                     self.fixConnections()
                     break

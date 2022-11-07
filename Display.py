@@ -487,12 +487,12 @@ class Display:
         return (startingPoint[0]+length*math.cos(angle), startingPoint[1]-length*math.sin(angle))
 
     def removeBlimp(self, blimpID):
-        for i in range(0,len(self.buttons)):
+        for i in range(len(self.buttons)-1,-1,-1):
             if(self.buttons[i][2]=="MPB"+str(blimpID)):
                 self.buttons.pop(i)
-            if(self.buttons[i][2]=="TG"+str(blimpID)):
+            elif(self.buttons[i][2]=="TG"+str(blimpID)):
                 self.buttons.pop(i)
-            if(self.buttons[i][2]=="TE"+str(blimpID)):
+            elif(self.buttons[i][2]=="TE"+str(blimpID)):
                 self.buttons.pop(i)
 
     def getElementY(self, index):
