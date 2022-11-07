@@ -336,7 +336,7 @@ class Display:
                 blimpPos = (self.align_blimps_left,int(self.anchor_y_blimpText + blimpIndex*self.spacing_y_blimpText+blimpSurfaceSize[1]/2))
                 pygame.draw.line(self.screen,lineColor,inputPos,blimpPos,lineThickness)
             except(IndexError):
-                print("Input Index Error?",inputs,inputIndex)
+                print("Input Disagreement")
 
     def drawActiveController(self):
         activeColor = Color(0,255,255)
