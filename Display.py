@@ -15,7 +15,7 @@ class Display:
         self.alive = True
 
         # Anchors
-        self.width_screen = 1000
+        self.width_screen = 1200
         self.height_screen = 600
         self.anchor_x_inputVisual = 0
         self.anchor_y_inputVisual = 0
@@ -51,7 +51,10 @@ class Display:
 
         self.anchor_x_targetGoal = self.anchor_x_blimpState + self.width_blimpState
         self.anchor_y_targetGoal = self.anchor_y_blimpState
-        self.width_targetGoal = 200
+        self.width_targetGoal = 180
+        self.anchor_x_targetEnemy = self.anchor_x_targetGoal + self.width_targetGoal
+        self.anchor_y_targetEnemy = self.anchor_y_targetGoal
+        self.width_targetEnemy = 180
 
         self.anchor_x_blimpStateLegend = self.width_screen - 200
         self.anchor_y_blimpStateLegend = self.height_screen - 100
@@ -80,6 +83,9 @@ class Display:
         self.color_plot_data = Color(0,0,0)
         self.color_goal_yellow = Color(209,245,66)
         self.color_goal_orange = Color(245,129,66)
+        self.color_enemy_red = Color(255,0,0)
+        self.color_enemy_green = Color(0,255,0)
+        self.color_enemy_blue = Color(0,0,255)
 
         # Game Display
         print("Beginning Program.")
@@ -228,6 +234,10 @@ class Display:
             print("TG button pressed")
             blimpID = int(name[2:])
             self.blimpHandler.pushTGButton(blimpID)
+        elif(name[0:2]=="TE"):
+            print("TE button pressed")
+            blimpID = int(name[2:])
+            self.blimpHandler.pushTEButton(blimpID)
 
 
     def posInRange(self,pos,origin,size):
@@ -284,6 +294,7 @@ class Display:
         self.screen.blit(self.getTextSurface("Blimps:",50),(self.anchor_x_blimps,self.anchor_y_blimps))
         self.screen.blit(self.getTextSurface("State",30),(self.anchor_x_blimpState,self.anchor_y_blimpState))
         self.screen.blit(self.getTextSurface("TargetGoal",20),(self.anchor_x_targetGoal,self.anchor_y_targetGoal))
+        self.screen.blit(self.getTextSurface("TargetEnemy",20),(self.anchor_x_targetEnemy,self.anchor_y_targetEnemy))
         #Iterate through inputs
         for i in range(0,len(inputs)):
             #Render inputs
@@ -335,10 +346,22 @@ class Display:
                 targetGoalColor = self.color_goal_yellow
             elif(blimp.targetGoal == "O"):
                 targetGoalColor = self.color_goal_orange
-            pygame.draw.rect(self.screen,targetGoalColor,Rect(self.anchor_x_targetGoal+30,blimpTextY,25,25))
+            pygame.draw.rect(self.screen,targetGoalColor,Rect(self.anchor_x_targetGoal+35,blimpTextY,25,25))
             buttonLabel = "TG" + str(blimp.ID) #TG = TargetGoal
             if(not self.buttonLabelExists(buttonLabel)):
-                newButton = ((self.anchor_x_targetGoal+30,blimpTextY),(25,25),buttonLabel)
+                newButton = ((self.anchor_x_targetGoal+35,blimpTextY),(25,25),buttonLabel)
+                self.buttons.append(newButton)
+            #Render blimp targetEnemyColor
+            if(blimp.targetEnemy == "R"):
+                targetEnemyColor = self.color_enemy_red
+            elif(blimp.targetEnemy == "G"):
+                targetEnemyColor = self.color_enemy_green
+            elif(blimp.targetEnemy == "B"):
+                targetEnemyColor = self.color_enemy_blue
+            pygame.draw.rect(self.screen,targetEnemyColor,Rect(self.anchor_x_targetEnemy+45,blimpTextY,25,25))
+            buttonLabel = "TE" + str(blimp.ID) #TE = TargetEnemy
+            if(not self.buttonLabelExists(buttonLabel)):
+                newButton = ((self.anchor_x_targetEnemy+45,blimpTextY),(25,25),buttonLabel)
                 self.buttons.append(newButton)
 
         #Render connection line if mouse is to the right of inputs
@@ -468,6 +491,8 @@ class Display:
             if(self.buttons[i][2]=="MPB"+str(blimpID)):
                 self.buttons.pop(i)
             if(self.buttons[i][2]=="TG"+str(blimpID)):
+                self.buttons.pop(i)
+            if(self.buttons[i][2]=="TE"+str(blimpID)):
                 self.buttons.pop(i)
 
     def getElementY(self, index):

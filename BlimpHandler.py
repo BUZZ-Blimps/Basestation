@@ -539,6 +539,16 @@ class BlimpHandler:
                     blimp.targetGoal = "Y"
                 elif(blimp.targetGoal == "Y"):
                     blimp.targetGoal = "O"
+    #TE = TargetEnemy
+    def pushTEButton(self,blimpID):
+        for blimp in self.blimps:
+            if(blimp.ID == blimpID):
+                if(blimp.targetEnemy == "R"):
+                    blimp.targetEnemy = "B"
+                elif(blimp.targetEnemy == "B"):
+                    blimp.targetEnemy = "G"
+                elif(blimp.targetEnemy == "G"):
+                    blimp.targetEnemy = "R"
 
         def toggleAuto(self, blimpIDs):
             if(type(blimpIDs)!=list):
