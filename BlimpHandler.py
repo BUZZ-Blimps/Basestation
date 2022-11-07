@@ -103,6 +103,9 @@ class BlimpHandler:
 
         self.lastUpdateLoop = 0
 
+        self.globalTargets = True
+
+
 
     def close(self):
         print("Closing BlimpHandler")
@@ -539,6 +542,11 @@ class BlimpHandler:
                     blimp.targetGoal = "Y"
                 elif(blimp.targetGoal == "Y"):
                     blimp.targetGoal = "O"
+                targetGoal = blimp.targetGoal
+        if(self.globalTargets):
+            for altBLimp in self.blimps:
+                altBLimp.targetGoal = targetGoal
+
     #TE = TargetEnemy
     def pushTEButton(self,blimpID):
         for blimp in self.blimps:
@@ -549,6 +557,10 @@ class BlimpHandler:
                     blimp.targetEnemy = "G"
                 elif(blimp.targetEnemy == "G"):
                     blimp.targetEnemy = "R"
+                targetEnemy = blimp.targetEnemy
+        if(self.globalTargets):
+            for altBLimp in self.blimps:
+                altBLimp.targetEnemy = targetEnemy
 
         def toggleAuto(self, blimpIDs):
             if(type(blimpIDs)!=list):
