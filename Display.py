@@ -59,8 +59,8 @@ class Display:
         self.anchor_x_barometer = 50
         self.anchor_y_barometer = self.height_screen - 50
 
-        self.anchor_x_plotNames = 50
-        self.anchor_y_plotNames = 50
+        self.anchor_x_plotNames = 25
+        self.anchor_y_plotNames = 25
         self.spacing_y_plotNames = 100
 
         #Colors
@@ -393,13 +393,13 @@ class Display:
         self.screen.blit(self.getTextSurface(stringBarometer, 30),(self.anchor_x_barometer, self.anchor_y_barometer))
     def draw_Plots(self):
         pygame.draw.rect(self.screen,Color(150,150,150),Rect(0,0,self.width_screen,self.height_screen)) #Draw background
-        """
+
         plotData = self.blimpHandler.plotData
-        plotKeys = plotData.keys()
+        plotKeys = list(plotData.keys())
         for keyIndex in range(0,len(plotKeys)):
             key = plotKeys[keyIndex]
-            self.screen.blit(self.screen, self.getTextSurface(key, 20),(self.anchor_x_plotNames, self.anchor_y_plotNames + keyIndex * self.spacing_y_plotNames))
-        """
+            self.screen.blit(self.getTextSurface(key, 30),(self.anchor_x_plotNames, self.anchor_y_plotNames + keyIndex * self.spacing_y_plotNames))
+
 
 
     def getTextSurface(self, text, size, color=None):
