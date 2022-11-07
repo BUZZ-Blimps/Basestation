@@ -13,7 +13,7 @@ class Input:
         elif(type=="Controller"):
             self.controller = data #Controller object
 
-        self.recordedInput = (0,0,0,0,0,0,0,0,0)
+        self.recordedInput = [0,0,0,0]
 
         self.keyboardActionMapping = {"grab":K_g,
                                       "auto":K_a,

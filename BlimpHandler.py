@@ -258,40 +258,24 @@ class BlimpHandler:
             connection = self.getConnectionFromBlimpIndex(blimpInd)
             #Send inputs
             if(connection != None):
-                #Blimp is connected to an input
                 input = self.inputs[connection.inputIndex]
                 inputData = input.grabInput()
-                if(currentTime - blimp.lastTimeInputDataSent > blimp.timeInputDelay):
-                    blimp.lastTimeInputDataSent = currentTime
-                    if (blimp.auto == 1):
-                        self.comms.send(blimpID, "A", "")
-                    else:
-                        # Finalize manual data to send to blimp
-                        blimpData = inputData.copy()
-                        blimpData.append(blimp.grabbing)
-                        blimpData.append(blimp.shooting)
-                        # Assemble message to send to blimp
-                        message = str(len(blimpData)) + "="
-                        for data in blimpData:
-                            message += str(data) + ","
-                        self.comms.send(blimpID, "M", message)
             else:
-                #Blimp is not connected to an input
-                if(currentTime - blimp.lastTimeInputDataSent > blimp.timeInputDelay):
-                    blimp.lastTimeInputDataSent = currentTime
-                    if (blimp.auto == 1):
-                        self.comms.send(blimpID, "A", "")
-                    else:
-                        message = "6=0,0,0,0," + str(blimp.grabbing) + "," + str(blimp.shooting)
-                        self.comms.send(blimpID,"M",message)
-            #Send barometer data
-            if(currentTime - blimp.lastBarometerSentTime > blimp.barometerSendDelay and self.baseHeight != None):
-                blimp.lastBarometerSentTime = currentTime
-                self.comms.send(blimpID,"B",self.baseHeight)
-            #Send target goal info
-            if(currentTime - blimp.lastTargetGoalSentTime > blimp.targetGoalSendDelay):
-                blimp.lastTargetGoalSentTime = currentTime
-                self.comms.send(blimpID,"TG",blimp.targetGoal)
+                inputData = [0,0,0,0]
+            if(currentTime - blimp.lastTimeInputDataSent > blimp.timeInputDelay):
+                blimp.lastTimeInputDataSent = currentTime
+                if (blimp.auto == 1):
+                    message = str(self.baseHeight) + ";" + blimp.targetGoal + ";" + blimp.targetEnemy
+                    self.comms.send(blimpID, "A", message)
+                else:
+                    blimpData = inputData.copy()
+                    blimpData.append(blimp.grabbing)
+                    blimpData.append(blimp.shooting)
+                    message = ""
+                    for data in blimpData:
+                        message += str(data) + ","
+                    message += ";" + str(self.baseHeight) + ";" + blimp.targetGoal + ";" + blimp.targetEnemy
+                    self.comms.send(blimpID, "M", message)
 
         #Iterate through inputs and actions
         for inputIndex in range(0,len(self.inputs)):
