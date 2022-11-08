@@ -15,74 +15,73 @@ import easygui
 class BlimpHandler:
     # Init =================================================================================
     def __init__(self):
-        self.comms = UDPHelper() #SerialHelper() #UDPHelper()
+        self.comms = UDPHelper()  # SerialHelper() # UDPHelper()
         self.display = None
         self.comms.open()
         self.parameterMessages = []
-        self.pCodes = {  #Parameter message codes
-            "toggleABG": "e",    #toggle Active Ball Grabber
-            "autoOn":    "A1",   #turn autonomous on
-            "autoOff":   "A0"    #turn autonomous off
+        self.pCodes = {  # Parameter message codes
+            "toggleABG": "e",    # toggle Active Ball Grabber
+            "autoOn":    "A1",   # turn autonomous on
+            "autoOff":   "A0"    # turn autonomous off
         }
 
         self.blimps = []
-        #for i in range(50,60):
-            #self.addFakeBlimp(i,"Fake"+str(i))
-        #self.addFakeBlimp(50,"Fake50")
-        #self.addFakeBlimp(51,"Fake51")
-        #self.addFakeBlimp(52,"Fake52")
+        """
+        for i in range(50,60):
+            self.addFakeBlimp(i,"Fake"+str(i))
+        """
 
-        self.blimpIPIDMap = {"192.168.0.101":1,
-                             "192.168.0.102":2,
-                             "192.168.0.103":3,
-                             "192.168.0.104":4,
-                             "192.168.0.105":5,
+        self.blimpIPIDMap = {"192.168.0.101": 1,
+                             "192.168.0.102": 2,
+                             "192.168.0.103": 3,
+                             "192.168.0.104": 4,
+                             "192.168.0.105": 5,
 
-                             "192.168.0.80":10,
-                             "192.168.0.72":11,
-                             "192.168.0.89":12,
-                             "192.168.0.62":13,
-                             "192.168.0.86":14,
-                             "192.168.0.14":15,
+                             "192.168.0.80": 10,
+                             "192.168.0.20": 11,
+                             "192.168.0.89": 12,
+                             "192.168.0.62": 13,
+                             "192.168.0.86": 14,
+                             "192.168.0.14": 15,
 
-                             "192.168.0.20":20}
-        self.blimpIDNameMap = {1: "Salsa",
+                             "192.168.0.38": 20}
+        self.blimpIDNameMap = {1: "Spicy Hot Dog",
                                2: "Waffle",
                                3: "Apple",
                                4: "Milk",
                                5: "Pasta",
 
-                               10: "B",
-                               11: "L",
-                               12: "I",
-                               13: "M",
-                               14: "P",
+                               10: "Big Cup of Eggs",
+                               11: "Leg in a Cup",
+                               12: "I'm in a Cup",
+                               13: "My Cup of Eggs",
+                               14: "Pint of Eggs",
                                15: "Stealthy Steve",
 
                                20: "Barometer"}
         self.blimpNewID = 30
 
         self.lastBlimpAdded = 0
-        self.blimpAddDelay = 5 #seconds
+        self.blimpAddDelay = 5  # seconds
 
         self.initInputs()
 
         self.connections = []
 
-        self.blimpStateStrings = {-1:"None",
-                                  0:"searching",
-                                  1:"approach",
-                                  2:"catching",
-                                  3:"caught",
-                                  4:"goalSearch",
-                                  5:"approachGoal",
-                                  6:"scoringStart",
-                                  7:"shooting",
-                                  8:"scored"}
+        self.blimpStateStrings = {-1: "None",
+                                  0: "searching",
+                                  1: "approach",
+                                  2: "catching",
+                                  3: "caught",
+                                  4: "goalSearch",
+                                  5: "approachGoal",
+                                  6: "scoringStart",
+                                  7: "shooting",
+                                  8: "scored"}
 
         self.baseHeight = 0
         self.baroPrioritizeUDP = False
-        self.baroTimeout = 3 #seconds
+        self.baroTimeout = 3  # seconds
 
         self.baroType = None
         self.lastBaroPrint = 0
@@ -93,7 +92,7 @@ class BlimpHandler:
         self.baroSerial = None
         try:
             self.baroSerial = serial.Serial('/dev/baro_0', 115200)
-        except(serial.SerialException):
+        except serial.SerialException:
             print("Serial error!")
 
         self.plotData = {}
@@ -103,9 +102,7 @@ class BlimpHandler:
 
         self.lastUpdateLoop = 0
 
-        self.globalTargets = True
-
-
+        self.globalTargets = False
 
     def close(self):
         print("Closing BlimpHandler")
@@ -115,7 +112,7 @@ class BlimpHandler:
     def initInputs(self):
         self.inputs = []
 
-        #Init WASD Input
+        # Init WASD Input
         input_WASD = Input("Keyboard", "WASD", (K_d, K_a, K_w, K_s, K_UP, K_DOWN, K_c, K_e, K_q))
         self.inputs.append(input_WASD)
         """
@@ -154,7 +151,6 @@ class BlimpHandler:
         if(waitTime > 0.01):
             print(waitTime)
         self.lastUpdateLoop = time.time()
-
 
     #Make UI element that shows if baro data is available and what type such as serial or udp
     def updateBaroHeight(self):
@@ -537,6 +533,7 @@ class BlimpHandler:
                 blimp.auto = 0
     #TG = TargetGoal
     def pushTGButton(self,blimpID):
+        targetGoal = None
         for blimp in self.blimps:
             if(blimp.ID == blimpID):
                 if(blimp.targetGoal == "O"):
@@ -544,12 +541,13 @@ class BlimpHandler:
                 elif(blimp.targetGoal == "Y"):
                     blimp.targetGoal = "O"
                 targetGoal = blimp.targetGoal
-        if(self.globalTargets):
+        if(self.globalTargets and targetGoal != None):
             for altBLimp in self.blimps:
                 altBLimp.targetGoal = targetGoal
 
     #TE = TargetEnemy
     def pushTEButton(self,blimpID):
+        targetEnemy = None
         for blimp in self.blimps:
             if(blimp.ID == blimpID):
                 if(blimp.targetEnemy == "R"):
@@ -559,7 +557,7 @@ class BlimpHandler:
                 elif(blimp.targetEnemy == "G"):
                     blimp.targetEnemy = "R"
                 targetEnemy = blimp.targetEnemy
-        if(self.globalTargets):
+        if(self.globalTargets and targetEnemy != None):
             for altBLimp in self.blimps:
                 altBLimp.targetEnemy = targetEnemy
 
