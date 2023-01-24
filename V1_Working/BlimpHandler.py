@@ -356,7 +356,7 @@ class BlimpHandler:
 
     def requestRecording(self, blimpIDs):
         if (type(blimpIDs) != list):
-            blimpIDs = (blimpIDs)
+            blimpIDs = [blimpIDs]
         for blimpID in blimpIDs:
             self.comms.send(blimpID, "P", "C300")
 
