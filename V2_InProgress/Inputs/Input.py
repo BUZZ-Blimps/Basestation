@@ -1,13 +1,13 @@
 import pygame
 from pygame.locals import *
-from Text import getTextSurface
+from .. import Text # Had to mark parent directory as "namespace package"
 import time
 
 class Input:
     def __init__(self, type, name, data):
         self.type = type
         self.name = name
-        self.nameSurface = getTextSurface(self.name,30)
+        self.nameSurface = Text.getTextSurface(self.name, 30)
         if(type=="Keyboard"):
             self.keys = data #Key constants
         elif(type=="Controller"):

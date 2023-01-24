@@ -1,8 +1,7 @@
-from Input import Input
 from Blimp import Blimp
 from Connection import Connection
-import pygame
-from pygame.locals import *
+
+from InputHandler import InputHandler
 
 import serial
 
@@ -18,53 +17,25 @@ class BlimpHandler:
         self.comms = UDPHelper()  # SerialHelper() # UDPHelper()
         self.display = None
         self.comms.open()
-        self.parameterMessages = []
-        self.pCodes = {  # Parameter message codes
-            "toggleABG": "e",    # toggle Active Ball Grabber
-            "autoOn":    "A1",   # turn autonomous on
-            "autoOff":   "A0"    # turn autonomous off
-        }
 
         self.blimps = []
-        """
-        for i in range(50,60):
-            self.addFakeBlimp(i,"Fake"+str(i))
-        """
 
-        self.blimpIPIDMap = {"192.168.0.101": 1,
-                             "192.168.0.102": 2,
-                             "192.168.0.103": 3,
-                             "192.168.0.104": 4,
-                             "192.168.0.105": 5,
+        self.blimpIPNameMap = {"192.168.0.101": "Spicy Hot Dog",
+                               "192.168.0.102": "Waffle",
+                               "192.168.0.103": "Apple",
+                               "192.168.0.104": "Milk",
+                               "192.168.0.105": "Pasta",
 
-                             "192.168.0.80": 10,
-                             "192.168.0.20": 11,
-                             "192.168.0.89": 12,
-                             "192.168.0.62": 13,
-                             "192.168.0.86": 14,
-                             "192.168.0.14": 15,
+                               "192.168.0.80": "Big Cup of Eggs",
+                               "192.168.0.20": "Leg in a Cup",
+                               "192.168.0.89": "I'm in a Cup",
+                               "192.168.0.62": "My Cup of Eggs",
+                               "192.168.0.86": "Pint of Eggs",
+                               "192.168.0.14": "Stealthy Steve",
 
-                             "192.168.0.38": 20}
-        self.blimpIDNameMap = {1: "Spicy Hot Dog",
-                               2: "Waffle",
-                               3: "Apple",
-                               4: "Milk",
-                               5: "Pasta",
+                               "192.168.0.38": "Barometer"}
 
-                               10: "Big Cup of Eggs",
-                               11: "Leg in a Cup",
-                               12: "I'm in a Cup",
-                               13: "My Cup of Eggs",
-                               14: "Pint of Eggs",
-                               15: "Stealthy Steve",
-
-                               20: "Barometer"}
-        self.blimpNewID = 30
-
-        self.lastBlimpAdded = 0
-        self.blimpAddDelay = 5  # seconds
-
-        self.initInputs()
+        self.inputHandler = InputHandler()
 
         self.connections = []
 
@@ -109,32 +80,6 @@ class BlimpHandler:
         self.comms.close()
         print("Comms closed.")
 
-    def initInputs(self):
-        self.inputs = []
-
-        # Init WASD Input
-        input_WASD = Input("Keyboard", "WASD", (K_d, K_a, K_w, K_s, K_UP, K_DOWN, K_c, K_e, K_q))
-        self.inputs.append(input_WASD)
-        """
-        #Init IJKL Input
-        input_IJKL = Input("Keyboard", "IJKL", (K_l, K_j, K_i, K_k, K_LEFTBRACKET, K_QUOTE, K_RETURN))
-        self.inputs.append(input_IJKL)
-        """
-
-        #Check for joysticks
-        self.joystickInstanceIDs = []
-        self.joystickCount = pygame.joystick.get_count()
-        for i in range(0,self.joystickCount):
-            controller = pygame.joystick.Joystick(i)
-            controller.init()
-            self.printControllerData(controller)
-            self.joystickInstanceIDs.append(controller.get_instance_id())
-            controllerName = "Contrl " + str(controller.get_instance_id())
-            input_Controller = Input("Controller",controllerName,controller)
-            self.inputs.append(input_Controller)
-        self.tempActiveController = len(self.inputs)-1
-        if(self.display != None): self.display.activeController = self.tempActiveController
-
     def setDisplay(self,display):
         self.display = display
         display.activeController = self.tempActiveController
@@ -142,8 +87,7 @@ class BlimpHandler:
     #Loop ==================================================================================
     def update(self):
         self.updateBaroHeight()
-        self.checkJoystickCount()
-        self.updateInputs()
+        self.inputHandler.update()
         self.checkForDeadBlimps()
         self.listen()
         self.sendDataToBlimps()
@@ -194,16 +138,6 @@ class BlimpHandler:
         else:
             self.baseHeight = None
             self.baroType = None
-
-    def checkJoystickCount(self):
-        if (pygame.joystick.get_count() != self.joystickCount):
-            print("Updating joysticks")
-            self.initInputs()
-            self.fixConnections()
-
-    def updateInputs(self):
-        for input in self.inputs:
-            input.update()
 
     def checkForDeadBlimps(self):
         blimpsCorrect = False

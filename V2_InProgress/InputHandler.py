@@ -1,0 +1,61 @@
+from Inputs.Input import Input
+import pygame
+from pygame.locals import *
+
+
+class InputHandler:
+    def __init__(self):
+        self.inputsStatic = []
+        self.inputsJoysticks = []
+        self.joystickCount = 0
+        self.inputs = []
+
+        self.updateInputs()
+
+    def updateInputs(self):
+        # Updates static/joystick input arrays, fills total input array with static/joystick inputs
+        self.updateInputsStatic()
+        self.updateInputsJoysticks()
+        self.inputs = []
+        for inputStatic in self.inputsStatic:
+            self.inputs.append(inputStatic)
+        for inputJoystick in self.inputsJoysticks:
+            self.inputs.append(inputJoystick)
+
+    def updateInputsStatic(self):
+        # Clears static input array, manually fills it with static inputs (i.e. defined keyboard inputs)
+        self.inputsStatic = []
+
+        # Init WASD Input
+        input_WASD = Input("Keyboard", "WASD", (K_d, K_a, K_w, K_s, K_UP, K_DOWN, K_c, K_e, K_q))
+        self.inputsStatic.append(input_WASD)
+
+    def updateInputsJoysticks(self):
+        # Clears joystick input array, fills it with all currently connected joysticks
+        self.inputsJoysticks = []
+        self.joystickCount = pygame.joystick.get_count()
+        for i in range(0, self.joystickCount):
+            controller = pygame.joystick.Joystick(i)
+            controller.init()
+            # printControllerData(controller)
+            controllerName = "Contrl " + str(controller.get_instance_id())
+            input_Controller = Input("Controller", controllerName, controller)
+            self.inputsJoysticks.append(input_Controller)
+
+    def joystickCountMismatch(self):
+        return pygame.joystick.get_count() != self.joystickCount
+
+    def update(self):
+        if self.joystickCountMismatch():
+            self.updateInputs()
+        for input in self.inputs:
+            input.update()
+
+
+def printControllerData(controller):
+    print("Input")
+    print("Name:", controller.get_name())
+    print("Axes:", controller.get_numaxes())
+    print("Trackballs:", controller.get_numballs())
+    print("Buttons:", controller.get_numbuttons())
+    print("Hats:", controller.get_numhats())
