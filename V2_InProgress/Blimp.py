@@ -2,6 +2,7 @@ from Text import getTextSurface
 
 class Blimp:
     def __init__(self,ID,name):
+        self.IP = 0
         self.ID = ID
         self.auto = 0
         self.grabbing = 0
