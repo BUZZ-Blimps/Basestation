@@ -1,4 +1,5 @@
-from Inputs.Input import Input
+from Inputs.KeyboardInput import KeyboardInput
+from Inputs.ControllerInput import ControllerInput
 import pygame
 from pygame.locals import *
 
@@ -16,22 +17,21 @@ class InputHandler:
         # Updates static/joystick input arrays, fills total input array with static/joystick inputs
         self.updateInputsStatic()
         self.updateInputsJoysticks()
-        self.inputs = []
-        for inputStatic in self.inputsStatic:
-            self.inputs.append(inputStatic)
-        for inputJoystick in self.inputsJoysticks:
-            self.inputs.append(inputJoystick)
 
+        self.inputs = []
+        self.inputs.extend(self.inputsStatic)
+        self.inputs.extend(self.inputsJoysticks)
+
+    # Clears static input array, manually fills it with static inputs (i.e. defined keyboard inputs)
     def updateInputsStatic(self):
-        # Clears static input array, manually fills it with static inputs (i.e. defined keyboard inputs)
         self.inputsStatic = []
 
         # Init WASD Input
-        input_WASD = Input("Keyboard", "WASD", (K_d, K_a, K_w, K_s, K_UP, K_DOWN, K_c, K_e, K_q))
+        input_WASD = KeyboardInput("WASD", (K_d, K_a, K_w, K_s, K_UP, K_DOWN, K_c, K_e, K_q))
         self.inputsStatic.append(input_WASD)
 
+    # Clears joystick input array, fills it with all currently connected joysticks
     def updateInputsJoysticks(self):
-        # Clears joystick input array, fills it with all currently connected joysticks
         self.inputsJoysticks = []
         self.joystickCount = pygame.joystick.get_count()
         for i in range(0, self.joystickCount):
@@ -39,7 +39,7 @@ class InputHandler:
             controller.init()
             # printControllerData(controller)
             controllerName = "Contrl " + str(controller.get_instance_id())
-            input_Controller = Input("Controller", controllerName, controller)
+            input_Controller = ControllerInput(controllerName, controller)
             self.inputsJoysticks.append(input_Controller)
 
     def joystickCountMismatch(self):
@@ -50,12 +50,3 @@ class InputHandler:
             self.updateInputs()
         for input in self.inputs:
             input.update()
-
-
-def printControllerData(controller):
-    print("Input")
-    print("Name:", controller.get_name())
-    print("Axes:", controller.get_numaxes())
-    print("Trackballs:", controller.get_numballs())
-    print("Buttons:", controller.get_numbuttons())
-    print("Hats:", controller.get_numhats())
