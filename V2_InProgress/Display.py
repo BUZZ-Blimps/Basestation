@@ -1,3 +1,4 @@
+# Imported Classes
 import sys
 import pygame
 import math
@@ -239,7 +240,6 @@ class Display:
             blimpID = int(name[2:])
             self.blimpHandler.pushTEButton(blimpID)
 
-
     def posInRange(self,pos,origin,size):
         xrange = (origin[0], origin[0] + size[0])
         yrange = (origin[1], origin[1] + size[1])
@@ -440,6 +440,7 @@ class Display:
         else:
             stringBarometer += "(" + self.blimpHandler.baroType + ") " + str(self.blimpHandler.baseHeight)
         self.screen.blit(self.getTextSurface(stringBarometer, 30),(self.anchor_x_barometer, self.anchor_y_barometer))
+
     def draw_Plots(self):
         pygame.draw.rect(self.screen,self.color_plot_screenbackground,Rect(0,0,self.width_screen,self.height_screen)) #Draw background
 
@@ -468,7 +469,6 @@ class Display:
                     dataPointCenter = (self.anchor_x_plot + (dataPoint[0]-xMin)/(xMax-xMin)*self.width_plot, self.anchor_y_plot + self.height_plot/2 - (dataPoint[1]-dataMin)/(dataMax-dataMin)*self.height_plot)
                     pygame.draw.circle(self.screen,self.color_plot_data,dataPointCenter,2)
 
-
     def getTextSurface(self, text, size, color=None):
         if(color == None):
             color = Color(0,0,0)
@@ -480,7 +480,6 @@ class Display:
             #print("New key:",textKey)
             #print(len(self.textSurfaces.keys()))
         return surface
-
 
     def getClampPoint(self, startingPoint, length, angleDegrees):
         angle = angleDegrees/180*math.pi
@@ -517,3 +516,4 @@ class Display:
             if(button[2] == label):
                 return True
         return False
+

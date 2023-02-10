@@ -23,5 +23,3 @@ while True:
     if(readIn!=""): print(readIn,end='')
     time.sleep(0.1)
 
-
-
