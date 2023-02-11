@@ -1,4 +1,4 @@
-from Input import Input
+from V2_InProgress.Inputs.Input import Input
 import time
 
 
@@ -93,7 +93,7 @@ class ControllerInput(Input):
         self.vibrateUntilTime = 0
 
     # ============================== ABSTRACT UPDATES ==============================
-    def __updateInputs(self):
+    def _Input__updateInputs(self):
         # Input
         controller = self.controller
         leftX = self.getControllerInput("JS_LEFT_X")
@@ -120,7 +120,7 @@ class ControllerInput(Input):
         elif mode == 2:
             self.recordedInput = [leftX, rightY, rightX, leftY]
 
-    def __updateActions(self):
+    def _Input__updateActions(self):
         currentTime = time.time()
         for actionName in self.controllerActionMapping.keys():
             if self.controllerActionMapping[actionName] is None:

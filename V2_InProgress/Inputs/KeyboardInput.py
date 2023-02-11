@@ -1,4 +1,4 @@
-from Input import Input
+from V2_InProgress.Inputs.Input import Input
 import time
 import pygame
 from pygame.locals import *
@@ -12,7 +12,7 @@ class KeyboardInput(Input):
 
         self.keyboardActionMapping = {"grab": K_g,
                                       "auto": K_a,
-                          # ============================== ABSTRACT UPDATES ==============================            "shoot": K_l,
+                                      "shoot": K_l,
                                       "panicAuto": K_p,
                                       "kill": K_k,
                                       "record": K_r,
@@ -27,7 +27,7 @@ class KeyboardInput(Input):
             self.actionObserved[key] = False
 
     # ============================== ABSTRACT UPDATES ==============================
-    def __updateInputs(self):
+    def _Input__updateInputs(self):
         # Input
         keys = self.keys  # KeyConstants=[right,left,forward,backward,up,down,morePower,grab,auto]
         powerNormal = 0.3
@@ -46,7 +46,7 @@ class KeyboardInput(Input):
 
         self.recordedInput = [leftX, leftY, rightX, rightY]
 
-    def __updateActions(self):
+    def _Input__updateActions(self):
         currentTime = time.time()
         for actionName in self.keyboardActionMapping.keys():
             if self.keyboardActionMapping[actionName] is None:
@@ -72,7 +72,7 @@ class KeyboardInput(Input):
                 self.actionStartTime[actionName] = currentTime
                 self.actionObserved[actionName] = False
 
-    def __notify(self, timeDuration):
+    def notify(self, timeDuration):
         # Keyboard can't vibrate
         pass
 

@@ -133,19 +133,6 @@ class Display:
 
         print("Display Initialized")
 
-        self.exclusiveConnections = True
-
-    """ #Hotfix add keybind
-    elif self.getKey(K_e):
-        if (self.activeController != -1):
-            blimpIDs = []
-            for connection in self.blimpHandler.connections:
-                if (self.activeController == connection.inputIndex):
-                    blimpIDs.append(self.blimpHandler.blimps[connection.blimpIndex].ID)
-            if (len(blimpIDs) > 0):
-                pass #self.blimpHandler.updateGrabber(blimpIDs)
-    """
-
     def handleEvent(self,event):
         if event.type == QUIT:
             print("Attempted Quit")
@@ -154,43 +141,10 @@ class Display:
             if self.getKey(K_ESCAPE):
                 print("Escape key pressed; Aborting.")
                 self.alive = False
-            elif self.getKey(K_TAB):
-                if(self.activeController != -1):
-                    blimpIDs = []
-                    for connection in self.blimpHandler.connections:
-                        if(self.activeController == connection.inputIndex):
-                            blimpIDs.append(self.blimpHandler.blimps[connection.blimpIndex].ID)
-                    self.blimpHandler.pushMPB(blimpIDs)
-            elif self.getKey(K_SPACE):
-                if(self.renderMode == "InputsBlimps"):
-                    self.renderMode = "Plots"
-                elif(self.renderMode == "Plots"):
-                    self.renderMode = "InputsBlimps"
-                else:
-                    print("wtf")
-            elif self.getKey(K_r):
-                if (self.activeController != -1):
-                    blimpIDs = []
-                    for connection in self.blimpHandler.connections:
-                        if (self.activeController == connection.inputIndex):
-                            blimpIDs.append(self.blimpHandler.blimps[connection.blimpIndex].ID)
-                    self.blimpHandler.requestRecording(blimpIDs)
             elif self.getKey(K_p):
                 for blimp in self.blimpHandler.blimps:
                     blimp.auto = 1
-            elif self.getNumber()[0]:
-                number = self.getNumber()[1]
-                if(self.activeController != -1):
-                    #remove previous connections
-                    if(self.exclusiveConnections):
-                        for i in range(0,len(self.blimpHandler.connections)):
-                            connection = self.blimpHandler.connections[i]
-                            if(connection.inputIndex == self.activeController and connection.blimpIndex != number-1):
-                                self.blimpHandler.updateConnection(self.activeController,connection.blimpIndex)
-                                i -= 1
-                    #add new connection
-                    self.blimpHandler.updateConnection(self.activeController,number-1)
-                    self.blimpHandler.fixConnections()
+                print("Hardcoded autonomous panic!")
 
         if event.type == MOUSEBUTTONDOWN:
             if(event.button == 1): #Left Click
@@ -198,7 +152,7 @@ class Display:
                 for button in self.buttons:
                     if(self.posInRange(pos,button[0],button[1])):
                         self.handleButton(button[2])
-                inputs = self.blimpHandler.inputs
+                inputs = self.blimpHandler.inputHandler.inputs
                 for i in range(0, len(inputs)):
                     if(self.inRangeInput(pos,i)):
                         self.drawing = True
@@ -206,7 +160,7 @@ class Display:
         if event.type == MOUSEBUTTONUP:
             if(event.button == 1): #Left Click
                 pos = pygame.mouse.get_pos()
-                inputs = self.blimpHandler.inputs
+                inputs = self.blimpHandler.inputHandler.inputs
                 blimps = self.blimpHandler.blimps
 
                 for i in range(0,len(inputs)):
@@ -219,7 +173,9 @@ class Display:
                 for i in range(0,len(blimps)):
                     if(self.inRangeBlimp(pos,i)):
                         if(self.drawing):
-                            self.blimpHandler.updateConnection(self.drawingIndex,i)
+                            inputName = self.blimpHandler.inputHandler.inputs[self.drawingIndex].name
+                            blimpName = self.blimpHandler.blimps[i].name
+                            self.blimpHandler.blimpMapper.updateMapping(inputName, blimpName)
                 self.drawing = False
 
     def handleButton(self,name):
@@ -248,7 +204,7 @@ class Display:
         return validX and validY
 
     def inRangeInput(self, pos, index):
-        size = self.blimpHandler.inputs[index].getNameSurface().get_size()
+        size = self.blimpHandler.inputHandler.inputs[index].getNameSurface().get_size()
         inputTextY = self.anchor_y_inputText + index*self.spacing_y_inputText
         return self.posInRange(pos,(self.align_input_right - size[0],inputTextY),size)
 
@@ -279,12 +235,12 @@ class Display:
         pygame.display.update()
 
     def draw_InputsBlimps(self):
-        self.drawConnections()
+        self.drawMappings()
         #self.drawActiveController()
         self.drawMisc()
 
-    def drawConnections(self):
-        inputs = self.blimpHandler.inputs
+    def drawMappings(self):
+        inputs = self.blimpHandler.inputHandler.inputs
         blimps = self.blimpHandler.blimps
 
         #backWidth = self.width_inputVisual + self.width_input + self.width_blimps + self.width_blimpState + self.width_blimpStatus
@@ -309,7 +265,7 @@ class Display:
             pygame.draw.line(self.screen, self.color_inputVisual_grid, (rectX, rectY + 0.5*self.height_inputVisualRect), (rectX+self.width_inputVisualRect, rectY + 0.5*self.height_inputVisualRect))
             pygame.draw.line(self.screen, self.color_inputVisual_grid, (rectX+0.25*self.width_inputVisualRect, rectY), (rectX+0.25*self.width_inputVisualRect, rectY+self.height_inputVisualRect))
             pygame.draw.line(self.screen, self.color_inputVisual_grid, (rectX+0.75*self.width_inputVisualRect, rectY), (rectX+0.75*self.width_inputVisualRect, rectY+self.height_inputVisualRect))
-            input = self.blimpHandler.inputs[i].grabInput()
+            input = self.blimpHandler.inputHandler.inputs[i].grabInput()
             leftJS = (rectX+0.25*self.width_inputVisualRect + input[0] * self.inputVisualRect_radius, rectY + 0.5*self.height_inputVisualRect - input[1] * self.inputVisualRect_radius)
             rightJS = (rectX+0.75*self.width_inputVisualRect + input[2] * self.inputVisualRect_radius, rectY + 0.5*self.height_inputVisualRect - input[3] * self.inputVisualRect_radius)
             pygame.draw.circle(self.screen, self.color_inputVisual_joystick, leftJS, self.inputVisualRect_JSCircle)
@@ -364,7 +320,7 @@ class Display:
                 newButton = ((self.anchor_x_targetEnemy+45,blimpTextY),(25,25),buttonLabel)
                 self.buttons.append(newButton)
 
-        #Render connection line if mouse is to the right of inputs
+        #Render mapping line if mouse is to the right of inputs
         newLineColor = Color(255,100,255)
         lineColor = Color(255,255,255)
         lineThickness = 3
@@ -374,10 +330,10 @@ class Display:
             inputPos = (self.align_input_right,int(self.anchor_y_inputText + self.drawingIndex*self.spacing_y_inputText+inputSurfaceSize[1]/2))
             pygame.draw.line(self.screen,newLineColor,inputPos,pos,lineThickness)
 
-        #Render connection lines
-        for connection in self.blimpHandler.connections:
-            inputIndex = connection.inputIndex
-            blimpIndex = connection.blimpIndex
+        #Render mapping lines
+        for mapping in self.blimpHandler.blimpMapper.getMappings():
+            inputIndex = mapping[0]
+            blimpIndex = mapping[1]
             try:
                 inputSurfaceSize = inputs[inputIndex].getNameSurface().get_size()
                 blimpSurfaceSize = blimps[blimpIndex].getNameSurface().get_size()
@@ -419,7 +375,7 @@ class Display:
             pygame.draw.line(self.screen,whiteColor,CRightOrigin,self.getClampPoint(CRightOrigin, CLength,0),5)
         else:
             #Joysticks
-            input = self.blimpHandler.inputs[self.activeController].getInput()
+            input = self.blimpHandler.inputHandler.inputs[self.activeController].getInput()
             leftPos = (JSLeftOrigin[0]+joystickRadius*input[0],JSLeftOrigin[1]-joystickRadius*input[1])
             rightPos = (JSRightOrigin[0]+joystickRadius*input[2],JSRightOrigin[1]-joystickRadius*input[3])
             pygame.draw.circle(self.screen,whiteColor,leftPos,circleRadius)

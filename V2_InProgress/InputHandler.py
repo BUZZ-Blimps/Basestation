@@ -10,6 +10,7 @@ class InputHandler:
         self.inputsJoysticks = []
         self.joystickCount = 0
         self.inputs = []
+        self.inputIndexMap = {}
 
         self.updateInputs()
 
@@ -50,3 +51,19 @@ class InputHandler:
             self.updateInputs()
         for input in self.inputs:
             input.update()
+
+    def fixInputIndexMap(self):
+        self.inputIndexMap = {}
+        for i in range(0,len(self.inputs)):
+            self.inputIndexMap[self.inputs[i].name] = i
+
+    def getInputIndex(self, inputName, recursiveLevel=0):
+        if recursiveLevel == 2:
+            return -1
+        if inputName in self.inputIndexMap:
+            possibleIndex = self.inputIndexMap[inputName]
+            possibleInput = self.inputs[possibleIndex]
+            if inputName == possibleInput.name:
+                return possibleIndex
+        self.fixInputIndexMap()
+        return self.getInputIndex(inputName, recursiveLevel + 1)

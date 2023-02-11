@@ -1,8 +1,8 @@
 # Imported Classes
 from Blimp import Blimp
-from Connection import Connection
 from InputHandler import InputHandler
 from UDPMulticast import UDPHelper
+from BlimpMapper import BlimpMapper
 
 # Imported Libraries
 import time
@@ -34,6 +34,9 @@ class BlimpHandler:
         # List of Blimps
         self.blimps = []
 
+        # Initialize dict storing indices of blimps
+        self.blimpIndexMap = {}
+
         # Blimp Names and IPs
         self.blimpIPNameMap = {"192.168.0.101": "Spicy Hot Dog",
                                "192.168.0.102": "Waffle",
@@ -53,8 +56,8 @@ class BlimpHandler:
         # Initialize Input Handler
         self.inputHandler = InputHandler()
 
-        # List of Connections
-        self.connections = []
+        # Initialize Blimp Mapper
+        self.blimpMapper = BlimpMapper(self, self.inputHandler)
 
         # Blimp States
         self.blimpStateStrings = {-1: "None",
@@ -82,8 +85,8 @@ class BlimpHandler:
         self.baroSerialLastReceivedValue = None
         self.baroSerial = None
 
+        # Try connecting to the Barometer
         try:
-            # Set Serial for Barometer
             self.baroSerial = serial.Serial('/dev/baro_0', 115200)
         except(serial.SerialException):
             # Error
@@ -103,6 +106,8 @@ class BlimpHandler:
 
         # Initialize Global Targets
         self.globalTargets = False
+
+        self.addFakeBlimp(1000,"lmao")
 
     # ====================== Close Blimp Handler ====================== #
     # Description #
@@ -124,9 +129,6 @@ class BlimpHandler:
         # Set Display
         self.display = display
 
-        # Set Controller
-        display.activeController = self.tempActiveController
-
     # ================== Update Blimp Handler (Loop) ================== #
     # Description #
     # Loops to continuously check and update barometer height, dead blimps,
@@ -138,15 +140,15 @@ class BlimpHandler:
         self.inputHandler.update()
         # Check for Dead Blimps
         self.checkForDeadBlimps()
+        # Update Blimp Mapper
+        self.blimpMapper.update()
         # Get Blimp Data
         self.listen()
         # Update Blimp Data
         self.sendDataToBlimps()
 
-        # Calculate Wait Time
+        # Calculate and Print Wait Time
         waitTime = time.time() - self.lastUpdateLoop
-
-        # Print Wait Time
         if (waitTime > 0.01):
             print(waitTime)
 
@@ -171,21 +173,18 @@ class BlimpHandler:
     # Finds disconnected blimps and removes them from the Blimp List
     def checkForDeadBlimps(self):
         # If Blimps are not connected, remove them from the list
-        blimpsCorrect = False
-        while not blimpsCorrect:
-            blimpsCorrect = True
-            for i in range(0, len(self.blimps)):
-                blimp = self.blimps[i]
-                blimp.lastHeartbeatDiff = time.time() - blimp.lastHeartbeatDetected
-                # print(amount,";  ",blimp.heartbeatDisconnectDelay)
-                if (blimp.lastHeartbeatDiff > blimp.heartbeatDisconnectDelay):
-                    # Blimp heartbeat not received for too long; Remove it
-                    print(blimp.name, "heartbeat not received; Removing...")
-                    self.blimps.pop(i)
-                    self.display.removeBlimp(blimp.ID)
-                    blimpsCorrect = False
-                    self.fixConnections()
-                    break
+        blimpIndex = 0
+        while blimpIndex < len(self.blimps):
+            blimp = self.blimps[blimpIndex]
+            # Calculate time since blimp's last heartbeat
+            blimp.lastHeartbeatDiff = time.time() - blimp.lastHeartbeatDetected
+            if blimp.lastHeartbeatDiff > blimp.heartbeatDisconnectDelay:
+                # Blimp heartbeat not received for too long; Remove it
+                print(blimp.name, "heartbeat not received; Removing...")
+                self.blimps.pop(blimpIndex)
+                self.display.removeBlimp(blimp.ID)
+            else:
+                blimpIndex += 1
 
     # ====================== Listen for Messages ====================== #
     # Description #
@@ -214,32 +213,18 @@ class BlimpHandler:
         # Get Current Time
         currentTime = time.time()
 
-        # Send Blimp ID and Message Data
-        self.sendBlimpIDAndData()
+        # Iterate through inputs
+        for input in self.inputHandler.inputs:
+            # Iterate through blimps mapped to this input
+            mappedBlimp = self.blimpMapper.getMappedBlimp(input.name)
+            if mappedBlimp is not None:
+                # Send blimp inputs
+                self.sendBlimpInputs(input, mappedBlimp, currentTime)
+                # Send blimp-centered actions
+                self.blimpCenteredActions(input, mappedBlimp)
 
-        # Iterate through Blimps, Input, Barometer Data, Target Goal
-        for blimpInd in range(0,len(self.blimps)):
-            blimp = self.blimps[blimpInd]
-            blimpID = blimp.ID
-            connection = self.getConnectionFromBlimpIndex(blimpInd)
-            # Send Inputs
-            self.sendBlimpInputs(connection, currentTime, blimp, blimpID)
-
-        # Iterate through Inputs and Actions
-        for inputIndex in range(0,len(self.inputs)):
-            # Current Input
-            input = self.inputs[inputIndex]
-
-            # Iterate through Blimps (Blimp-centered Actions)
-            blimpIndices = self.getConnectedBlimpIndicesFromInput(input)
-            for blimpIndex in blimpIndices:
-                blimp = self.blimps[blimpIndex]
-                blimpID = blimp.ID
-                # Blimp-centered Actions
-                self.blimpCenteredActions(input, blimp, blimpID)
-
-            # Non-Blimp-centered Actions
-            self.nonBlimpCenteredActions(input, inputIndex)
+            # Non-blimp-centered Actions
+            self.nonBlimpCenteredActions(input)
 
     # ======================= Request Recording ======================= #
     # Description #
@@ -252,41 +237,20 @@ class BlimpHandler:
 
 # ========================= Helper Functions ========================== #
 
-    # ===================== Send Blimp ID and Data ==================== #
-    # Description #
-    # Sends parameter messages (Blimp ID and Blimp Data)
-    def sendBlimpIDAndData(self):
-        # Send parameter messages
-        if (len(self.parameterMessages) > 0):
-            # print("Messages:",len(self.parameterMessages))
-            while (len(self.parameterMessages) > 0):
-                message = self.parameterMessages[0]
-                self.parameterMessages.pop(0)
-                blimpID = message[0]
-                data = message[1]
-                # Send Blimp ID and Data
-                self.comms.send(blimpID, "P", data)
-                # print(blimpID,",0:P:",data,sep='')currentTime = time.time()
-
     # ======================= Send Blimp Inputs ======================= #
     # Description #
-    # Checks if there is a connection and gets inputs, then sends Blimp ID
+    # Gets inputs and sends to blimp
     # with Blimp Data (Blimp Height, Target Goal, and Target Enemy)
-    def sendBlimpInputs(self, connection, currentTime, blimp, blimpID):
-        # If there is a connection, get the input and input data
-        if (connection is not None):
-            input = self.inputs[connection.inputIndex]
-            inputData = input.grabInput()
-        # If there is no connection, set all the input data to zero
-        else:
-            inputData = [0, 0, 0, 0]
+    def sendBlimpInputs(self, input, blimp, currentTime):
+        inputData = input.grabInput()
+        blimpID = blimp.ID
 
         # If the time since previous input is GREATER than the time input delay
-        if (currentTime - blimp.lastTimeInputDataSent > blimp.timeInputDelay):
+        if currentTime - blimp.lastTimeInputDataSent > blimp.timeInputDelay:
             # Store the current time
             blimp.lastTimeInputDataSent = currentTime
             # If the blimp is autonomous
-            if (blimp.auto == 1):
+            if blimp.auto == 1:
                 # Send Blimp ID and a message about base height, target goal, and target enemy (UDP)
                 message = str(self.baseHeight) + ";" + blimp.targetGoal + ";" + blimp.targetEnemy
                 self.comms.send(blimpID, "A", message)
@@ -308,7 +272,8 @@ class BlimpHandler:
     # ===================== Blimp Centered Actions ==================== #
     # Description #
     # Changes Blimp's Action based on Input
-    def blimpCenteredActions(self, input, blimp, blimpID):
+    def blimpCenteredActions(self, input, blimp):
+        blimpID = blimp.ID
         # Grab
         if (input.grabAction("grab")):
             blimp.grabbing = 1 - blimp.grabbing
@@ -338,54 +303,30 @@ class BlimpHandler:
     # =================== Non-Blimp Centered Actions ================== #
     # Description #
     # Changes Blimp's Action based on Input
-    def nonBlimpCenteredActions(self, input, inputIndex):
+    def nonBlimpCenteredActions(self, input):
         # Autonomous Panic
-        if (input.grabAction("panicAuto")):
+        if input.grabAction("panicAuto"):
             for blimp in self.blimps:
                 blimp.auto = 1
-                print("PANIC AUTO")
-                input.notify(1)
-                self.connections.clear()
+            print("PANIC AUTO")
+            input.notify(1)
+            self.blimpMapper.clearMappings()
 
         # Connect Up
-        if (input.grabAction("connectUp")):
-            blimpIndices = self.getConnectedBlimpIndicesFromInput(input)
-            if (len(blimpIndices) < 2):
-                prevIndex = len(self.blimps)
-                if (len(blimpIndices) == 1):
-                    prevIndex = blimpIndices[0]
-                    self.updateConnection(inputIndex, blimpIndices[0])
-                while (prevIndex > 0):
-                    nextIndex = prevIndex - 1
-                    connection = self.getConnectionFromBlimpIndex(nextIndex)
-                    if (connection is None):
-                        self.updateConnection(inputIndex, nextIndex)
-                        break
-                    prevIndex = nextIndex
+        if input.grabAction("connectUp"):
+            self.blimpMapper.mapUp(input.name)
 
         # Connect Down
-        if (input.grabAction("connectDown")):
-            blimpIndices = self.getConnectedBlimpIndicesFromInput(input)
-            if (len(blimpIndices) < 2):
-                prevIndex = -1
-                if (len(blimpIndices) == 1):
-                    prevIndex = blimpIndices[0]
-                    self.updateConnection(inputIndex, blimpIndices[0])
-                while (prevIndex < len(self.blimps) - 1):
-                    nextIndex = prevIndex + 1
-                    connection = self.getConnectionFromBlimpIndex(nextIndex)
-                    if (connection is None):
-                        self.updateConnection(inputIndex, nextIndex)
-                        break
-                    prevIndex = nextIndex
+        if input.grabAction("connectDown"):
+            self.blimpMapper.mapDown(input.name)
 
         # Vibe Right
-        if (input.grabAction("vibeRight")):
+        if input.grabAction("vibeRight"):
             input.notify(0.1)
             print("STOP Vibe")
 
         # Vibe Left
-        if (input.grabAction("vibeLeft")):
+        if input.grabAction("vibeLeft"):
             input.notify(100000)
             print("STOP Vibe")
 
@@ -439,28 +380,6 @@ class BlimpHandler:
         else:
             self.baseHeight = None
             self.baroType = None
-
-    # ========================= Fix Connections ======================= #
-    # Description #
-    # If Input and Blimp exist, Update the Existing Lists for Each
-    # If Input and Blimp exist, Remove the Connection
-    def fixConnections(self):
-        correctConnections = False
-        while not correctConnections:
-            correctConnections = True  # Assume true until proven incorrect
-            for i in range(0, len(self.connections)):
-                connection = self.connections[i]
-                inputExist = self.inputExists(connection.inputName)
-                blimpExist = self.blimpNameExists(connection.blimpName)
-                if (inputExist[0] and blimpExist[0]):
-                    # Input and blimp exists; Update index
-                    connection.inputIndex = inputExist[1]
-                    connection.blimpIndex = blimpExist[1]
-                else:
-                    # Input or blimp doesn't exist; Remove it
-                    self.connections.pop(i)
-                    correctConnections = False
-                    break
 
     # ========================== Input Exists ========================= #
     # Description #
@@ -613,36 +532,6 @@ class BlimpHandler:
                     # Set the Last Heartbeat Detected to the time
                     blimp.lastHeartbeatDetected = time.time()
 
-    # ======================= Update Connection ======================= #
-    # Description #
-    # Remove Disconnected Blimps, Update Current Blimps, and Add New Blimps
-    def updateConnection(self, inputIndex, blimpIndex):
-        # If Input Index is greater or equal to the inputs
-        if (inputIndex >= len(self.inputs)):
-            return
-        # If Blimp Index is greater or equal to the inputs
-        if (blimpIndex >= len(self.blimps)):
-            return
-        # Get Input Name, Blimp Name, and New Connection
-        inputName = self.inputs[inputIndex].name
-        blimpName = self.blimps[blimpIndex].name
-        newConnection = Connection(inputName, blimpName, inputIndex, blimpIndex)
-        # Go through all connections
-        for i in range(0, len(self.connections)):
-            # Get a single connection
-            connection = self.connections[i]
-            # If a Connection exists, Remove it
-            if (newConnection.names == connection.names):
-                self.connections.pop(i)
-                return
-            # If a Blimp already connected, Overwrite it
-            elif (newConnection.blimpName == connection.blimpName):
-                self.connections.pop(i)
-                self.connections.append(newConnection)
-                return
-        # Add New Connection to All Connections
-        self.connections.append(newConnection)
-
     # ============================ Push MPB =========================== #
     # Description #
     # Push Message Parameters for Blimps
@@ -657,32 +546,6 @@ class BlimpHandler:
         # If Data doesn't exist, Return
         if (data is None):
             return
-        # If the first Data Index is E
-        if (data[0] == "E"):
-            # If the second Data Index is 1
-            if (data[1:] == "1"):
-                # Exclusive Connections are True
-                self.display.exclusiveConnections = True
-                print("Exclusive connections: TRUE")
-            else:
-                # Exclusive Connections are False
-                self.display.exclusiveConnections = False
-                print("Exclusive connections: FALSE")
-            # Return
-            return
-        # Go through all Blimps using Blimp IDs
-        for blimpID in blimpIDs:
-            # Get Blimp Data
-            self.parameterMessages.append((blimpID, data))
-            # Get Blimp
-            blimp = self.findBlimp(blimpID)
-            # Check if Autonomous is True or False
-            if (data == self.pCodes["autoOn"]):
-                # Autonomous is True
-                blimp.auto = 1
-            elif (data == self.pCodes["autoOff"]):
-                # Autonomous is False
-                blimp.auto = 0
 
     # ==================== Push Target Goal Button ==================== #
     # Description #
@@ -765,36 +628,6 @@ class BlimpHandler:
             if (blimp.ID == blimpID):
                 return blimp
 
-    # ======================== Update Grabber ========================= #
-    # Description #
-    # Returns a single connection or no connection
-    def getConnectionFromBlimpIndex(self, blimpInd):
-        for connection in self.connections:
-            if (connection.blimpIndex == blimpInd):
-                return connection
-        return None
-
-    # ============= Get Connected Blimp Indices from Input ============ #
-    # Description #
-    # Returns a list of Blimp Indices from Blimp Connections
-    def getConnectedBlimpIndicesFromInput(self, input):
-        blimpIndices = []
-        for connection in self.connections:
-            if (self.inputs[connection.inputIndex] == input):
-                blimpIndices.append(connection.blimpIndex)
-        return blimpIndices
-
-    # ===================== Print Controller Data ===================== #
-    # Description #
-    # Prints Input, Name, Axes, Trackballs, Buttons, and Hats of Controller
-    def printControllerData(self, controller):
-        print("Input")
-        print("Name:", controller.get_name())
-        print("Axes:", controller.get_numaxes())
-        print("Trackballs:", controller.get_numballs())
-        print("Buttons:", controller.get_numbuttons())
-        print("Hats:", controller.get_numhats())
-
     # ================== Check if Input is a Integer ================== #
     # Description #
     # Returns true or false for the inputString (Integer == True)
@@ -833,3 +666,24 @@ class BlimpHandler:
         self.blimps.append(tempBlimp)
         return tempBlimp
 
+    # ======================= Get Blimp Index ======================== #
+    # Description #
+    # Get blimp's index in list from name
+    def getBlimpIndex(self, blimpName, recursiveLevel=0):
+        if recursiveLevel == 2:
+            return -1
+        if blimpName in self.blimpIndexMap:
+            possibleIndex = self.blimpIndexMap[blimpName]
+            possibleBlimp = self.blimps[possibleIndex]
+            if blimpName == possibleBlimp.name:
+                return possibleIndex
+        self.fixBlimpIndexMap()
+        return self.getBlimpIndex(blimpName,recursiveLevel+1)
+
+    # ======================= Fix Blimp Index Map ======================== #
+    # Description #
+    # Empties the blimp index map and fills it with the current indices
+    def fixBlimpIndexMap(self):
+        self.blimpIndexMap = {}
+        for i in range(0,len(self.blimps)):
+            self.blimpIndexMap[self.blimps[i].name] = i
