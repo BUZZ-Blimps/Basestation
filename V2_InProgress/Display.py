@@ -185,15 +185,15 @@ class Display:
             #self.blimpHandler.initInputs()
         elif(name[0:3]=="MPB"):
             print("MPB pressed")
-            blimpID = int(name[3:])
+            blimpID = name[3:]
             self.blimpHandler.pushMPB(blimpID)
         elif(name[0:2]=="TG"):
             print("TG button pressed")
-            blimpID = int(name[2:])
+            blimpID = name[2:]
             self.blimpHandler.pushTGButton(blimpID)
         elif(name[0:2]=="TE"):
             print("TE button pressed")
-            blimpID = int(name[2:])
+            blimpID = name[2:]
             self.blimpHandler.pushTEButton(blimpID)
 
     def posInRange(self,pos,origin,size):
@@ -241,7 +241,7 @@ class Display:
 
     def drawMappings(self):
         inputs = self.blimpHandler.inputHandler.inputs
-        blimps = self.blimpHandler.blimps
+        blimpIDs = self.blimpHandler.getOrderedConnectedBlimpIDs()
 
         #backWidth = self.width_inputVisual + self.width_input + self.width_blimps + self.width_blimpState + self.width_blimpStatus
         backWidth = self.width_screen
@@ -265,7 +265,7 @@ class Display:
             pygame.draw.line(self.screen, self.color_inputVisual_grid, (rectX, rectY + 0.5*self.height_inputVisualRect), (rectX+self.width_inputVisualRect, rectY + 0.5*self.height_inputVisualRect))
             pygame.draw.line(self.screen, self.color_inputVisual_grid, (rectX+0.25*self.width_inputVisualRect, rectY), (rectX+0.25*self.width_inputVisualRect, rectY+self.height_inputVisualRect))
             pygame.draw.line(self.screen, self.color_inputVisual_grid, (rectX+0.75*self.width_inputVisualRect, rectY), (rectX+0.75*self.width_inputVisualRect, rectY+self.height_inputVisualRect))
-            input = self.blimpHandler.inputHandler.inputs[i].grabInput()
+            input = inputs[i].grabInput()
             leftJS = (rectX+0.25*self.width_inputVisualRect + input[0] * self.inputVisualRect_radius, rectY + 0.5*self.height_inputVisualRect - input[1] * self.inputVisualRect_radius)
             rightJS = (rectX+0.75*self.width_inputVisualRect + input[2] * self.inputVisualRect_radius, rectY + 0.5*self.height_inputVisualRect - input[3] * self.inputVisualRect_radius)
             pygame.draw.circle(self.screen, self.color_inputVisual_joystick, leftJS, self.inputVisualRect_JSCircle)
@@ -279,68 +279,82 @@ class Display:
             pygame.draw.circle(self.screen, self.activeColor, (indicatorX, indicatorY), 5)
 
         #Render list of blimps
-        for i in range(0,len(blimps)):
-            if(blimps[i].auto == 1):
+        for i in range(0,len(blimpIDs)):
+            blimpID = blimpIDs[i]
+            blimp = self.blimpHandler.swampBlimps[blimpID]
+            if blimp.auto == 1:
                 blimpColor = self.color_blimpState_autonomous
             else:
                 blimpColor = self.color_blimpState_manual
-            blimpSurface = self.getTextSurface(blimps[i].name, int(40 - len(blimps[i].name)),blimpColor)
+            blimpSurface = self.getTextSurface(blimp.name, int(40 - len(blimp.name)),blimpColor)
             blimpSurface = blimpSurface.convert_alpha()
             #Render blimp heartbeats
-            blimp = blimps[i]
             heartbeatWidth = blimpSurface.get_width()*blimp.lastHeartbeatDiff/blimp.heartbeatDisconnectDelay
             heartbeatRect = Rect(0,0,heartbeatWidth,blimpSurface.get_height())
             blimpSurface.fill(Color(255,255,255,50),heartbeatRect,special_flags=BLEND_RGBA_ADD)
             blimpTextX = self.align_blimps_left
             blimpTextY = self.anchor_y_blimpText + i*self.spacing_y_blimpText
-            #Render blimp name
+            # Render blimp name
             self.screen.blit(blimpSurface,(blimpTextX,blimpTextY))
-            #Render blimp state
+            # Render blimp state
             self.screen.blit(self.stateSurfaceMap[blimp.receivedState],(self.anchor_x_blimpState,blimpTextY))
-            #Render blimp targetGoalColor
-            if(blimp.targetGoal == "Y"):
+            # Render blimp targetGoalColor
+            targetGoalColor = self.color_plot_screenbackground # Assume background as default color
+            if blimp.targetGoal == "Y":
                 targetGoalColor = self.color_goal_yellow
-            elif(blimp.targetGoal == "O"):
+            elif blimp.targetGoal == "O":
                 targetGoalColor = self.color_goal_orange
-            pygame.draw.rect(self.screen,targetGoalColor,Rect(self.anchor_x_targetGoal+35,blimpTextY,25,25))
-            buttonLabel = "TG" + str(blimp.ID) #TG = TargetGoal
-            if(not self.buttonLabelExists(buttonLabel)):
-                newButton = ((self.anchor_x_targetGoal+35,blimpTextY),(25,25),buttonLabel)
+            pygame.draw.rect(self.screen, targetGoalColor, Rect(self.anchor_x_targetGoal+35,blimpTextY,25,25))
+            buttonLabel = "TG" + str(blimp.ID) # TG = TargetGoal
+            if not self.buttonLabelExists(buttonLabel):
+                newButton = ((self.anchor_x_targetGoal+35, blimpTextY), (25, 25), buttonLabel)
                 self.buttons.append(newButton)
-            #Render blimp targetEnemyColor
-            if(blimp.targetEnemy == "R"):
+            # Render blimp targetEnemyColor
+            targetEnemyColor = self.color_plot_screenbackground # Assume background color as default
+            if blimp.targetEnemy == "R":
                 targetEnemyColor = self.color_enemy_red
-            elif(blimp.targetEnemy == "G"):
+            elif blimp.targetEnemy == "G":
                 targetEnemyColor = self.color_enemy_green
-            elif(blimp.targetEnemy == "B"):
+            elif blimp.targetEnemy == "B":
                 targetEnemyColor = self.color_enemy_blue
             pygame.draw.rect(self.screen,targetEnemyColor,Rect(self.anchor_x_targetEnemy+45,blimpTextY,25,25))
-            buttonLabel = "TE" + str(blimp.ID) #TE = TargetEnemy
-            if(not self.buttonLabelExists(buttonLabel)):
-                newButton = ((self.anchor_x_targetEnemy+45,blimpTextY),(25,25),buttonLabel)
+            buttonLabel = "TE" + str(blimp.ID) # TE = TargetEnemy
+            if not self.buttonLabelExists(buttonLabel):
+                newButton = ((self.anchor_x_targetEnemy+45, blimpTextY), (25, 25), buttonLabel)
                 self.buttons.append(newButton)
 
-        #Render mapping line if mouse is to the right of inputs
-        newLineColor = Color(255,100,255)
-        lineColor = Color(255,255,255)
+        # Render mapping line if mouse is to the right of inputs
+        newLineColor = Color(255, 100, 255)
+        lineColor = Color(255, 255, 255)
         lineThickness = 3
         pos = pygame.mouse.get_pos()
-        if(self.drawing and pos[0]>self.align_input_right):
+        if self.drawing and pos[0] > self.align_input_right:
             inputSurfaceSize = inputs[self.drawingIndex].getNameSurface().get_size()
             inputPos = (self.align_input_right,int(self.anchor_y_inputText + self.drawingIndex*self.spacing_y_inputText+inputSurfaceSize[1]/2))
             pygame.draw.line(self.screen,newLineColor,inputPos,pos,lineThickness)
 
-        #Render mapping lines
-        for mapping in self.blimpHandler.blimpMapper.getMappings():
-            inputIndex = mapping[0]
-            blimpIndex = mapping[1]
+        # Render mapping lines
+        blimpIndexMap = {}
+        for i in range(0,len(blimpIDs)):
+            blimpID = blimpIDs[i]
+            blimpIndexMap[blimpID] = i
+        inputIndexMap = {}
+        for i in range(0,len(inputs)):
+            inputName = inputs[i].name
+            inputIndexMap[inputName] = i
+        inputToBlimpMap = self.blimpHandler.blimpMapper.inputToBlimpMap
+        for inputName in inputToBlimpMap.keys():
+            blimpID = inputToBlimpMap[inputName]
+            blimp = self.blimpHandler.swampBlimps[blimpID]
+            inputIndex = inputIndexMap[inputName]
+            blimpIndex = blimpIndexMap[blimpID]
             try:
                 inputSurfaceSize = inputs[inputIndex].getNameSurface().get_size()
-                blimpSurfaceSize = blimps[blimpIndex].getNameSurface().get_size()
+                blimpSurfaceSize = blimp.getNameSurface().get_size()
                 inputPos = (self.align_input_right,int(self.anchor_y_inputText + inputIndex*self.spacing_y_inputText+inputSurfaceSize[1]/2))
                 blimpPos = (self.align_blimps_left,int(self.anchor_y_blimpText + blimpIndex*self.spacing_y_blimpText+blimpSurfaceSize[1]/2))
-                pygame.draw.line(self.screen,lineColor,inputPos,blimpPos,lineThickness)
-            except(IndexError):
+                pygame.draw.line(self.screen, lineColor, inputPos, blimpPos, lineThickness)
+            except IndexError:
                 print("Input Disagreement")
 
     def drawActiveController(self):

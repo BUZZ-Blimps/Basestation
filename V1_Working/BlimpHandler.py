@@ -36,6 +36,9 @@ class BlimpHandler:
                              "192.168.0.103": 3,
                              "192.168.0.104": 4,
                              "192.168.0.105": 5,
+                             "192.168.0.106": 6,
+                             "192.168.0.107": 7,
+                             "192,168.0.100": 8,
 
                              "192.168.0.80": 10,
                              "192.168.0.20": 11,
@@ -50,6 +53,9 @@ class BlimpHandler:
                                3: "Apple",
                                4: "Milk",
                                5: "Pasta",
+                               6: "Duck",
+                               7: "Eggs",
+                               8: "Silly ahh",
 
                                10: "Big Cup of Eggs",
                                11: "Leg in a Cup",
@@ -104,6 +110,9 @@ class BlimpHandler:
 
         self.globalTargets = False
 
+        self.pingDelay = 1  # second
+        self.lastPing = 0
+
     def close(self):
         print("Closing BlimpHandler")
         self.comms.close()
@@ -141,6 +150,10 @@ class BlimpHandler:
 
     #Loop ==================================================================================
     def update(self):
+        currentTime = time.time()
+        if currentTime - self.lastPing > self.pingDelay:
+            self.lastPing = currentTime
+            self.comms.send(69,"L","MAO")
         self.updateBaroHeight()
         self.checkJoystickCount()
         self.updateInputs()

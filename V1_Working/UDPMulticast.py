@@ -21,8 +21,8 @@ class UDPHelper:
 
         self.inputMessages = []
         self.looping = False
-        self.verboseOutputReceivedMessages = False
-        self.verboseOutputSentMessages = False
+        self.verboseOutputReceivedMessages = True
+        self.verboseOutputSentMessages = True
 
     def open(self):
         self.thread = Thread(target=self.loopListen)

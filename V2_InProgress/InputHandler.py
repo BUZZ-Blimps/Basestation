@@ -57,13 +57,13 @@ class InputHandler:
         for i in range(0,len(self.inputs)):
             self.inputIndexMap[self.inputs[i].name] = i
 
-    def getInputIndex(self, inputName, recursiveLevel=0):
-        if recursiveLevel == 2:
-            return -1
+    def getInputByName(self, inputName):
         if inputName in self.inputIndexMap:
             possibleIndex = self.inputIndexMap[inputName]
             possibleInput = self.inputs[possibleIndex]
             if inputName == possibleInput.name:
-                return possibleIndex
+                return possibleInput
         self.fixInputIndexMap()
-        return self.getInputIndex(inputName, recursiveLevel + 1)
+        correctIndex = self.inputIndexMap[inputName]
+        correctInput = self.inputs[correctIndex]
+        return correctInput

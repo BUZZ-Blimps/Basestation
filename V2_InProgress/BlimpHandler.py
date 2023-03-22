@@ -44,6 +44,8 @@ class BlimpHandler:
                                "192.168.0.104": "Milk",
                                "192.168.0.105": "Pasta",
 
+                               "192,168.0.100": "Silly Ahh",
+
                                "192.168.0.80": "Big Cup of Eggs",
                                "192.168.0.20": "Leg in a Cup",
                                "192.168.0.89": "I'm in a Cup",
@@ -52,6 +54,31 @@ class BlimpHandler:
                                "192.168.0.14": "Stealthy Steve",
 
                                "192.168.0.38": "Barometer"}
+
+        #Map of established connections (i.e. EC)
+        self.blimpECMap = {"192.168.0.101": False,
+                            "192.168.0.102": False,
+                            "192.168.0.103": False,
+                            "192.168.0.104": False,
+                            "192.168.0.105": False,
+
+                            "192.168.0.80": False,
+                            "192.168.0.20": False,
+                            "192.168.0.89": False,
+                            "192.168.0.62": False,
+                            "192.168.0.86": False,
+                            "192.168.0.14": False,
+
+                            "192.168.0.38": False}
+
+        #Hard-coded list of all blimps
+        self.swampBlimps = {}
+
+        for key in self.blimpIPNameMap:
+            newBlimp = Blimp(key, self.blimpIPNameMap[key])
+            self.swampBlimps[key] = newBlimp
+
+        self.numNewBlimps = 0
 
         # Initialize Input Handler
         self.inputHandler = InputHandler()
@@ -70,6 +97,9 @@ class BlimpHandler:
                                   6: "scoringStart",
                                   7: "shooting",
                                   8: "scored"}
+
+        self.lastBlimpAdded = 0
+        self.blimpAddDelay = 5
 
         # Set Base Height
         self.baseHeight = 0
@@ -107,7 +137,7 @@ class BlimpHandler:
         # Initialize Global Targets
         self.globalTargets = False
 
-        self.addFakeBlimp(1000,"lmao")
+        #self.addFakeBlimp(1000,"Fake Blimp 1000")
 
     # ====================== Close Blimp Handler ====================== #
     # Description #
@@ -172,19 +202,29 @@ class BlimpHandler:
     # Description #
     # Finds disconnected blimps and removes them from the Blimp List
     def checkForDeadBlimps(self):
-        # If Blimps are not connected, remove them from the list
-        blimpIndex = 0
-        while blimpIndex < len(self.blimps):
-            blimp = self.blimps[blimpIndex]
+        # Iterate through blimps
+        for ID in self.swampBlimps.keys():
+            blimp = self.swampBlimps[ID]
+            if not blimp.connected:
+                continue
             # Calculate time since blimp's last heartbeat
             blimp.lastHeartbeatDiff = time.time() - blimp.lastHeartbeatDetected
             if blimp.lastHeartbeatDiff > blimp.heartbeatDisconnectDelay:
                 # Blimp heartbeat not received for too long; Remove it
-                print(blimp.name, "heartbeat not received; Removing...")
-                self.blimps.pop(blimpIndex)
-                self.display.removeBlimp(blimp.ID)
-            else:
-                blimpIndex += 1
+                print(blimp.name, "heartbeat not received; Disconnecting...")
+                self.removeBlimp(blimp.ID)
+                blimp.connected = False
+                if ID in self.blimpECMap:
+                    self.blimpECMap[ID] = False
+
+
+    #========================== Remove Blimp ========================== #
+    # Description #
+    # If ID is an identified blimp, disconnects the blimp
+    def removeBlimp(self, ID):
+        # Check that valid ID is passed in
+        if ID in self.blimpECMap:
+            self.blimpECMap[ID] = False
 
     # ====================== Listen for Messages ====================== #
     # Description #
@@ -201,9 +241,12 @@ class BlimpHandler:
         # readStrings = []
         while(len(readStrings)>0):
             self.numMessages += 1
+            for readString in readStrings:
+                pass
+                #print(readString)
             message = readStrings[0]
             readStrings.pop(0)
-            self.checkForNewBlimps(message)
+            #self.checkForNewBlimps(message)
             self.useMessage(message) # includes heartbeat
 
     # ====================== Send Data to Blimps ====================== #
@@ -254,20 +297,20 @@ class BlimpHandler:
                 # Send Blimp ID and a message about base height, target goal, and target enemy (UDP)
                 message = str(self.baseHeight) + ";" + blimp.targetGoal + ";" + blimp.targetEnemy
                 self.comms.send(blimpID, "A", message)
-        # If the time since previous input is LESS than the time input delay
-        else:
-            # Set a copy of Input Data to Blimp Data
-            blimpData = inputData.copy()
-            # Add Grabbing and Shooting to Blimp Data
-            blimpData.append(blimp.grabbing)
-            blimpData.append(blimp.shooting)
-            message = ""
-            # Iterate through all Blimp Data to add to the message
-            for data in blimpData:
-                message += str(data) + ","
-            # Send Blimp ID and a message about base height, target goal, and target enemy (UDP)
-            message += ";" + str(self.baseHeight) + ";" + blimp.targetGoal + ";" + blimp.targetEnemy
-            self.comms.send(blimpID, "M", message)
+            # If the time since previous input is LESS than the time input delay
+            else:
+                # Set a copy of Input Data to Blimp Data
+                blimpData = inputData.copy()
+                # Add Grabbing and Shooting to Blimp Data
+                blimpData.append(blimp.grabbing)
+                blimpData.append(blimp.shooting)
+                message = ""
+                # Iterate through all Blimp Data to add to the message
+                for data in blimpData:
+                    message += str(data) + ","
+                # Send Blimp ID and a message about base height, target goal, and target enemy (UDP)
+                message += ";" + str(self.baseHeight) + ";" + blimp.targetGoal + ";" + blimp.targetEnemy
+                self.comms.send(blimpID, "M", message)
 
     # ===================== Blimp Centered Actions ==================== #
     # Description #
@@ -306,7 +349,9 @@ class BlimpHandler:
     def nonBlimpCenteredActions(self, input):
         # Autonomous Panic
         if input.grabAction("panicAuto"):
-            for blimp in self.blimps:
+            # Iterate through blimps
+            for ID in self.swampBlimps.keys():
+                blimp = self.swampBlimps[ID]
                 blimp.auto = 1
             print("PANIC AUTO")
             input.notify(1)
@@ -381,6 +426,7 @@ class BlimpHandler:
             self.baseHeight = None
             self.baroType = None
 
+    """ # Deprecated?
     # ========================== Input Exists ========================= #
     # Description #
     # Returns true and index or false and zero for Input Name
@@ -389,7 +435,9 @@ class BlimpHandler:
             if (inputName == self.inputs[i].name):
                 return (True, i)
         return (False, 0)
+    """
 
+    """ # Deprecated?
     # ======================= Blimp Name Exists ======================= #
     # Description #
     # Returns true and index or false and 0 for Blimp Name
@@ -398,7 +446,9 @@ class BlimpHandler:
             if (blimpName == self.blimps[i].name):
                 return (True, i)
         return (False, 0)
+    """
 
+    """ # Deprecated?
     # ======================== Blimp ID Exists ======================== #
     # Description #
     # Returns true or false for Blimp ID
@@ -407,7 +457,9 @@ class BlimpHandler:
             if (blimpID == blimp.ID):
                 return True
         return False
+    """
 
+    """ # Deprecated?
     # =================== Check if New Blimps Exist =================== #
     # Description #
     # Check for New Blimps and Create New Blimp Objects
@@ -424,39 +476,68 @@ class BlimpHandler:
                 # Add new blimp!
 
                 # Check if IP matches known blimp
-                newID = self.blimpIPIDMap.get(msgAddress)
-                # If new ID is not nothing
-                if (newID is not None):
-                    print("Recognized Blimp",newID)
-                # If new ID is something
-                else:
-                    # IP doesn't match, assign new ID
-                    newID = self.blimpNewID
-                    self.blimpNewID += 1
-                    print("Unrecognized Blimp",newID)
+                #Assumes msgAddress is full IP Address
 
-                # Assign Blimp ID and Heartbeat to New Blimp
-                if(newID != -1):
-                    self.comms.send("N","N",str(newID))
-                    newBlimp = Blimp(newID, self.getBlimpName(newID))
-                    newBlimp.lastHeartbeatDetected = time.time()
-                    self.blimps.append(newBlimp)
-        # If Time since Last Blimp Added is Less than Blimp Add Delay
-        else:
-            comma = msgContent.find(",")
-            colon = msgContent.find(":")
-            if (comma == -1 or colon == -1):
-                return
-            checkID = msgContent[comma+1:colon]
-            # If ID is an Integer
-            if (self.isInt(checkID)):
-                checkID = int(checkID)
-                # If new ID found, Assign Blimp ID and Heartbeat to New Blimp
-                if not self.blimpIDExists(checkID):
-                    newBlimp = Blimp(checkID,self.getBlimpName(checkID))
-                    newBlimp.lastHeartbeatDetected = time.time()
-                    self.blimps.append(newBlimp)
-                    print("Blimp heard with ID:",checkID)
+                #newID = self.blimpIPIDMap.get(msgAddress)
+
+                #If new IP exists in defined blimps
+                if msgAddress in self.blimpECMap:
+                    print('Recognized Blimp', msgAddress)
+
+                    #This may be messed up now
+                    self.comms.send('N','N', str(msgAddress))
+
+                    #Update heartbeat of blimp in blimps list if already added
+                    if(self.blimpECMap[msgAddress]):
+                        for blimp in self.blimps:
+                            if blimp.ID == msgAddress:
+                                blimp.lastHeartbeatDetected = time.time()
+                                break
+
+                    else:
+                        self.swampBlimps[msgAddress].lastHeartbeatDetected = time.time()
+
+                        #Using function addBlimp for secure appending of blimp
+                        self.addBlimp(msgAddress)
+                else:
+                    print('Unrecognized Blimp')
+            else:
+                comma = msgContent.find(",")
+                colon = msgContent.find(":")
+                if (comma == -1 or colon == -1):
+                    return
+                checkID = msgContent[comma + 1:colon]
+                # If ID is an Integer
+                if (self.isInt(checkID)):
+                    checkID = int(checkID)
+                    self.addBlimp(checkID)
+    """
+
+    """ # Not needed?
+    #========================== Add Blimp ========================== #
+    # Description #
+    # Verifies if IP is known, and if the IP has been added to connected blimps, and appends to connected blimps list
+    def addBlimp(self, newIP):
+        
+        #Check that valid IP is passed in, otherwise return
+        if newIP not in self.blimpECMap:
+            return
+
+        if not (self.blimpECMap[newIP]):
+            #Establish connection
+            self.blimpECMap[newIP] = True
+
+            #Ensure blimp has not been added to list of connected blimps
+            blimpInList = False
+            for blimp in self.blimps:
+                if (blimp.ID == newIP):
+                    blimpInList = True
+
+                #If the blimp has not been added, then add to the list of connected blimps
+                #IP has already been verified to be valid, so should exist in swampBlimps
+            if not blimpInList:
+                self.blimps.append(self.swampBlimps[newIP])
+    """
 
     # ========================== Use Message ========================== #
     # Description #
@@ -468,69 +549,75 @@ class BlimpHandler:
         comma = msgContent.find(",")
         colon = msgContent.find(":")
         ID = msgContent[comma+1:colon]
-        # If ID is an Integer
-        if (self.isInt(ID)):
-            # Get Current Time and ID as an Integer
-            currentTime = time.time()
-            ID = int(ID)
-            # Find the Blimp using the ID
-            blimp = self.findBlimp(ID)
-            # Set the Last Heartbeat of the Blimp to the Current Time
-            blimp.lastHeartbeatDetected = currentTime
-            # Get Flag from the Message
-            secondColon = msgContent.find(":", colon+1)
-            flag = msgContent[colon+1:secondColon]
-            # If Flag is P
-            if (flag == "P"):
-                equal = msgContent.find("=", secondColon+1)
-                numFeedbackData = int(msgContent[secondColon+1:equal])
-                currentDataLength = len(blimp.data)
-                for i in range(currentDataLength, numFeedbackData):
-                    blimp.data.append(0.0)
-                lastComma = equal
-                for i in range(0, numFeedbackData):
-                    nextComma = msgContent.find(",", lastComma+1)
-                    blimp.data[i] = float(msgContent[lastComma+1:nextComma])
-                    lastComma = nextComma
-            # If Flag is S
-            if (flag == "S"): # State
-                # Get the Received State of the Blimp
-                blimp.receivedState = int(msgContent[secondColon+1:])
-                # print("Received State:",blimp.receivedState)
-            # If Flag is BB
-            if (flag == "BB"): # BarometerBaseline
-                baroMsg = msgContent[secondColon+1:]
-                if (self.isFloat(baroMsg)):
-                    self.baroUDPLastReceivedTime = currentTime
-                    self.baroUDPLastReceivedValue = float(baroMsg)
-            # If Flag is T
-            if (flag == "T"): # Telemetry
-                pass
-                """
-                msg = msgContent[secondColon+1:]
-                msgEqual = msg.find("=")
-                varName = msg[0:msgEqual]
-                varValue = msg[msgEqual+1:]
-                if(self.isFloat(varValue)):
-                    varValue = float(varValue)
-                    key = str(blimp.ID) + ":" + varName
-                    if(self.plotData.get(key) == None):
-                        #New variable
-                        self.plotData[key] = [[],varValue,varValue] #[Data points, min, max]
+        # Assume ID is "correct", but ID could come from 1 of three types of blimps
+        # 1: Identified blimp that is connected; 2: Identified blimp that is not connected; 3: Unidentified blimp
 
-                    varPlotData = self.plotData.get(key)
-                    currentData = (time.time(), varValue)
-                    varPlotData[0].append(currentData)
-                    varPlotData[1] = min(varPlotData[1],varValue)
-                    varPlotData[2] = max(varPlotData[2],varValue)
-                    #print(len(varPlotData[0]))
-                """
+        # Check if blimp is identified
+        identified = ID in self.swampBlimps
+        if not identified:
+            # Not previously identified... identify it!
+            self.numNewBlimps += 1
+            blimpName = "New Blimp " + str(self.numNewBlimps)
+            newBlimp = Blimp(ID, blimpName)
+            self.swampBlimps[ID] = newBlimp
+            print("Identified new blimp. Assigned name:", blimpName)
 
-            for blimp in self.blimps:
-                # Find Blimp with blimpID
-                if (blimp.ID == ID):
-                    # Set the Last Heartbeat Detected to the time
-                    blimp.lastHeartbeatDetected = time.time()
+        # Now assume blimp is identified
+        blimp = self.swampBlimps[ID]
+        # Get current time
+        currentTime = time.time()
+        # Update last heartbeat and connected
+        blimp.lastHeartbeatDetected = currentTime
+        blimp.connected = True
+        # Get Flag from the Message
+        secondColon = msgContent.find(":", colon+1)
+        flag = msgContent[colon+1:secondColon]
+
+        # If Flag is P
+        if flag == "P":
+            equal = msgContent.find("=", secondColon+1)
+            numFeedbackData = int(msgContent[secondColon+1:equal])
+            currentDataLength = len(blimp.data)
+            for i in range(currentDataLength, numFeedbackData):
+                blimp.data.append(0.0)
+            lastComma = equal
+            for i in range(0, numFeedbackData):
+                nextComma = msgContent.find(",", lastComma+1)
+                blimp.data[i] = float(msgContent[lastComma+1:nextComma])
+                lastComma = nextComma
+        # If Flag is S
+        if flag == "S": # State
+            # Get the Received State of the Blimp
+            blimp.receivedState = int(msgContent[secondColon+1:])
+            # print("Received State:",blimp.receivedState)
+        # If Flag is BB
+        if flag == "BB": # BarometerBaseline
+            baroMsg = msgContent[secondColon+1:]
+            if (self.isFloat(baroMsg)):
+                self.baroUDPLastReceivedTime = currentTime
+                self.baroUDPLastReceivedValue = float(baroMsg)
+        # If Flag is T
+        if flag == "T": # Telemetry
+            pass
+            """
+            msg = msgContent[secondColon+1:]
+            msgEqual = msg.find("=")
+            varName = msg[0:msgEqual]
+            varValue = msg[msgEqual+1:]
+            if(self.isFloat(varValue)):
+                varValue = float(varValue)
+                key = str(blimp.ID) + ":" + varName
+                if(self.plotData.get(key) == None):
+                    #New variable
+                    self.plotData[key] = [[],varValue,varValue] #[Data points, min, max]
+
+                varPlotData = self.plotData.get(key)
+                currentData = (time.time(), varValue)
+                varPlotData[0].append(currentData)
+                varPlotData[1] = min(varPlotData[1],varValue)
+                varPlotData[2] = max(varPlotData[2],varValue)
+                #print(len(varPlotData[0]))
+            """
 
     # ============================ Push MPB =========================== #
     # Description #
@@ -552,65 +639,68 @@ class BlimpHandler:
     # Change Blimp Target Goal and for Alternate Blimps as well
     # TG = TargetGoal
     def pushTGButton(self, blimpID):
-        targetGoal = None
-        # Go through All Blimps
-        for blimp in self.blimps:
-            if (blimp.ID == blimpID):
-                # If Target Goal is Orange, make Yellow
-                if (blimp.targetGoal == "O"):
-                    blimp.targetGoal = "Y"
-                # If Target Goal is Yellow, make Orange
-                elif (blimp.targetGoal == "Y"):
-                    blimp.targetGoal = "O"
-                # Update Blimp Target Goal
-                targetGoal = blimp.targetGoal
-        # Update Alternate Blimps to the Target Goal as well
-        if (self.globalTargets and targetGoal is not None):
-            for altBLimp in self.blimps:
-                altBLimp.targetGoal = targetGoal
+        # Get blimp from ID
+        blimp = self.swampBlimps[blimpID]
+        oldTargetGoal = blimp.targetGoal
+        # Determine new goal based on old goal
+        newTargetGoal = None
+        if oldTargetGoal == "O":
+            newTargetGoal = "Y"
+        elif oldTargetGoal == "Y":
+            newTargetGoal = "O"
+        # Update goals for either just this blimp OR all blimps
+        if not self.globalTargets:
+            blimp.targetGoal = newTargetGoal
+        else:
+            for ID in self.swampBlimps.keys():
+                currentBlimp = self.swampBlimps[ID]
+                currentBlimp.targetGoal = newTargetGoal
+
 
     # ==================== Push Target Enemy Button =================== #
     # Description #
     # Change Blimp Target Enemy and for Alternate Blimps as well
     # TE = TargetEnemy
-    def pushTEButton(self, blimpID):
-        targetEnemy = None
+    def pushTEButton(self, ID):
+        # Get blimp by ID
+        blimp = self.swampBlimps[ID]
+        oldTargetEnemy = blimp.targetEnemy
+        # Determine new target enemy based on old target enemy
+        newTargetEnemy = None
+        if oldTargetEnemy == "R":
+            newTargetEnemy = "B"
+        elif oldTargetEnemy == "B":
+            newTargetEnemy = "G"
+        elif oldTargetEnemy == "G":
+            newTargetEnemy = "R"
+        # Update target enemy either just for this blimp or all blimps
+        if not self.globalTargets:
+            blimp.targetEnemy = newTargetEnemy
+        else:
+            for currentID in self.swampBlimps.keys():
+                currentBlimp = self.swampBlimps[currentID]
+                currentBlimp.targetEnemy = newTargetEnemy
+
+    """ # Deprecated?
+    # Autonomous Toggle Function
+    def toggleAuto(self, blimpIDs):
+        # If BlimpIDs is not a list
+        if (type(blimpIDs) != list):
+            blimpIDs = (blimpIDs)
         # Go through All Blimps
-        for blimp in self.blimps:
-            if (blimp.ID == blimpID):
-                # If Target Goal is Red, make Blue
-                if(blimp.targetEnemy == "R"):
-                    blimp.targetEnemy = "B"
-                # If Target Goal is Blue, make Green
-                elif(blimp.targetEnemy == "B"):
-                    blimp.targetEnemy = "G"
-                # If Target Goal is Green, make Red
-                elif(blimp.targetEnemy == "G"):
-                    blimp.targetEnemy = "R"
-                # Update Blimp Target Enemy
-                targetEnemy = blimp.targetEnemy
-        # Update Alternate Blimps to the Target Enemy as well
-        if (self.globalTargets and targetEnemy is not None):
-            for altBLimp in self.blimps:
-                altBLimp.targetEnemy = targetEnemy
+        for blimpID in blimpIDs:
+            blimp = self.findBlimp(blimpID)
+            # If Autonomous is False, Change to True
+            if (blimp.auto == 0):
+                self.parameterMessages.append((blimpID, self.pCodes["autoOn"]))
+                blimp.auto = 1
+            # If Autonomous is True, Change to False
+            else:
+                self.parameterMessages.append((blimpID, self.pCodes["autoOff"]))
+                blimp.auto = 0
+    """
 
-        # Autonomous Toggle Function
-        def toggleAuto(self, blimpIDs):
-            # If BlimpIDs is not a list
-            if (type(blimpIDs) != list):
-                blimpIDs = (blimpIDs)
-            # Go through All Blimps
-            for blimpID in blimpIDs:
-                blimp = self.findBlimp(blimpID)
-                # If Autonomous is False, Change to True
-                if (blimp.auto == 0):
-                    self.parameterMessages.append((blimpID, self.pCodes["autoOn"]))
-                    blimp.auto = 1
-                # If Autonomous is True, Change to False
-                else:
-                    self.parameterMessages.append((blimpID, self.pCodes["autoOff"]))
-                    blimp.auto = 0
-
+    """ # Deprecated?
     # ======================== Update Grabber ========================= #
     # Description #
     # Updates Blimp IDs as a list
@@ -619,7 +709,9 @@ class BlimpHandler:
             blimpIDs = (blimpIDs)
         for blimpID in blimpIDs:
             self.parameterMessages.append((blimpID,self.pCodes["toggleABG"]))
+    """
 
+    """ # Deprecated?
     # ========================== Find Blimp =========================== #
     # Description #
     # Returns Blimp Object
@@ -627,6 +719,7 @@ class BlimpHandler:
         for blimp in self.blimps:
             if (blimp.ID == blimpID):
                 return blimp
+    """
 
     # ================== Check if Input is a Integer ================== #
     # Description #
@@ -648,6 +741,7 @@ class BlimpHandler:
         except ValueError:
             return False
 
+    """ # Deprecated?
     # ======================== Get Blimp Name ========================= #
     # Description #
     # Returns the name of a Blimp based on it's ID (No Name = Blimp ID)
@@ -656,15 +750,15 @@ class BlimpHandler:
         if (name is None):
             name = "Blimp " + str(ID)
         return name
+    """
 
     # ======================= Add a Fake Blimp ======================== #
     # Description #
     # Creates and Returns a Temporary Blimp with an ID and Name
     def addFakeBlimp(self, ID, name):
-        tempBlimp = Blimp(ID, name)
-        tempBlimp.lastHeartbeatDetected = 99999999999999
-        self.blimps.append(tempBlimp)
-        return tempBlimp
+        fakeBlimp = Blimp(ID, name)
+        fakeBlimp.lastHeartbeatDetected = 99999999999999
+        self.swampBlimps[ID] = fakeBlimp
 
     # ======================= Get Blimp Index ======================== #
     # Description #
@@ -687,3 +781,12 @@ class BlimpHandler:
         self.blimpIndexMap = {}
         for i in range(0,len(self.blimps)):
             self.blimpIndexMap[self.blimps[i].name] = i
+
+    def getOrderedConnectedBlimpIDs(self):
+        connectedIDs = []
+        for ID in self.swampBlimps.keys():
+            blimp = self.swampBlimps[ID]
+            if blimp.connected:
+                connectedIDs.append(ID)
+        connectedIDs.sort()
+        return connectedIDs

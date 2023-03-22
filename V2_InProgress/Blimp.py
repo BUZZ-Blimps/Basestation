@@ -7,7 +7,7 @@ class Blimp:
         self.auto = 0
         self.grabbing = 0
         self.shooting = 0
-        self.connnected = False
+        self.connected = False
         self.targetGoal = "Y" #"Y","O"
         self.targetEnemy = "B" #"R","G","B"
 
@@ -15,7 +15,7 @@ class Blimp:
         self.receivedStatus = "Null"
 
         self.receivedAuto_Surface = getTextSurface(self.receivedAuto,25)
-        self.receievedStatus_Surface = getTextSurface(self.receivedStatus,25)
+        self.receivedStatus_Surface = getTextSurface(self.receivedStatus,25)
 
         self.surfaces = {}
 

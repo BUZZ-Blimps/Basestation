@@ -6,8 +6,6 @@ class BlimpMapper:
 
         self.inputToBlimpMap = {}
         self.blimpToInputMap = {}
-        self.inputIndexMap = {}
-        self.blimpIndexMap = {}
 
         self.lastNumBlimps = 0
         self.lastNumInputs = 0
@@ -33,12 +31,13 @@ class BlimpMapper:
                     self.blimpToInputMap.pop(invalidBlimp)
         self.lastNumInputs = len(self.inputHandler.inputs)
         # Check for removed blimps
-        if len(self.blimpHandler.blimps) < self.lastNumBlimps:
+        blimpIDs = self.blimpHandler.getOrderedConnectedBlimpIDs()
+        if len(blimpIDs) < self.lastNumBlimps:
             # Uh oh, a blimp has been removed...
             # Make set of valid blimps
             validBlimps = set()
-            for blimp in self.blimpHandler.blimps:
-                validBlimps.add(blimp.name)
+            for ID in blimpIDs:
+                validBlimps.add(ID)
             # Iterate through mappings, remove invalid blimps
             possibleBlimps = list(self.blimpToInputMap.keys())
             for possibleBlimp in possibleBlimps:
@@ -46,72 +45,64 @@ class BlimpMapper:
                     # Remove mapping!
                     invalidInput = self.blimpToInputMap.pop(possibleBlimp)
                     self.inputToBlimpMap.pop(invalidInput)
-        self.lastNumBlimps = len(self.blimpHandler.blimps)
+        self.lastNumBlimps = len(blimpIDs)
 
-    def updateMapping(self, inputName, blimpName):
-        if inputName in self.inputToBlimpMap and blimpName in self.blimpToInputMap and self.inputToBlimpMap[inputName] == blimpName:
+    def updateMapping(self, inputName, blimpID):
+        if inputName in self.inputToBlimpMap and blimpID in self.blimpToInputMap and self.inputToBlimpMap[inputName] == blimpID:
             # Mapping exists... remove it!
             self.inputToBlimpMap.pop(inputName)
-            self.blimpToInputMap.pop(blimpName)
+            self.blimpToInputMap.pop(blimpID)
         else:
             # Mapping does not exist... create it!
+            # Remove existing mappings between input
             if inputName in self.inputToBlimpMap:
+                mappedBlimpID = self.inputToBlimpMap[inputName]
                 self.inputToBlimpMap.pop(inputName)
-            if blimpName in self.blimpToInputMap:
-                self.blimpToInputMap.pop(blimpName)
-            self.inputToBlimpMap[inputName] = blimpName
-            self.blimpToInputMap[blimpName] = inputName
-
-    def updateIndices(self):
-        self.inputIndexMap = {}
-        for i in range(0,len(self.inputHandler.inputs)):
-            self.inputIndexMap[self.inputHandler.inputs[i].name] = i
-        self.blimpIndexMap = {}
-        for i in range(0,len(self.blimpHandler.blimps)):
-            self.blimpIndexMap[self.blimpHandler.blimps[i].name] = i
+                self.blimpToInputMap.pop(mappedBlimpID)
+            if blimpID in self.blimpToInputMap:
+                mappedInputName = self.blimpToInputMap[blimpID]
+                self.blimpToInputMap.pop(blimpID)
+                self.inputToBlimpMap.pop(mappedInputName)
+            self.inputToBlimpMap[inputName] = blimpID
+            self.blimpToInputMap[blimpID] = inputName
 
     # Assumes valid mapping state (see checkBadMapping)
     def getMappedBlimp(self, inputName):
         if inputName in self.inputToBlimpMap:
-            blimpName = self.inputToBlimpMap[inputName]
-            blimpIndex = self.blimpHandler.getBlimpIndex(blimpName)
-            if blimpIndex != -1:
-                blimp = self.blimpHandler.blimps[blimpIndex]
-                return blimp
+            blimpID = self.inputToBlimpMap[inputName]
+            return self.blimpHandler.swampBlimps[blimpID]
         return None
 
     # Assumes valid mapping state (see checkBadMapping)
-    def getMappedInput(self, blimpName):
-        if blimpName in self.blimpToInputMap:
-            inputName = self.blimpToInputMap[blimpName]
-            inputIndex = self.inputHandler.getInputIndex(inputName)
-            if inputIndex != -1:
-                input = self.inputHandler.inputs[inputIndex]
-                return input
+    def getMappedInput(self, blimpID):
+        if blimpID in self.blimpToInputMap:
+            inputName = self.blimpToInputMap[blimpID]
+            return self.inputHandler.getInputByName(inputName)
         return None
 
     # Assumes valid mapping state (see checkBadMapping)
     def mapUp(self, inputName):
-        numBlimps = len(self.blimpHandler.blimps)
+        blimpIDs = self.blimpHandler.getOrderedConnectedBlimpIDs()
+        numBlimps = len(blimpIDs)
         # By default, start looking for new mappings from the end of the list, iterating upwards
         prevIndex = numBlimps
         # Check if there is an existing mapping to start from
         if inputName in self.inputToBlimpMap:
             # Mapping exists
-            blimpName = self.inputToBlimpMap[inputName]
-            self.updateMapping(inputName, blimpName)
-            prevIndex = self.blimpHandler.getBlimpIndex(blimpName)
+            blimpID = self.inputToBlimpMap[inputName]
+            self.updateMapping(inputName, blimpID)
+            prevIndex = blimpIDs.index(blimpID)
         validMappingFound = False
         # Iterate through blimps to find an unmapped blimp to map to
         while prevIndex > 0:
             nextIndex = prevIndex - 1
-            nextBlimpName = self.blimpHandler.blimps[nextIndex].name
-            if nextBlimpName in self.blimpToInputMap:
+            nextBlimpID = blimpIDs[nextIndex]
+            if nextBlimpID in self.blimpToInputMap:
                 # Mapping exists... move on
                 prevIndex = nextIndex
             else:
                 # Mapping doesn't exist... create it!
-                self.updateMapping(inputName, nextBlimpName)
+                self.updateMapping(inputName, nextBlimpID)
                 validMappingFound = True
                 break
         if not validMappingFound:
@@ -119,26 +110,27 @@ class BlimpMapper:
             pass
 
     def mapDown(self, inputName):
-        numBlimps = len(self.blimpHandler.blimps)
+        blimpIDs = self.blimpHandler.getOrderedConnectedBlimpIDs()
+        numBlimps = len(blimpIDs)
         # By default, start looking for new mappings from the beginning of the list, iterating downwards
         prevIndex = -1
         # Check if there is an existing mapping to start from
         if inputName in self.inputToBlimpMap:
             # Mapping exists
-            blimpName = self.inputToBlimpMap[inputName]
-            self.updateMapping(inputName, blimpName)
-            prevIndex = self.blimpHandler.getBlimpIndex(blimpName)
+            blimpID = self.inputToBlimpMap[inputName]
+            self.updateMapping(inputName, blimpID)
+            prevIndex = blimpIDs.index(blimpID)
         validMappingFound = False
         # Iterate through blimps to find an unmapped blimp to map to
         while prevIndex < numBlimps-1:
             nextIndex = prevIndex + 1
-            nextBlimpName = self.blimpHandler.blimps[nextIndex].name
-            if nextBlimpName in self.blimpToInputMap:
+            nextBlimpID = blimpIDs[nextIndex]
+            if nextBlimpID in self.blimpToInputMap:
                 # Mapping exists... move on
                 prevIndex = nextIndex
             else:
                 # Mapping doesn't exist... create it!
-                self.updateMapping(inputName, nextBlimpName)
+                self.updateMapping(inputName, nextBlimpID)
                 validMappingFound = True
                 break
         if not validMappingFound:
@@ -148,17 +140,3 @@ class BlimpMapper:
     def clearMappings(self):
         self.inputToBlimpMap.clear()
         self.blimpToInputMap.clear()
-
-    #Return type is list of (inputIndex, blimpIndex)
-    def getMappings(self):
-        inputNames = list(self.inputToBlimpMap.keys())
-        mappings = []
-        for inputName in inputNames:
-            inputIndex = self.inputHandler.getInputIndex(inputName)
-            if inputIndex != -1:
-                blimpName = self.inputToBlimpMap[inputName]
-                blimpIndex = self.blimpHandler.getBlimpIndex(blimpName)
-                if blimpIndex != -1:
-                    mapping = (inputIndex, blimpIndex)
-                    mappings.append(mapping)
-        return mappings
