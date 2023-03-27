@@ -7,6 +7,7 @@ sudo apt-get install python3-tk (to install tkinter, needed for easygui)
 import pygame
 from threading import Thread
 import time
+import subprocess
 
 from BlimpHandler import BlimpHandler
 from Display import Display
@@ -46,5 +47,16 @@ def asyncDisplayDraw(display):
         time.sleep(0.001)
         display.updateDraw()
 
+def check_wifi_ssid():
+    output = subprocess.check_output(["iwconfig", "2>/dev/null | grep 'ESSID:' | cut -d '\"' -f 2"], shell=True)
+    ssid = output.decode('utf-8').strip()
+    if( (ssid.find("COREBlimp") == -1) and (ssid.find("COREBlimp_5G_1") == -1) ):
+        print(ssid)
+        print("Invalid WiFi selected")
+        return False
+    else:
+        return True
+
 if __name__ == '__main__':
-    main()
+    if(check_wifi_ssid()):
+        main()
