@@ -25,7 +25,8 @@ def main():
     # Set up socket
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     print("Opened socket.")
-    s.bind(('127.0.0.1', 12345))
+    # s.bind(('127.0.0.1', 12345))
+    s.bind(('192.168.0.200', 12345))
     print("Binded socket.")
     
 
@@ -35,6 +36,7 @@ def main():
 
     while True:
         seg, addr = s.recvfrom(MAX_DGRAM)
+        # print("Received data")
         if struct.unpack("B", seg[0:1])[0] > 1:
             dat += seg[1:]
         else:
