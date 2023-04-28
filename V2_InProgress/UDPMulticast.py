@@ -17,12 +17,18 @@ class UDPHelper:
 
         self.mreq = struct.pack('4sL', socket.inet_aton(self.multicast_group), socket.INADDR_ANY)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, self.mreq)
+        self.sock.setblocking(False)
         print("Successfully connected to UDP Multicast")
 
         self.inputMessages = []
         self.looping = False
         self.verboseOutputReceivedMessages = False
         self.verboseOutputSentMessages = False
+
+        self.numMessagesSent = 0
+        self.lastCheckedNumMessagesSent = 0
+        self.numMessagesReceived = 0
+        self.lastCheckedNumMessagesReceived = 0
 
     def open(self):
         self.thread = Thread(target=self.loopListen)
@@ -33,7 +39,7 @@ class UDPHelper:
         print("Listening via UDP Multicast")
         self.looping = True
         while(self.looping):
-            time.sleep(0.01)
+            #time.sleep(0.001)
             self.listen()
 
     #Checks for message prefix == identifier
@@ -41,13 +47,17 @@ class UDPHelper:
         #print("waiting to receive message")
         try:
             (data, address) = self.sock.recvfrom(1024)
+            #print(data)
             #data = message content
             #address = (ip,port)
         except:
-            pass
+            #print("lmao")
+            return
         else:
             inString = data.decode(encoding='utf-8', errors='ignore')
+            self.numMessagesReceived += 1
             #print(inString)
+            #print("\"",inString,"\"",sep='')
             if (inString[0:2] == ":)"):
                 inString = inString[2:]
                 comma = inString.find(",")
@@ -58,7 +68,9 @@ class UDPHelper:
 
     # Message format: identifier+targetID+,+sourceID+:+flag+:+message
     def send(self, targetID, flag, message):
-        message = ":)" + str(targetID) + ",0:" + flag + ":" + str(message)
+        self.numMessagesSent += 1
+        message = ":)" + str(targetID) + ",0:" + flag + ":" + str(message) #+
+        # + ";;" + str(time.time())
         outBytes = message.encode(encoding='utf-8',errors='ignore')
         self.sock.sendto(outBytes, (self.multicast_group, self.multicast_port))
         if(self.verboseOutputSentMessages):

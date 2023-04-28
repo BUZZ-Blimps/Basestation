@@ -2,6 +2,7 @@ from Inputs.KeyboardInput import KeyboardInput
 from Inputs.ControllerInput import ControllerInput
 import pygame
 from pygame.locals import *
+import time
 
 
 class InputHandler:
@@ -11,6 +12,10 @@ class InputHandler:
         self.joystickCount = 0
         self.inputs = []
         self.inputIndexMap = {}
+
+        self.lastUpdateTime = time.time()
+        self.lastMaxDelay = 0
+        self.lastCheckMaxDelay = 0
 
         self.updateInputs()
 
@@ -47,6 +52,17 @@ class InputHandler:
         return pygame.joystick.get_count() != self.joystickCount
 
     def update(self):
+        currentTime = time.time()
+        currentDelay = currentTime - self.lastUpdateTime
+        self.lastUpdateTime = currentTime
+
+        self.lastMaxDelay = max(self.lastMaxDelay, currentDelay)
+
+        if currentTime - self.lastCheckMaxDelay > 1:
+            self.lastCheckMaxDelay = currentTime
+            print("Max Delay:", self.lastMaxDelay)
+            self.lastMaxDelay = 0
+
         if self.joystickCountMismatch():
             self.updateInputs()
         for input in self.inputs:

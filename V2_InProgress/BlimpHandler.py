@@ -44,7 +44,7 @@ class BlimpHandler:
                                "192.168.0.104": "Milk",
                                "192.168.0.105": "Pasta",
 
-                               "192,168.0.100": "Silly Ahh",
+                               "192.168.0.100": "Silly Ahh",
 
                                "192.168.0.80": "Big Cup of Eggs",
                                "192.168.0.20": "Leg in a Cup",
@@ -53,7 +53,7 @@ class BlimpHandler:
                                "192.168.0.86": "Pint of Eggs",
                                "192.168.0.14": "Stealthy Steve",
 
-                               "192.168.0.38": "Barometer"}
+                               "20": "Barometer"}
 
         #Map of established connections (i.e. EC)
         self.blimpECMap = {"192.168.0.101": False,
@@ -69,7 +69,7 @@ class BlimpHandler:
                             "192.168.0.86": False,
                             "192.168.0.14": False,
 
-                            "192.168.0.38": False}
+                            "20": False}
 
         #Hard-coded list of all blimps
         self.swampBlimps = {}
@@ -164,6 +164,19 @@ class BlimpHandler:
     # Loops to continuously check and update barometer height, dead blimps,
     # general blimp data, and wait time since last update
     def update(self):
+
+        currentTime = time.time()
+        # Check number of messages sent
+        if currentTime - self.comms.lastCheckedNumMessagesSent > 1:
+            self.comms.lastCheckedNumMessagesSent = currentTime
+            print("NumMessagesSent:", self.comms.numMessagesSent)
+            self.comms.numMessagesSent = 0
+        # Check number of messages received
+        if currentTime - self.comms.lastCheckedNumMessagesReceived > 1:
+            self.comms.lastCheckedNumMessagesReceived = currentTime
+            print("NumMessagesReceived:", self.comms.numMessagesReceived)
+            self.comms.numMessagesReceived = 0
+
         # Update Barometer Height
         self.updateBaroHeight()
         # Update Input Handler
@@ -231,10 +244,12 @@ class BlimpHandler:
     # Prints last checked number of messages, then gets current number of messages
     def listen(self):
         # Print Current Number of Messages
+        """
         if (time.time() - self.lastCheckedNumMessages > 1):
             self.lastCheckedNumMessages = time.time()
             print("NumMessages:",self.numMessages)
             self.numMessages = 0
+        """
 
         # Get Current Number of Messages
         readStrings = self.comms.getInputMessages()
@@ -560,7 +575,7 @@ class BlimpHandler:
             blimpName = "New Blimp " + str(self.numNewBlimps)
             newBlimp = Blimp(ID, blimpName)
             self.swampBlimps[ID] = newBlimp
-            print("Identified new blimp. Assigned name:", blimpName)
+            print("Identified new blimp (id:", ID,"). Assigned name:", blimpName)
 
         # Now assume blimp is identified
         blimp = self.swampBlimps[ID]
