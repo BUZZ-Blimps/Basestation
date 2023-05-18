@@ -25,23 +25,25 @@ def main():
     # Set up socket
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     print("Opened socket.")
-    #s.bind(('127.0.0.1', 12345))
     s.bind(('192.168.0.200', 12345))
-    print("Binded socket.")
+    print("Bound socket.")
     
 
     dat = b''
     #dump_buffer(s)
     
+  # image = np.asarray(bytearray(resp.read()), dtype="uint8")
+      
+    # use imdecode function
+    # image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
     while True:
         seg, addr = s.recvfrom(MAX_DGRAM)
-        # print("Received data")
         if struct.unpack("B", seg[0:1])[0] > 1:
             dat += seg[1:]
         else:
             dat += seg[1:]
-            img = cv2.imdecode(np.fromstring(dat, dtype=np.uint8), 1)
+            img = cv2.imdecode(np.asarray(bytearray(dat), dtype='uint8'), cv2.IMREAD_COLOR)
 
             if (img is not None):
                 cv2.imshow('Received Frame', img)

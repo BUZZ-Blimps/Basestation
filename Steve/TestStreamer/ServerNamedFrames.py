@@ -7,7 +7,7 @@ import socket
 import struct
 import time
 
-MAX_DGRAM = 2**14
+MAX_DGRAM = 2**16
 
 blimpIPNameMap = { "192.168.0.101": "Spicy Hot Dog",
                    "192.168.0.102": "Waffle",
@@ -47,7 +47,7 @@ def main():
     print("Opened socket.")
     #s.bind(('127.0.0.1', 12345))
     s.bind(('192.168.0.200', 12345))
-    print("Binded socket.")
+    print("Bound socket.")
     
 
     dat = b''
