@@ -1,0 +1,50 @@
+running egg_info
+writing ../../build/BasestationV3/BasestationV3.egg-info/PKG-INFO
+writing dependency_links to ../../build/BasestationV3/BasestationV3.egg-info/dependency_links.txt
+writing entry points to ../../build/BasestationV3/BasestationV3.egg-info/entry_points.txt
+writing requirements to ../../build/BasestationV3/BasestationV3.egg-info/requires.txt
+writing top-level names to ../../build/BasestationV3/BasestationV3.egg-info/top_level.txt
+reading manifest file '../../build/BasestationV3/BasestationV3.egg-info/SOURCES.txt'
+writing manifest file '../../build/BasestationV3/BasestationV3.egg-info/SOURCES.txt'
+running build
+running build_py
+copying BasestationV3/BlimpHandler.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+copying BasestationV3/Text.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+copying BasestationV3/SerialHelper.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+copying BasestationV3/SerialListener.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+copying BasestationV3/UDPMulticast.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+copying BasestationV3/Main.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+copying BasestationV3/InputHandler.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+copying BasestationV3/Blimp.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+copying BasestationV3/Display.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+copying BasestationV3/BlimpMapper.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+running install
+running install_lib
+copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/BlimpHandler.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/Text.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/SerialHelper.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/SerialListener.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/UDPMulticast.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/Main.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/InputHandler.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/Blimp.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/Display.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/BlimpMapper.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/BlimpHandler.py to BlimpHandler.cpython-38.pyc
+byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/Text.py to Text.cpython-38.pyc
+byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/SerialHelper.py to SerialHelper.cpython-38.pyc
+byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/SerialListener.py to SerialListener.cpython-38.pyc
+byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/UDPMulticast.py to UDPMulticast.cpython-38.pyc
+byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/Main.py to Main.cpython-38.pyc
+byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/InputHandler.py to InputHandler.cpython-38.pyc
+byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/Blimp.py to Blimp.cpython-38.pyc
+byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/Display.py to Display.cpython-38.pyc
+byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/BlimpMapper.py to BlimpMapper.cpython-38.pyc
+running install_data
+running install_egg_info
+removing '/home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3-0.0.0-py3.8.egg-info' (and everything under it)
+Copying ../../build/BasestationV3/BasestationV3.egg-info to /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3-0.0.0-py3.8.egg-info
+running install_scripts
+Installing HelloWorld script to /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/BasestationV3
+Installing Main script to /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/BasestationV3
+writing list of installed files to '/home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/install.log'

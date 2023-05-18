@@ -1,0 +1,21 @@
+[0.542s] Invoking command in '/home/coreblimp1/GitHub/Basestation/V3_ws/src/my_package': PYTHONPATH=/home/coreblimp1/GitHub/Basestation/V3_ws/build/my_package/prefix_override:/home/coreblimp1/GitHub/Basestation/V3_ws/install/my_package/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py egg_info --egg-base ../../build/my_package build --build-base /home/coreblimp1/GitHub/Basestation/V3_ws/build/my_package/build install --record /home/coreblimp1/GitHub/Basestation/V3_ws/build/my_package/install.log --install-scripts $base/lib/my_package --single-version-externally-managed
+[0.669s] running egg_info
+[0.669s] writing ../../build/my_package/my_package.egg-info/PKG-INFO
+[0.669s] writing dependency_links to ../../build/my_package/my_package.egg-info/dependency_links.txt
+[0.669s] writing entry points to ../../build/my_package/my_package.egg-info/entry_points.txt
+[0.669s] writing requirements to ../../build/my_package/my_package.egg-info/requires.txt
+[0.670s] writing top-level names to ../../build/my_package/my_package.egg-info/top_level.txt
+[0.692s] reading manifest file '../../build/my_package/my_package.egg-info/SOURCES.txt'
+[0.693s] writing manifest file '../../build/my_package/my_package.egg-info/SOURCES.txt'
+[0.693s] running build
+[0.693s] running build_py
+[0.693s] running install
+[0.693s] running install_lib
+[0.694s] running install_data
+[0.694s] running install_egg_info
+[0.696s] removing '/home/coreblimp1/GitHub/Basestation/V3_ws/install/my_package/lib/python3.8/site-packages/my_package-0.0.0-py3.8.egg-info' (and everything under it)
+[0.696s] Copying ../../build/my_package/my_package.egg-info to /home/coreblimp1/GitHub/Basestation/V3_ws/install/my_package/lib/python3.8/site-packages/my_package-0.0.0-py3.8.egg-info
+[0.696s] running install_scripts
+[0.708s] Installing my_node script to /home/coreblimp1/GitHub/Basestation/V3_ws/install/my_package/lib/my_package
+[0.708s] writing list of installed files to '/home/coreblimp1/GitHub/Basestation/V3_ws/build/my_package/install.log'
+[0.727s] Invoked command in '/home/coreblimp1/GitHub/Basestation/V3_ws/src/my_package' returned '0': PYTHONPATH=/home/coreblimp1/GitHub/Basestation/V3_ws/build/my_package/prefix_override:/home/coreblimp1/GitHub/Basestation/V3_ws/install/my_package/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py egg_info --egg-base ../../build/my_package build --build-base /home/coreblimp1/GitHub/Basestation/V3_ws/build/my_package/build install --record /home/coreblimp1/GitHub/Basestation/V3_ws/build/my_package/install.log --install-scripts $base/lib/my_package --single-version-externally-managed
