@@ -21,7 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
         	'HelloWorld = BasestationV3.HelloWorld:main',
-        	'Main = BasestationV3.Main:main',
+        	'Basestation = BasestationV3.Main:main',
         ],
     },
 )

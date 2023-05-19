@@ -1,0 +1,5 @@
+[console_scripts]
+Checker = TestingPkg.CheckNodesSubscribed:main
+listener = TestingPkg.BasicSubscriber:main
+talker = TestingPkg.BasicPublisher:main
+

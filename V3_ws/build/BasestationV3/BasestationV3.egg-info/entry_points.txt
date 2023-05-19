@@ -1,4 +1,4 @@
 [console_scripts]
+Basestation = BasestationV3.Main:main
 HelloWorld = BasestationV3.HelloWorld:main
-Main = BasestationV3.Main:main
 
