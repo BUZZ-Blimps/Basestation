@@ -14,21 +14,21 @@ class Blimp(Node):
         super().__init__(self.nodeName)
 
         # Create publisher for /blimpID
-        self.pub_blimpID = self.create_publisher(String, 'blimpID', 1) # Relative name, within namespace
+        self.pub_blimpID = self.create_publisher(String, 'blimpID', 1)  # Relative name, within namespace
 
         # Create subscriber for /autoPanic
-        self.sub_autoPanic = self.create_subscription(
+        self.sub_identify = self.create_subscription(
             Bool,
-            '/autoPanic',  # Absolute name
-            self.subCallback_autoPanic,
+            '/identify',  # Absolute name
+            self.subCallback_identify,
             1)
 
         # Create timer
         timer_period = 1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
-    def subCallback_autoPanic(self, msg):
-        self.get_logger().info('AUTO PANIC: %s' % str(msg.data))
+    def subCallback_identify(self, msg):
+        self.get_logger().info('Identify: %s' % str(msg.data))
 
     def timer_callback(self):
         # Publish /blimpID

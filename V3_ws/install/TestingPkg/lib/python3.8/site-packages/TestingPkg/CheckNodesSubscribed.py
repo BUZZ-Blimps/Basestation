@@ -12,6 +12,7 @@ class BlimpNodeHandler:
 
         self.blimpID = None
         self.lastReceived_blimpID = None
+        self.parentNode.get_logger().info("Created node for %s" % nodeName)
 
     def subCallback_blimpID(self, msg):
         if self.blimpID is None:
@@ -37,6 +38,12 @@ class CheckNodesSubscribed(Node):
             if nodeName not in self.recognizedNodes:
                 self.createBlimpNodeHandler(nodeName)
 
+        # Print out names of all connected nodes
+        connectedNodes = ""
+        for node in self.recognizedNodes:
+            connectedNodes += node + ", "
+        self.get_logger().info("Connected nodes: %s" % connectedNodes)
+
         # Check for nodes that timed out
         for blimpNodeHandler in self.blimpNodeHandlers:
             currentTime = self.get_clock().now()
@@ -48,6 +55,10 @@ class CheckNodesSubscribed(Node):
                     self.removeBlimpNodeHandler(blimpNodeHandler)
 
     def createBlimpNodeHandler(self, nodeName):
+        if nodeName == "_NODE_NAME_UNKNOWN_":
+            self.get_logger().info("FLAG: Node Name Unknown")
+            return
+
         self.recognizedNodes.append(nodeName)
 
         # Create new node handler

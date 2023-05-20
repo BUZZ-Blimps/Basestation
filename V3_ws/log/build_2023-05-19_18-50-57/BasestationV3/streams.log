@@ -1,0 +1,24 @@
+[0.776s] Invoking command in '/home/coreblimp1/GitHub/Basestation/V3_ws/src/BasestationV3': PYTHONPATH=/home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/prefix_override:/home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py egg_info --egg-base ../../build/BasestationV3 build --build-base /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build install --record /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/install.log --install-scripts $base/lib/BasestationV3 --single-version-externally-managed
+[0.926s] running egg_info
+[0.926s] writing ../../build/BasestationV3/BasestationV3.egg-info/PKG-INFO
+[0.926s] writing dependency_links to ../../build/BasestationV3/BasestationV3.egg-info/dependency_links.txt
+[0.926s] writing entry points to ../../build/BasestationV3/BasestationV3.egg-info/entry_points.txt
+[0.926s] writing requirements to ../../build/BasestationV3/BasestationV3.egg-info/requires.txt
+[0.926s] writing top-level names to ../../build/BasestationV3/BasestationV3.egg-info/top_level.txt
+[0.952s] reading manifest file '../../build/BasestationV3/BasestationV3.egg-info/SOURCES.txt'
+[0.953s] writing manifest file '../../build/BasestationV3/BasestationV3.egg-info/SOURCES.txt'
+[0.953s] running build
+[0.953s] running build_py
+[0.953s] copying BasestationV3/ROS2Helper.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3
+[0.954s] running install
+[0.954s] running install_lib
+[0.955s] copying /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build/lib/BasestationV3/ROS2Helper.py -> /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3
+[0.956s] byte-compiling /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/ROS2Helper.py to ROS2Helper.cpython-38.pyc
+[0.957s] running install_data
+[0.957s] running install_egg_info
+[0.959s] removing '/home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3-0.0.0-py3.8.egg-info' (and everything under it)
+[0.959s] Copying ../../build/BasestationV3/BasestationV3.egg-info to /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3-0.0.0-py3.8.egg-info
+[0.959s] running install_scripts
+[0.972s] Installing Basestation script to /home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/BasestationV3
+[0.972s] writing list of installed files to '/home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/install.log'
+[1.012s] Invoked command in '/home/coreblimp1/GitHub/Basestation/V3_ws/src/BasestationV3' returned '0': PYTHONPATH=/home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/prefix_override:/home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py egg_info --egg-base ../../build/BasestationV3 build --build-base /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/build install --record /home/coreblimp1/GitHub/Basestation/V3_ws/build/BasestationV3/install.log --install-scripts $base/lib/BasestationV3 --single-version-externally-managed

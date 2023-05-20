@@ -3,6 +3,7 @@ import sys
 import pygame
 import math
 import os
+import time
 from pygame.locals import *
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from .Text import getTextSurface
@@ -228,22 +229,22 @@ class Display:
         self.draw()
 
     def draw(self):
-        if(self.renderMode == "InputsBlimps"):
+        if self.renderMode == "InputsBlimps":
             self.draw_InputsBlimps()
-        elif(self.renderMode == "Plots"):
+        elif self.renderMode == "Plots":
             self.draw_Plots()
         pygame.display.update()
 
     def draw_InputsBlimps(self):
         self.drawMappings()
-        #self.drawActiveController()
+        # self.drawActiveController()
         self.drawMisc()
 
     def drawMappings(self):
         inputs = self.blimpHandler.inputHandler.inputs
         blimpIDs = self.blimpHandler.getOrderedConnectedBlimpIDs()
 
-        #backWidth = self.width_inputVisual + self.width_input + self.width_blimps + self.width_blimpState + self.width_blimpStatus
+        # backWidth = self.width_inputVisual + self.width_input + self.width_blimps + self.width_blimpState + self.width_blimpStatus
         backWidth = self.width_screen
         pygame.draw.rect(self.screen,Color(150,150,150),Rect(self.anchor_x_inputVisual,self.anchor_y_inputVisual,backWidth,self.height_screen)) #Draw background
         self.screen.blit(self.getTextSurface("Input:",50),(self.anchor_x_input,self.anchor_y_input))
@@ -251,7 +252,7 @@ class Display:
         self.screen.blit(self.getTextSurface("State",30),(self.anchor_x_blimpState,self.anchor_y_blimpState))
         self.screen.blit(self.getTextSurface("TargetGoal",20),(self.anchor_x_targetGoal,self.anchor_y_targetGoal))
         self.screen.blit(self.getTextSurface("TargetEnemy",20),(self.anchor_x_targetEnemy,self.anchor_y_targetEnemy))
-        #Iterate through inputs
+        # Iterate through inputs
         for i in range(0,len(inputs)):
             #Render inputs
             inputSurface = inputs[i].getNameSurface()
@@ -289,7 +290,8 @@ class Display:
             blimpSurface = self.getTextSurface(blimp.name, int(40 - len(blimp.name)),blimpColor)
             blimpSurface = blimpSurface.convert_alpha()
             #Render blimp heartbeats
-            heartbeatWidth = blimpSurface.get_width()*blimp.lastHeartbeatDiff/blimp.heartbeatDisconnectDelay
+            heartbeatDiff = time.time() - blimp.lastHeartbeatDetected
+            heartbeatWidth = blimpSurface.get_width()*heartbeatDiff/blimp.heartbeatDisconnectDelay
             heartbeatRect = Rect(0,0,heartbeatWidth,blimpSurface.get_height())
             blimpSurface.fill(Color(255,255,255,50),heartbeatRect,special_flags=BLEND_RGBA_ADD)
             blimpTextX = self.align_blimps_left

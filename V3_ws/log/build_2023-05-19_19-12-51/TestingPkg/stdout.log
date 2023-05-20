@@ -1,0 +1,21 @@
+running egg_info
+writing ../../build/TestingPkg/TestingPkg.egg-info/PKG-INFO
+writing dependency_links to ../../build/TestingPkg/TestingPkg.egg-info/dependency_links.txt
+writing entry points to ../../build/TestingPkg/TestingPkg.egg-info/entry_points.txt
+writing requirements to ../../build/TestingPkg/TestingPkg.egg-info/requires.txt
+writing top-level names to ../../build/TestingPkg/TestingPkg.egg-info/top_level.txt
+reading manifest file '../../build/TestingPkg/TestingPkg.egg-info/SOURCES.txt'
+writing manifest file '../../build/TestingPkg/TestingPkg.egg-info/SOURCES.txt'
+running build
+running build_py
+running install
+running install_lib
+running install_data
+running install_egg_info
+removing '/home/coreblimp1/GitHub/Basestation/V3_ws/install/TestingPkg/lib/python3.8/site-packages/TestingPkg-0.0.0-py3.8.egg-info' (and everything under it)
+Copying ../../build/TestingPkg/TestingPkg.egg-info to /home/coreblimp1/GitHub/Basestation/V3_ws/install/TestingPkg/lib/python3.8/site-packages/TestingPkg-0.0.0-py3.8.egg-info
+running install_scripts
+Installing Checker script to /home/coreblimp1/GitHub/Basestation/V3_ws/install/TestingPkg/lib/TestingPkg
+Installing listener script to /home/coreblimp1/GitHub/Basestation/V3_ws/install/TestingPkg/lib/TestingPkg
+Installing talker script to /home/coreblimp1/GitHub/Basestation/V3_ws/install/TestingPkg/lib/TestingPkg
+writing list of installed files to '/home/coreblimp1/GitHub/Basestation/V3_ws/build/TestingPkg/install.log'

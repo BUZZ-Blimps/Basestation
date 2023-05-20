@@ -1,0 +1,2 @@
+/home/coreblimp1/GitHub/Basestation/V3_ws/install/TestingPkg/lib/python3.8/site-packages/TestingPkg/CheckNodesSubscribed.py:59: SyntaxWarning: "is" with a literal. Did you mean "=="?
+  if nodeName is "_NODE_NAME_UNKNOWN_":

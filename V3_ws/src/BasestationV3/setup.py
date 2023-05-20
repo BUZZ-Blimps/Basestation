@@ -20,7 +20,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        	'HelloWorld = BasestationV3.HelloWorld:main',
         	'Basestation = BasestationV3.Main:main',
         ],
     },

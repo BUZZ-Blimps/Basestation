@@ -1,16 +1,13 @@
 # Imported Classes
 from .Blimp import Blimp
 from .InputHandler import InputHandler
-from .UDPMulticast import UDPHelper
 from .BlimpMapper import BlimpMapper
+from .ROS2Helper import ROS2Helper
 
 # Imported Libraries
 import time
 import easygui
 import serial
-
-# Not used #
-# from SerialHelper import SerialHelper
 
 
 # ======================== Blimp Handler Class ======================== #
@@ -22,14 +19,13 @@ class BlimpHandler:
     # Description #
     # Sets up UDP and initializes variables to default values
     def __init__(self):
-        # Communication Initialization (UDP)
-        self.comms = UDPHelper()  # SerialHelper() # UDPHelper()
+        # Communication Initialization (ROS2)
+        ROSLoopRate = 20
+        self.ROS2Helper = ROS2Helper(ROSLoopRate, self)
+        self.ROS2Helper.start()
 
         # Display Initialization
         self.display = None
-
-        # Open communication (UDP)
-        self.comms.open()
 
         # List of Blimps
         self.blimps = []
@@ -55,6 +51,7 @@ class BlimpHandler:
 
                                "20": "Barometer"}
 
+        """
         #Map of established connections (i.e. EC)
         self.blimpECMap = {"192.168.0.101": False,
                             "192.168.0.102": False,
@@ -70,8 +67,9 @@ class BlimpHandler:
                             "192.168.0.14": False,
 
                             "20": False}
+        """
 
-        #Hard-coded list of all blimps
+        # Hard-coded list of all blimps
         self.swampBlimps = {}
 
         for key in self.blimpIPNameMap:
@@ -102,7 +100,7 @@ class BlimpHandler:
         self.blimpAddDelay = 5
 
         # Set Base Height
-        self.baseHeight = 0
+        self.baseBaroData = 0
 
         # Barometer Initialization
         self.baroPrioritizeUDP = False
@@ -118,7 +116,7 @@ class BlimpHandler:
         # Try connecting to the Barometer
         try:
             self.baroSerial = serial.Serial('/dev/baro_0', 115200)
-        except(serial.SerialException):
+        except serial.SerialException:
             # Error
             print("Serial error!")
 
@@ -146,8 +144,8 @@ class BlimpHandler:
         # Print Closing Message
         print("Closing BlimpHandler")
 
-        # Close Communication (UDP)
-        self.comms.close()
+        # Close Communication (ROS2)
+        self.ROS2Helper.close()
 
         # Print All Comms Closed
         print("Comms closed.")
@@ -164,35 +162,23 @@ class BlimpHandler:
     # Loops to continuously check and update barometer height, dead blimps,
     # general blimp data, and wait time since last update
     def update(self):
-
-        currentTime = time.time()
-        # Check number of messages sent
-        if currentTime - self.comms.lastCheckedNumMessagesSent > 1:
-            self.comms.lastCheckedNumMessagesSent = currentTime
-            print("NumMessagesSent:", self.comms.numMessagesSent)
-            self.comms.numMessagesSent = 0
-        # Check number of messages received
-        if currentTime - self.comms.lastCheckedNumMessagesReceived > 1:
-            self.comms.lastCheckedNumMessagesReceived = currentTime
-            print("NumMessagesReceived:", self.comms.numMessagesReceived)
-            self.comms.numMessagesReceived = 0
-
         # Update Barometer Height
         self.updateBaroHeight()
         # Update Input Handler
         self.inputHandler.update()
         # Check for Dead Blimps
-        self.checkForDeadBlimps()
+        # self.checkForDeadBlimps()
         # Update Blimp Mapper
         self.blimpMapper.update()
         # Get Blimp Data
-        self.listen()
+        # self.listen()
         # Update Blimp Data
-        self.sendDataToBlimps()
+        # self.sendDataToBlimps()
+        self.updateBlimpData()
 
         # Calculate and Print Wait Time
         waitTime = time.time() - self.lastUpdateLoop
-        if (waitTime > 0.01):
+        if waitTime > 0.01:
             print(waitTime)
 
         # Set Last Loop Update to current time
@@ -211,6 +197,7 @@ class BlimpHandler:
         # Validate Recent Barometer Data
         self.validateBaroDataReceived()
 
+    """
     # ===================== Check for Dead Blimps ===================== #
     # Description #
     # Finds disconnected blimps and removes them from the Blimp List
@@ -225,12 +212,13 @@ class BlimpHandler:
             if blimp.lastHeartbeatDiff > blimp.heartbeatDisconnectDelay:
                 # Blimp heartbeat not received for too long; Remove it
                 print(blimp.name, "heartbeat not received; Disconnecting...")
-                self.removeBlimp(blimp.ID)
+                #self.removeBlimp(blimp.ID)
                 blimp.connected = False
-                if ID in self.blimpECMap:
-                    self.blimpECMap[ID] = False
+                #if ID in self.blimpECMap:
+                #    self.blimpECMap[ID] = False
+    """
 
-
+    """
     #========================== Remove Blimp ========================== #
     # Description #
     # If ID is an identified blimp, disconnects the blimp
@@ -238,6 +226,7 @@ class BlimpHandler:
         # Check that valid ID is passed in
         if ID in self.blimpECMap:
             self.blimpECMap[ID] = False
+    """
 
     # ====================== Listen for Messages ====================== #
     # Description #
@@ -310,7 +299,7 @@ class BlimpHandler:
             # If the blimp is autonomous
             if blimp.auto == 1:
                 # Send Blimp ID and a message about base height, target goal, and target enemy (UDP)
-                message = str(self.baseHeight) + ";" + blimp.targetGoal + ";" + blimp.targetEnemy
+                message = str(self.baseBaroData) + ";" + blimp.targetGoal + ";" + blimp.targetEnemy
                 self.comms.send(blimpID, "A", message)
             # If the time since previous input is LESS than the time input delay
             else:
@@ -324,7 +313,7 @@ class BlimpHandler:
                 for data in blimpData:
                     message += str(data) + ","
                 # Send Blimp ID and a message about base height, target goal, and target enemy (UDP)
-                message += ";" + str(self.baseHeight) + ";" + blimp.targetGoal + ";" + blimp.targetEnemy
+                message += ";" + str(self.baseBaroData) + ";" + blimp.targetGoal + ";" + blimp.targetEnemy
                 self.comms.send(blimpID, "M", message)
 
     # ===================== Blimp Centered Actions ==================== #
@@ -333,29 +322,30 @@ class BlimpHandler:
     def blimpCenteredActions(self, input, blimp):
         blimpID = blimp.ID
         # Grab
-        if (input.grabAction("grab")):
-            blimp.grabbing = 1 - blimp.grabbing
+        if input.grabAction("grab"):
+            blimp.grabbing = not blimp.grabbing
             print("Toggled grabber for blimp ID", blimpID)
 
         # Shoot
-        if (input.grabAction("shoot")):
-            blimp.shooting = 1 - blimp.shooting
+        if input.grabAction("shoot"):
+            blimp.shooting = not blimp.shooting
             print("Toggled shooting for blimp ID", blimpID)
 
         # Autonomous
-        if (input.grabAction("auto")):
-            blimp.auto = 1 - blimp.auto
+        if input.grabAction("auto"):
+            blimp.auto = not blimp.auto
             print("Toggled auto for blimp ID", blimpID)
             input.notify(0.5)
 
         # Kill
-        if (input.grabAction("kill")):
+        if input.grabAction("kill"):
             print("Killing blimp", blimpID)
-            self.comms.send(blimpID, "K", "")
+            blimp.killed = True
+            # self.comms.send(blimpID, "K", "")
             input.notify(3)
 
         # Record
-        if (input.grabAction("record")):
+        if input.grabAction("record"):
             self.requestRecording(blimpID)
 
     # =================== Non-Blimp Centered Actions ================== #
@@ -367,7 +357,7 @@ class BlimpHandler:
             # Iterate through blimps
             for ID in self.swampBlimps.keys():
                 blimp = self.swampBlimps[ID]
-                blimp.auto = 1
+                blimp.auto = True
             print("PANIC AUTO")
             input.notify(1)
             self.blimpMapper.clearMappings()
@@ -390,13 +380,35 @@ class BlimpHandler:
             input.notify(100000)
             print("STOP Vibe")
 
+    # =============== Update Blimp Data ============== #
+    # Description #
+    # Locally update data for each blimp.
+    # ROS2Helper will automatically send all data to blimps.
+    def updateBlimpData(self):
+        # Iterate through inputs
+        for input in self.inputHandler.inputs:
+            # Iterate through blimps mapped to this input
+            mappedBlimp = self.blimpMapper.getMappedBlimp(input.name)
+            if mappedBlimp is not None and mappedBlimp.connected:
+                # Update blimp inputs
+                if not mappedBlimp.auto:
+                    mappedBlimp.motorCommands = input.grabInput()
+                # Parse blimp-centered actions
+                self.blimpCenteredActions(input, mappedBlimp)
+                # Update barometer
+                if self.baseBaroData is not None:
+                    mappedBlimp.baseBarometer = self.baseBaroData
+
+            # Parse non-blimp-centered Actions
+            self.nonBlimpCenteredActions(input)
+
     # =============== Handle Barometer Serial Connection ============== #
     # Description #
     # If Barometer is Disconnected, Attempt to Reconnect
     # If Barometer is Connected, Get Barometer Data from the Teensy
     def handleBaroSerial(self):
         # Barometer is Disconnected
-        if (self.baroSerial is None):
+        if self.baroSerial is None:
             # Try to reconnect
             try:
                 self.baroSerial = serial.Serial('/dev/baro_0', 115200)
@@ -407,17 +419,17 @@ class BlimpHandler:
                 pass
 
         # Barometer is Connected
-        if (self.baroSerial is not None):
+        if self.baroSerial is not None:
             # Get Barometer Data from Teensy
             try:
                 while self.baroSerial.in_waiting:
                     receivedString = self.baroSerial.readline().decode('utf-8')
-                    if (self.isFloat(receivedString)):
+                    if self.isFloat(receivedString):
                         self.baroSerialLastReceivedValue = float(receivedString)
                         self.baroSerialLastReceivedTime = time.time()
-                if (time.time() - self.lastBaroPrint > 0.01):
+                if time.time() - self.lastBaroPrint > 0.01:
                     self.lastBaroPrint = time.time()
-                    # print(self.baseHeight)
+                    # print(self.baseBaroData)
             # If port crashes, assume teensy has disconnected
             except(OSError):
                 self.baroSerial = None
@@ -431,14 +443,14 @@ class BlimpHandler:
         baroValidUDP = currentTime - self.baroUDPLastReceivedTime < self.baroTimeout
         baroValidSerial = currentTime - self.baroSerialLastReceivedTime < self.baroTimeout and self.baroSerial is not None
 
-        if (baroValidUDP and (self.baroPrioritizeUDP or not baroValidSerial)):
-            self.baseHeight = self.baroUDPLastReceivedValue
+        if baroValidUDP and (self.baroPrioritizeUDP or not baroValidSerial):
+            self.baseBaroData = self.baroUDPLastReceivedValue
             self.baroType = "UDP"
-        elif (baroValidSerial and (not self.baroPrioritizeUDP or not baroValidUDP)):
-            self.baseHeight = self.baroSerialLastReceivedValue
+        elif baroValidSerial and (not self.baroPrioritizeUDP or not baroValidUDP):
+            self.baseBaroData = self.baroSerialLastReceivedValue
             self.baroType = "Serial"
         else:
-            self.baseHeight = None
+            self.baseBaroData = None
             self.baroType = None
 
     """ # Deprecated?
@@ -554,6 +566,7 @@ class BlimpHandler:
                 self.blimps.append(self.swampBlimps[newIP])
     """
 
+    """
     # ========================== Use Message ========================== #
     # Description #
     # Use the Messages to Update the Blimp Data and Barometer
@@ -614,7 +627,8 @@ class BlimpHandler:
         # If Flag is T
         if flag == "T": # Telemetry
             pass
-            """
+    """
+    """
             msg = msgContent[secondColon+1:]
             msgEqual = msg.find("=")
             varName = msg[0:msgEqual]
