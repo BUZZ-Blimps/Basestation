@@ -410,7 +410,7 @@ class Display:
         if(self.blimpHandler.baroType == None):
             stringBarometer += "Disconnected"
         else:
-            stringBarometer += "(" + self.blimpHandler.baroType + ") " + str(self.blimpHandler.baseHeight)
+            stringBarometer += "(" + self.blimpHandler.baroType + ") " + str(self.blimpHandler.baseBaroData)
         self.screen.blit(self.getTextSurface(stringBarometer, 30),(self.anchor_x_barometer, self.anchor_y_barometer))
 
     def draw_Plots(self):
