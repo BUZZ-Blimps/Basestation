@@ -48,7 +48,7 @@ class BlimpHandler:
                                "192.168.0.62": "My Cup of Eggs",
                                "192.168.0.86": "Pint of Eggs",
                                "192.168.0.14": "Stealthy Steve",
-
+                               "BurnCreamBlimp":"Burn Cream Blimp",
                                "20": "Barometer"}
 
         """

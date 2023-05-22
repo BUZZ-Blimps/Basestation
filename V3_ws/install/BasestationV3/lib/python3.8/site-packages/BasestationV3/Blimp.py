@@ -14,7 +14,7 @@ class Blimp:
         self.motorCommands = [0, 0, 0, 0]
         self.grabbing = False
         self.shooting = False
-        self.baseBarometer = -1.0
+        self.baseBarometer = 123456.000001
 
         # ROS2 backend values
         self.nodeHandler = None

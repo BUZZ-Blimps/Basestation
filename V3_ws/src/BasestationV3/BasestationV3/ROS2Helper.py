@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String, Bool, Float32, Float32MultiArray
+from std_msgs.msg import String, Bool, Float64, Float64MultiArray
 
 from threading import Thread
 import time
@@ -174,10 +174,10 @@ class NodeHandler:
         bufferSize = 1
         self.pub_auto = self.parentNode.create_publisher(Bool, topic_auto, bufferSize)
         self.pub_killed = self.parentNode.create_publisher(Bool, topic_killed, bufferSize)
-        self.pub_motorCommands = self.parentNode.create_publisher(Float32MultiArray, topic_motorCommands, bufferSize)
+        self.pub_motorCommands = self.parentNode.create_publisher(Float64MultiArray, topic_motorCommands, bufferSize)
         self.pub_grabbing = self.parentNode.create_publisher(Bool, topic_grabbing, bufferSize)
         self.pub_shooting = self.parentNode.create_publisher(Bool, topic_shooting, bufferSize)
-        self.pub_baseBarometer = self.parentNode.create_publisher(Float32, topic_baseBarometer, bufferSize)
+        self.pub_baseBarometer = self.parentNode.create_publisher(Float64, topic_baseBarometer, bufferSize)
 
     def publish(self):
         if self.blimp is None:
@@ -185,10 +185,10 @@ class NodeHandler:
 
         msg_auto = Bool(data=self.blimp.auto)
         msg_killed = Bool(data=self.blimp.killed)
-        msg_motorCommands = Float32MultiArray(data=self.blimp.motorCommands)
+        msg_motorCommands = Float64MultiArray(data=self.blimp.motorCommands)
         msg_grabbing = Bool(data=self.blimp.grabbing)
         msg_shooting = Bool(data=self.blimp.shooting)
-        msg_baseBarometer = Float32(data=self.blimp.baseBarometer)
+        msg_baseBarometer = Float64(data=self.blimp.baseBarometer)
 
         self.pub_auto.publish(msg_auto)
         self.pub_killed.publish(msg_killed)
