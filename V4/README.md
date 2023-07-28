@@ -53,6 +53,7 @@ src
 - Dedicated Streaming Page
 - Dedicated Page showing ROS Current Nodes and Topics
 - Dedicated Page for debugging that grabs current data from specific ROS topics
+- Dedicated Page for tuning PID parameters in real-time
 - Manually Change State of Blimp from Basestation (Very Difficult)
 - Add Xbox Button Indicator for Basestation Functionality
 - Documentation Page of how to use the Basestation with link to YouTube Video
