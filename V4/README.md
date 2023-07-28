@@ -7,10 +7,10 @@ Basestation V4 is web-based and uses Flask with the code written in Python for t
 Run install.sh in the install directory to install the necessary packages.
 
 # Run
-Run run.sh in the run directory to start the webserver. Click the second link to open the webpage. The webpage name is static and can be saved in your browser.
+Run run.sh in the run directory to start the webserver. Click the second link to open the webpage. The webpage name is static and can be saved in your browser. The file freePort.sh can be used to free up the port if you run './freePort.sh 5000'.
 
 # Src
-The Src directory contains the source code. The source code is broken up into four folders as shown below:
+The src directory contains the source code. The source code is broken up into four folders as shown below:
 
 src
 
