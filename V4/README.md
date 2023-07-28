@@ -14,12 +14,19 @@ The Src directory contains the source code. The source code is broken up into fo
 
 src
 ├── database
+
 │   └── (Files in Database Folder)
+
 ├── ros
+
 │   └── (Files in ROS Folder)
+
 ├── webserver
+
 │   └── (Files in Webserver Folder)
+
 ├── globalVars.py
+
 └── main.py
 
 # To-Do
