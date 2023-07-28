@@ -1,15 +1,15 @@
 # Basestation V4 README
 
-# Description
+## Description
 Basestation V4 is web-based and uses Flask with the code written in Python for the backend and HTML and Javascript for the frontend. The backend and frontend communicate using the Flask-SocketIO library. A Basestation ROS 2 node is run in parallel to the Flask application.
 
-# Install
+## Install
 Run install.sh in the install directory to install the necessary packages.
 
-# Run
+## Run
 Run run.sh in the run directory to start the webserver. Click the second link to open the webpage. The webpage name is static and can be saved in your browser. The file freePort.sh can be used to free up the port if you run './freePort.sh 5000'.
 
-# Src
+## Src
 The src directory contains the source code. The source code is broken up into four folders as shown below:
 
 src
@@ -30,9 +30,9 @@ src
 
 └── main.py
 
-# To-Do
+## To-Do
 
-## Mandatory
+### Mandatory
 - Add Blimp Idenifier to the ROS Node Class and Implement using Global Database Object (db object: db.add_blimp_name(blimp_name_here))
 - Create Blimp Class and Fleet Class (In future create separate classes for CatchingBlimp and Attacking Blimp, they will be children of the parent class Fleet)
 - Fix WASD and Controller Inputs (Make them happen in the backend and then sent to the frontend; currently it is happening in the frontend only)
@@ -42,7 +42,7 @@ src
 - Get State of State Machine from James' Teensy Code
 - Add Barometer Display
 
-## Other
+### Other
 - All Autonomous Button
 - Buttons to Flash Each Pi Wirelessly and all Pi's Wirelessly (Flash All Button)
 - Integrate Teensy Code to the Basestation Codebase and Flash Teensy Wirelessly
