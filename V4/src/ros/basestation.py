@@ -5,10 +5,10 @@ from std_msgs.msg import Bool, Int64
 from test_msgs.srv import BasicTypes
 
 # Can change name of node to basestation later
-class mainNode(Node):
+class Basestation(Node):
 
     def __init__(self):
-        super().__init__('main_node')
+        super().__init__('Basestation')
         self.auto_sub = self.create_subscription(Bool, '/Blimp1/auto', self.getAuto, 10)
         self.service = self.create_service(BasicTypes, 'BlimpID', self.getService)
         self.auto = None

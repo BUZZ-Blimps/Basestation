@@ -27,7 +27,7 @@ def globalView():
 globalView()
 
 # ROS Packages
-from ros.ros import mainNode
+from ros.basestation import Basestation
 
 # Database Packages
 from database.database import Database

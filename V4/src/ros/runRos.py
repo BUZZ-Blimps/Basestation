@@ -7,15 +7,14 @@ from std_msgs.msg import Bool, Int64
 from test_msgs.srv import BasicTypes
 
 # Basestation Node Package
-import os, sys
-from ros import mainNode
+from basestation import Basestation
 
 def main():
     # Initialize ROS 2 system
     rclpy.init()
 
     # Create an instance of the mainNode class
-    node = mainNode()
+    node = Basestation()
 
     # Perform operations with the node
     rclpy.spin(node)
