@@ -32,7 +32,7 @@ src
 
 # To-Do
 
-# Mandatory
+## Mandatory
 - Add Blimp Idenifier to the ROS Node Class and Implement using Global Database Object (db object: db.add_blimp_name(blimp_name_here))
 - Create Blimp Class and Fleet Class (In future create separate classes for CatchingBlimp and Attacking Blimp, they will be children of the parent class Fleet)
 - Fix WASD and Controller Inputs (Make them happen in the backend and then sent to the frontend; currently it is happening in the frontend only)
@@ -42,7 +42,7 @@ src
 - Get State of State Machine from James' Teensy Code
 - Add Barometer Display
 
-# Other
+## Other
 - All Autonomous Button
 - Buttons to Flash Each Pi Wirelessly and all Pi's Wirelessly (Flash All Button)
 - Integrate Teensy Code to the Basestation Codebase and Flash Teensy Wirelessly
