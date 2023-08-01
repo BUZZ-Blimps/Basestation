@@ -16,8 +16,6 @@ from flask_socketio import SocketIO, emit
 
 # Global View of Files
 def globalView():
-    import os
-    import sys
     # Basestation Node Package
     # Get the directory of the current script
     current_dir = os.path.dirname(os.path.abspath(__file__))
