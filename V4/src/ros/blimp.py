@@ -33,7 +33,7 @@ class Blimp:
 
         #self.nameSurface = getTextSurface(self.name, int(40 - len(self.name)))
         self.lastHeartbeatDiff = 0
-        self.heartbeatDisconnectDelay = 5  # seconds
+        self.heartbeatDisconnectDelay = 1  # seconds
         self.lastTimeInputDataSent = 0
         self.timeInputDelay = 0.05  # seconds
         self.lastBarometerSentTime = 0

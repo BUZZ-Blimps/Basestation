@@ -15,12 +15,14 @@ blimps_file = '../src/database/blimps.txt'
 
 class Database:
     def __init__(self):
+        self.clear_file(blimps_file)
+        self.getData()
+        self.saveData()
         self.goal_color = "yellow"
         self.target1_color = "green"
         self.target2_color = "green"
         self.client_ip = ip_allowed
         self.blimps = {}
-        self.getData()
 
     def getData(self):
         # Read the color from the database.txt file on startup
@@ -97,7 +99,7 @@ class Database:
 
             # Extract the blimp ID and name from the parts.
             blimp_id_part, blimp_name_part = parts
-            blimp_id = int(blimp_id_part.split("=")[1].strip())  # Extract the blimp ID and convert to an integer.
+            blimp_id = blimp_id_part.split("=")[1].strip()  # Extract the blimp ID
             blimp_name = blimp_name_part.split("=")[1].strip()  # Extract the blimp name.
 
             # Store the blimp name in the dictionary, using the blimp ID as the key.
@@ -114,3 +116,9 @@ class Database:
         # Write the colors to the database.txt file
         with open(database_file, 'w') as file:
             file.write(f'Goal = {self.goal_color}\nTarget 1 = {self.target1_color}\nTarget 2 = {self.target2_color}')
+
+    def clear_file(self, filename):
+        # Only clear the file if it exists.
+        if os.path.isfile(filename):
+            with open(filename, 'w') as file:
+                pass  # Do nothing.

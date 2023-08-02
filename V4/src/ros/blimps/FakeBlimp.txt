@@ -1,0 +1,15 @@
+# Fake Blimp Permanent Profile (Attacking) #
+
+# Reset Values (Reset to False when Basestation starts)
+Connected = False
+Autonomous = False
+Stream On = False
+
+# Permanent Values
+ID = 1
+Basestation Name = Fake Blimp
+Blimp Type = Attack
+
+# Persistent State Values
+State = Searching
+Target Color = Blue
