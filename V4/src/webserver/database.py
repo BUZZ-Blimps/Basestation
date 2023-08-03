@@ -36,7 +36,7 @@ class Database:
     def setClientIP(self, client_ip):
         self.client_ip = client_ip
 
-    def toggle_goal_color(self, blimpFile):
+    def toggle_goal_color(self):
         if self.client_ip == ip_allowed:
             if self.goal_color == 'yellow':
                 self.goal_color = 'orange'
@@ -71,54 +71,9 @@ class Database:
     def add_blimp(self, blimp):
         with open(blimps_file, 'a') as f:
             f.write(f"Blimp ID = {blimp.ID}, Blimp Name = {blimp.name}\n")
-    
-    def remove_blimp(self, blimp):
-        # Load all lines from the file.
-        with open(blimps_file, 'r') as f:
-            lines = f.readlines()
 
-        # Filter out the line that matches the blimp to be removed.
-        lines = [line for line in lines if line.strip() != f"Blimp ID = {blimp.ID}, Blimp Name = {blimp.name}"]
-
-        # Write the remaining lines back to the file.
-        with open(blimps_file, 'w') as f:
-            f.writelines(lines)
-
-    def get_blimp_names(self):
-        # Initialize an empty dictionary to store the blimp data.
-        blimps = {}
-
-        # Open the file and read the lines.
-        with open(blimps_file, 'r') as f:
-            lines = f.readlines()
-
-        # For each line in the file, parse the blimp ID and name and store them in the dictionary.
-        for line in lines:
-            line = line.strip()  # Remove any leading/trailing whitespace.
-            parts = line.split(",")  # Split the line into parts based on the comma.
-
-            # Extract the blimp ID and name from the parts.
-            blimp_id_part, blimp_name_part = parts
-            blimp_id = blimp_id_part.split("=")[1].strip()  # Extract the blimp ID
-            blimp_name = blimp_name_part.split("=")[1].strip()  # Extract the blimp name.
-
-            # Store the blimp name in the dictionary, using the blimp ID as the key.
-            blimps[blimp_id] = blimp_name
-
-        # Get the blimp IDs (keys of the dictionary) and sort them.
-        sorted_blimp_ids = sorted(blimps.keys())
-
-        # Get the blimp names corresponding to the sorted blimp IDs and return them.
-        sorted_blimp_names = [blimps[blimp_id] for blimp_id in sorted_blimp_ids]
-        return sorted_blimp_names
-
+    # Fix
     def saveData(self):
         # Write the colors to the database.txt file
         with open(database_file, 'w') as file:
             file.write(f'Goal = {self.goal_color}\nTarget 1 = {self.target1_color}\nTarget 2 = {self.target2_color}')
-
-    def clear_file(self, filename):
-        # Only clear the file if it exists.
-        if os.path.isfile(filename):
-            with open(filename, 'w') as file:
-                pass  # Do nothing.

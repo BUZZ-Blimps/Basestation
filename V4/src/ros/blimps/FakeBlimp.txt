@@ -1,7 +1,7 @@
 # Fake Blimp Permanent Profile (Attacking) #
 
 # Reset Values (Reset to False when Basestation starts)
-Connected = False
+Connected = True
 Autonomous = False
 Stream On = False
 

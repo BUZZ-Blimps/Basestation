@@ -1,7 +1,7 @@
 # Burn Cream Blimp Permanent Profile (Catching) #
 
 # These Variables are ALWAYS Reset when Basestation Starts!!! (Reset to False)
-Connected = False
+Connected = True
 Autonomous = False
 Stream On = False
 
@@ -14,4 +14,4 @@ Blimp Type = Catching
 State = None
 Target 1 Color = Green
 Target 2 Color = Purple
-Goal = Orange
+Goal = orange

@@ -87,6 +87,12 @@ class Basestation(Node):
             # Add Blimp
             self.addBlimp(blimpID, blimpName, blimpNodeHandler)
 
+            # Get Filename
+            filename = '../src/ros/blimps/' + blimpName.replace(' ', '') + '.txt'
+
+            # Identify Blimp as Connected
+            self.write_value(filename, 'Connected', 'True')
+
             # New Blimp Identified
             self.get_logger().info("Identified new blimp (id: %s). Assigned name: %s" % (str(blimpID), blimpName))
 
@@ -94,8 +100,26 @@ class Basestation(Node):
             # Re-Add Blimp
             self.addBlimp(blimpID, blimpName, blimpNodeHandler)
 
+            # Get Filename
+            filename = '../src/ros/blimps/' + blimpName.replace(' ', '') + '.txt'
+
+            # Identify Blimp as Connected
+            self.write_value(filename, 'Connected', 'True')
+
             # Blimp Already Identified
             self.get_logger().info("BlimpID already identified: %s" % blimpID)
+
+    # Maybe get rid of when New Method is done?? Not sure I if still need this??
+    def addBlimp(self, blimpID, blimpName, blimpNodeHandler):
+        from blimp import Blimp
+        blimp = Blimp(blimpID, blimpName)
+        db.blimps[blimpID] = blimp
+        db.add_blimp(blimp)
+
+        blimp.ID = blimpID
+        blimp.nodeHandler = blimpNodeHandler
+        blimp.connected = True
+        blimpNodeHandler.blimp = blimp
 
     def getBlimpName(self, blimpID):
         # Hard Code Blimp Names for Basestation
@@ -109,18 +133,6 @@ class Basestation(Node):
             blimpName = "New Blimp " + str(self.numNewBlimps)
 
         return blimpName
-
-    # Maybe get rid of when New Method is done?? Not sure I if still need this??
-    def addBlimp(self, blimpID, blimpName, blimpNodeHandler):
-        from blimp import Blimp
-        blimp = Blimp(blimpID, blimpName)
-        db.blimps[blimpID] = blimp
-        db.add_blimp(blimp)
-
-        blimp.ID = blimpID
-        blimp.nodeHandler = blimpNodeHandler
-        blimp.connected = True
-        blimpNodeHandler.blimp = blimp
 
     # Blimp Node Handler Functions #
 
@@ -186,6 +198,15 @@ class Basestation(Node):
 
         # Remove Blimp Node Handler from List
         self.blimpNodeHandlers.remove(blimpNodeHandler)
+
+        # Get Basestation's Blimp Name
+        blimpName = self.getBlimpName(blimpNodeHandler.blimpID)
+
+        # Get Filename
+        filename = '../src/ros/blimps/' + blimpName.replace(' ', '') + '.txt'
+
+        # Identify Blimp as Disconnected
+        self.write_value(filename, 'Connected', 'False')
 
         # Timeout Detected for Blimp Node
         if blimpNodeHandler is not None:
