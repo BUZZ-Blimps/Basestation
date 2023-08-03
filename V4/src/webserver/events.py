@@ -1,5 +1,7 @@
 from webserver.packages import *
 
+ip_allowed = '192.168.0.203'
+
 blimp_files = '../src/ros/blimps'
 
 def send_blimp_names():
@@ -25,8 +27,8 @@ def send_blimp_names():
 def handle_connect():
     socketio.start_background_task(send_blimp_names)
     db.getData()
-    goal_colors = read_value_in_all_files(blimp_files, 'Goal')
-    print(goal_colors)
+    # Fix this !!! (Only add Goal Colors for connected Blimps) !!!
+    goal_colors = read_and_map_value_in_all_files(blimp_files, 'Goal')
     emit('setGoalColor', goal_colors)
     emit('setTarget1Color', db.target1_color)
     emit('setTarget2Color', db.target2_color)
@@ -42,18 +44,21 @@ def handle_toggle_goal_color():
 
 @socketio.on('toggleGoalColor')
 def handle_toggle_goal_color(index):
-    db.setClientIP(request.remote_addr)
+    client_ip = request.remote_addr
 
-    goal_colors = []  # List to hold the goal colors for each connected blimp
-
-    for blimp_file in blimp_files:
-        if blimp_file.endswith('.txt'):  # If you only want to process text files
-            file_path = os.path.join('../src/ros/blimps', blimp_file)
-            connected = read_value(file_path, 'Connected')
-            if connected == 'True':
-                db.toggle_goal_color(index)
-                write_value(file_path, 'Goal', db.goal_color)
-                goal_colors.append(db.goal_color)  # Add the color to the list for each connected blimp
+    goal_colors = read_and_map_value_in_all_files(blimp_files, 'Goal')
+    
+    file_path = os.path.join('../src/ros/blimps', index)
+    connected = read_value(file_path, 'Connected')
+    if connected == 'True':
+        if client_ip == ip_allowed:
+            if index != None:
+                if goal_colors[index] == 'yellow':
+                    goal_colors[index] = 'orange'
+                else:
+                    goal_colors[index] = 'yellow'
+                write_value(file_path, 'Goal', goal_colors[index])
+                        
 
     emit('setGoalColor', goal_colors, broadcast=True)
 
@@ -79,6 +84,7 @@ def read_value(filename, variable):
                     return val
         return None  # Return None if the variable was not found in the file
 
+# Maybe deprecate and use the map function below !!!
 def read_value_in_all_files(directory, variable):
     values = []
     for filename in os.listdir(directory):
@@ -86,6 +92,17 @@ def read_value_in_all_files(directory, variable):
             value = read_value(os.path.join(directory, filename), variable)
             if value is not None:
                 values.append(value)
+    return values
+
+def read_and_map_value_in_all_files(directory, variable):
+    values = {}
+    for filename in os.listdir(directory):
+        if filename.endswith('.txt'):  # only process text files
+            connected = read_value(os.path.join(directory, filename), 'Connected')
+            if connected == 'True':
+                value = read_value(os.path.join(directory, filename), variable)
+                if value is not None:
+                    values[filename] = value
     return values
 
 def write_value(filename, variable, value):

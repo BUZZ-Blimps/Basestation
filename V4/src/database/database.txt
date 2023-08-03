@@ -1,3 +1,3 @@
 Goal = yellow
-Target 1 = purple
-Target 2 = green
+Target 1 = green
+Target 2 = red

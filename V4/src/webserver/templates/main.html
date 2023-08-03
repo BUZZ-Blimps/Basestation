@@ -235,19 +235,23 @@
       }
 
       // Then, add the updated list of goal buttons with the appropriate colors
-      for (var i = 0; i < colors.length; i++) {
+      Object.entries(colors).forEach(([file, color]) => {
         const button = document.createElement('button');
         button.className = 'goalButton';
-        button.style.backgroundColor = colors[i];
-        
-        // Set the appropriate click handler based on the color or index, if needed
-        button.onclick = toggleGoalColor;
+        button.style.backgroundColor = color;
 
-        centerDiv.appendChild(button);
-      }
+        // Set the appropriate click handler based on the file (key)
+        button.onclick = () => toggleGoalColor(file);
+
+        // Create a div element that will be used to wrap the button and force it to a new line
+        const buttonWrapper = document.createElement('div');
+        buttonWrapper.appendChild(button);
+
+        centerDiv.appendChild(buttonWrapper);
+      });
     });
-    function toggleGoalColor(index) {
-      socket.emit('toggleGoalColor', index);
+    function toggleGoalColor(file) {
+      socket.emit('toggleGoalColor', file);
     }
 
     socket.on('setTarget1Color', (color) => {

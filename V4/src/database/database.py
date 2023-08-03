@@ -36,7 +36,7 @@ class Database:
     def setClientIP(self, client_ip):
         self.client_ip = client_ip
 
-    def toggle_goal_color(self, blimpFile):
+    def toggle_goal_color(self, index):
         if self.client_ip == ip_allowed:
             if self.goal_color == 'yellow':
                 self.goal_color = 'orange'

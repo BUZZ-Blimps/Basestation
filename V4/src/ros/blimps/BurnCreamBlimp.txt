@@ -12,6 +12,6 @@ Blimp Type = Catching
 
 # Persistent State Values
 State = None
-Target 1 Color = Green
-Target 2 Color = Purple
-Goal = orange
+Target 1 Color = green
+Target 2 Color = purple
+Goal = yellow

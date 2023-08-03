@@ -123,6 +123,7 @@ class Basestation(Node):
 
     def getBlimpName(self, blimpID):
         # Hard Code Blimp Names for Basestation
+        print('Blimp ID:', blimpID) 
         if blimpID == "BurnCreamBlimp":
             blimpName = "Burn Cream Blimp"
 
@@ -137,10 +138,14 @@ class Basestation(Node):
     # Blimp Node Handler Functions #
 
     def updateBlimpNodeHandlers(self):
+        # Testing
+        #print(self.recognizedBlimpNodes)
         # Iterate through current nodes, look for new nodes
         infos = self.get_subscriptions_info_by_topic(self.topicName_identify)
         for info in infos:
             nodeName = info.node_name
+            # Testing
+            #print(nodeName)
             if nodeName not in self.recognizedBlimpNodes:
                 self.createBlimpNodeHandler(nodeName)
 
@@ -214,7 +219,7 @@ class Basestation(Node):
 
         # Disconnect blimp
         if blimpNodeHandler.blimp is not None:
-            blimpNodeHandler.blimp.nodeHandler = None
+            #blimpNodeHandler.blimp.nodeHandler = None
             blimpNodeHandler.blimp.connected = False
             # Change Eventually?
             db.remove_blimp(blimpNodeHandler.blimp)
