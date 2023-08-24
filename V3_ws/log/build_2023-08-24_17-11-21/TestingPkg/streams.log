@@ -1,0 +1,51 @@
+[0.600s] Invoking command in '/home/local/GitHub/Basestation/V3_ws/src/TestingPkg': PYTHONPATH=/home/local/GitHub/Basestation/V3_ws/build/TestingPkg/prefix_override:/home/local/GitHub/Basestation/V3_ws/install/TestingPkg/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py egg_info --egg-base ../../build/TestingPkg build --build-base /home/local/GitHub/Basestation/V3_ws/build/TestingPkg/build install --record /home/local/GitHub/Basestation/V3_ws/build/TestingPkg/install.log --install-scripts $base/lib/TestingPkg --single-version-externally-managed
+[0.683s] /home/local/.local/lib/python3.8/site-packages/setuptools/dist.py:745: SetuptoolsDeprecationWarning: Invalid dash-separated options
+[0.683s] !!
+[0.683s] 
+[0.684s]         ********************************************************************************
+[0.684s]         Usage of dash-separated 'script-dir' will not be supported in future
+[0.684s]         versions. Please use the underscore name 'script_dir' instead.
+[0.684s] 
+[0.684s]         By 2023-Sep-26, you need to update your project and remove deprecated calls
+[0.684s]         or your builds will no longer be supported.
+[0.684s] 
+[0.684s]         See https://setuptools.pypa.io/en/latest/userguide/declarative_config.html for details.
+[0.684s]         ********************************************************************************
+[0.684s] 
+[0.684s] !!
+[0.684s]   opt = self.warn_dash_deprecation(opt, section)
+[0.719s] running egg_info
+[0.725s] writing ../../build/TestingPkg/TestingPkg.egg-info/PKG-INFO
+[0.725s] writing dependency_links to ../../build/TestingPkg/TestingPkg.egg-info/dependency_links.txt
+[0.725s] writing entry points to ../../build/TestingPkg/TestingPkg.egg-info/entry_points.txt
+[0.726s] writing requirements to ../../build/TestingPkg/TestingPkg.egg-info/requires.txt
+[0.726s] writing top-level names to ../../build/TestingPkg/TestingPkg.egg-info/top_level.txt
+[0.777s] reading manifest file '../../build/TestingPkg/TestingPkg.egg-info/SOURCES.txt'
+[0.777s] writing manifest file '../../build/TestingPkg/TestingPkg.egg-info/SOURCES.txt'
+[0.777s] running build
+[0.777s] running build_py
+[0.777s] running install
+[0.777s] /home/local/.local/lib/python3.8/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.
+[0.777s] !!
+[0.778s] 
+[0.778s]         ********************************************************************************
+[0.778s]         Please avoid running ``setup.py`` directly.
+[0.778s]         Instead, use pypa/build, pypa/installer or other
+[0.778s]         standards-based tools.
+[0.778s] 
+[0.778s]         See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.
+[0.778s]         ********************************************************************************
+[0.778s] 
+[0.778s] !!
+[0.778s]   self.initialize_options()
+[0.780s] running install_lib
+[0.786s] running install_data
+[0.792s] running install_egg_info
+[0.798s] removing '/home/local/GitHub/Basestation/V3_ws/install/TestingPkg/lib/python3.8/site-packages/TestingPkg-0.0.0-py3.8.egg-info' (and everything under it)
+[0.798s] Copying ../../build/TestingPkg/TestingPkg.egg-info to /home/local/GitHub/Basestation/V3_ws/install/TestingPkg/lib/python3.8/site-packages/TestingPkg-0.0.0-py3.8.egg-info
+[0.798s] running install_scripts
+[0.824s] Installing Checker script to /home/local/GitHub/Basestation/V3_ws/install/TestingPkg/lib/TestingPkg
+[0.824s] Installing listener script to /home/local/GitHub/Basestation/V3_ws/install/TestingPkg/lib/TestingPkg
+[0.825s] Installing talker script to /home/local/GitHub/Basestation/V3_ws/install/TestingPkg/lib/TestingPkg
+[0.825s] writing list of installed files to '/home/local/GitHub/Basestation/V3_ws/build/TestingPkg/install.log'
+[0.855s] Invoked command in '/home/local/GitHub/Basestation/V3_ws/src/TestingPkg' returned '0': PYTHONPATH=/home/local/GitHub/Basestation/V3_ws/build/TestingPkg/prefix_override:/home/local/GitHub/Basestation/V3_ws/install/TestingPkg/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py egg_info --egg-base ../../build/TestingPkg build --build-base /home/local/GitHub/Basestation/V3_ws/build/TestingPkg/build install --record /home/local/GitHub/Basestation/V3_ws/build/TestingPkg/install.log --install-scripts $base/lib/TestingPkg --single-version-externally-managed

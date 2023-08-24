@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String, Bool, Float64, Float64MultiArray
+from std_msgs.msg import String, Bool, Float64, Float64MultiArray, Int64
 
 from threading import Thread
 import time
@@ -95,8 +95,11 @@ class _BasestationNode(Node):
         # Create new node handler
         newBlimpNodeHandler = NodeHandler(self, nodeName)
         topic_blimpID = "/" + nodeName + "/blimpID"
+        topic_stateMachine = "/" + nodeName + "/state_machine"
         newBlimpNodeHandler.sub_blimpID = self.create_subscription(
             String, topic_blimpID, newBlimpNodeHandler.subCallback_blimpID, 1)
+        newBlimpNodeHandler.sub_stateMachine = self.create_subscription(
+            Int64, topic_stateMachine, newBlimpNodeHandler.subCallback_stateMachine, 1)
 
         self.nodeHandlers.append(newBlimpNodeHandler)
 
@@ -152,6 +155,7 @@ class NodeHandler:
         self.pub_grabbing = None
         self.pub_shooting = None
         self.pub_baseBarometer = None
+        self.pub_goalColor = None
 
     def subCallback_blimpID(self, msg):
         if self.blimpID is None:
@@ -163,6 +167,11 @@ class NodeHandler:
         if self.blimp is not None:
             self.blimp.lastHeartbeatDetected = time.time()
 
+    def subCallback_stateMachine(self, msg):
+        if self.blimpID is not None:
+            self.blimp.lastHeartbeatDetected = time.time()
+            self.blimp.receivedState = msg.data
+
     def createPublishers(self):
         topic_auto =            "/" + self.nodeName + "/auto"
         topic_killed =          "/" + self.nodeName + "/killed"
@@ -170,6 +179,7 @@ class NodeHandler:
         topic_grabbing =        "/" + self.nodeName + "/grabbing"
         topic_shooting =        "/" + self.nodeName + "/shooting"
         topic_baseBarometer =   "/" + self.nodeName + "/baseBarometer"
+        topic_goalColor =       "/" + self.nodeName + "/goal_color"
 
         bufferSize = 1
         self.pub_auto = self.parentNode.create_publisher(Bool, topic_auto, bufferSize)
@@ -178,10 +188,16 @@ class NodeHandler:
         self.pub_grabbing = self.parentNode.create_publisher(Bool, topic_grabbing, bufferSize)
         self.pub_shooting = self.parentNode.create_publisher(Bool, topic_shooting, bufferSize)
         self.pub_baseBarometer = self.parentNode.create_publisher(Float64, topic_baseBarometer, bufferSize)
+        self.pub_goalColor = self.parentNode.create_publisher(Int64, topic_goalColor, bufferSize)
 
     def publish(self):
         if self.blimp is None:
             return
+
+        if self.blimp.targetGoal == "O":
+            targetGoalNum = 0
+        else:
+            targetGoalNum = 1
 
         msg_auto = Bool(data=self.blimp.auto)
         msg_killed = Bool(data=self.blimp.killed)
@@ -189,6 +205,7 @@ class NodeHandler:
         msg_grabbing = Bool(data=self.blimp.grabbing)
         msg_shooting = Bool(data=self.blimp.shooting)
         msg_baseBarometer = Float64(data=self.blimp.baseBarometer)
+        msg_goalColor = Int64(data=targetGoalNum)
 
         self.pub_auto.publish(msg_auto)
         self.pub_killed.publish(msg_killed)
@@ -196,3 +213,4 @@ class NodeHandler:
         self.pub_grabbing.publish(msg_grabbing)
         self.pub_shooting.publish(msg_shooting)
         self.pub_baseBarometer.publish(msg_baseBarometer)
+        self.pub_goalColor.publish(msg_goalColor)

@@ -95,7 +95,7 @@ class _BasestationNode(Node):
         # Create new node handler
         newBlimpNodeHandler = NodeHandler(self, nodeName)
         topic_blimpID = "/" + nodeName + "/blimpID"
-        topic_stateMachine = "/" + nodeName + "/stateMachine"
+        topic_stateMachine = "/" + nodeName + "/state_machine"
         newBlimpNodeHandler.sub_blimpID = self.create_subscription(
             String, topic_blimpID, newBlimpNodeHandler.subCallback_blimpID, 1)
         newBlimpNodeHandler.sub_stateMachine = self.create_subscription(
@@ -168,7 +168,7 @@ class NodeHandler:
             self.blimp.lastHeartbeatDetected = time.time()
 
     def subCallback_stateMachine(self, msg):
-        if self.blimp is not None:
+        if self.blimpID is not None:
             self.blimp.lastHeartbeatDetected = time.time()
             self.blimp.receivedState = msg.data
 
@@ -179,7 +179,7 @@ class NodeHandler:
         topic_grabbing =        "/" + self.nodeName + "/grabbing"
         topic_shooting =        "/" + self.nodeName + "/shooting"
         topic_baseBarometer =   "/" + self.nodeName + "/baseBarometer"
-        topic_goalColor =       "/" + self.nodeName + "/goalColor"
+        topic_goalColor =       "/" + self.nodeName + "/goal_color"
 
         bufferSize = 1
         self.pub_auto = self.parentNode.create_publisher(Bool, topic_auto, bufferSize)
