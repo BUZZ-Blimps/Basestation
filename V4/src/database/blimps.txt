@@ -1,2 +1,0 @@
-Blimp ID = BurnCreamBlimp, Blimp Name = Burn Cream Blimp
-Blimp ID = 1, Blimp Name = Fake Blimp
