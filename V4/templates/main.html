@@ -228,6 +228,9 @@
     <!-- JavaScript code -->
     <script>
 
+        // IP Address Allowed
+        const ip_allowed = '10.140.72.58';
+
         // Connect to SocketIO server
         const socket = io();
 
@@ -237,28 +240,12 @@
         // Timers
         const blimp_name_timers = {};
         const goal_color_timers = {};
-
-        // IP Address Allowed
-        ip_allowed = '128.227.7.19';
-
-        // Client IP Address
-        let client_ip;
         
-        // Get Client IP Address
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", "https://api.ipify.org?format=json", true);
-        xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            var response = JSON.parse(xhr.responseText);
-            client_ip = response.ip;
-            console.log("Client IP Address:", client_ip);
-        }
-        };
-        xhr.send();
-
         // Receive Connection
         socket.on('connect', () => {
-            console.log('Connected to server');
+            // Client IP Address
+            let client_ip = "{{ client_ip }}";
+            console.log('Client', client_ip, 'connected to server');
         });
 
         // Receive Blimp Name
@@ -491,7 +478,10 @@
                 
                 // Attach the click event listener to the button
                 goal_color_button.addEventListener('click', (event) => {
-                    //if (client_ip === ip_allowed) {
+                    // Client IP Address
+                    let client_ip = "{{ client_ip }}";
+
+                    if (client_ip === ip_allowed) {
                       // Change the goal color and the data
                       if (goal_color === 'orange') {
                           goal_color = 'yellow';
@@ -513,7 +503,7 @@
 
                       // Send the data to the backend to update over ROS
                       socket.emit('update_goal_color', data);
-                    //}
+                    }
                 });
 
                 // Create a div element that will be used to wrap the button and force it to a new line

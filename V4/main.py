@@ -281,7 +281,8 @@ def handle_connect():
 
 @app.route('/')
 def index():
-    return render_template('main.html')
+    client_ip = request.remote_addr
+    return render_template('main.html', client_ip=client_ip)
 
 def ros_thread():
     rclpy.init()
