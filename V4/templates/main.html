@@ -201,6 +201,7 @@
         </tr>
       </table>
       <div class="center">
+          <!-- Make another class similar to goal buttons container for target buttons -->
           <!-- Dynamic target buttons will be appended here -->
       </div>
     </div>
@@ -258,265 +259,146 @@
             update_goal_color(data.node_name, data.goal_color);
         });
 
-        socket.on('update', (data) => {
-            update_basestation(data.node_name, data.blimp_name, data.goal_color_data);
+        socket.on('update', (blimp_dict) => {
+            //console.log(blimp_dict)
+            update_basestation(blimp_dict);
         });
 
         var blimpOrder = ["Blimp 1", "Blimp 2", "Burn Cream Blimp"];
 
-        // Create a mapping of blimp names to their corresponding rows in the table
         var blimpList = [];
 
-        var blimpRows = {}
+        var sortedNameRows = [];
 
-        var goal_color;
+        var sortedGoalRows = [];
 
-        function update_basestation(node_name, blimp_name, goal_color_data) {
-            // Clear the timers
-            clearTimeout(blimp_name_timers[blimp_name]);
-            clearTimeout(goal_color_timers[node_name]);
+        function update_basestation(blimp_dict) {
+          // Get data from blimp dictionary
+          let blimp_name = blimp_dict["blimp_name"];
 
-            // Get the blimpsTableBody
-            var blimpsTableBody = document.getElementById('blimpsTableBody');
-            var goalButtonsContainer = document.querySelector('.goalButtonsContainer');
+          // Clear the timers
+          clearTimeout(blimp_name_timers[blimp_name]);
+          clearTimeout(goal_color_timers[blimp_name]);
 
-            // Get the goal color button for the specific blimp
-            let goal_color_button = document.getElementById(`goal_color_button_${node_name}`);
+          // Get the blimpsTableBody
+          var blimpsTableBody = document.getElementById('blimpsTableBody');
+          var goalButtonsContainer = document.querySelector('.goalButtonsContainer');
 
-            // Get goal color from the data
-            if (goal_color_data === 0) {
-                goal_color = 'orange';
-            } else {
-                goal_color = 'yellow';
-            }
+          // Get the goal color button for the specific blimp
+          let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
 
-            // Only proceed if the name is not in the table
-            if (!(blimpList.includes(blimp_name))) {
-                // Create a new row and cell for the blimp name
-                var newRow = document.createElement('h3');
-                var newCell = document.createElement('h3');
-                newCell.textContent = blimp_name;
-                newRow.appendChild(newCell);
-                blimpsTableBody.appendChild(newRow);
+          // Get goal color from the data
+          let goal_color;
+          if (blimp_dict["goal_color"] === 0) {
+              goal_color = 'orange';
+          } else {
+              goal_color = 'yellow';
+          }
 
-                // Store the row in the blimpList
-                blimpList.push(blimp_name);
+          // Only proceed if the name is not in the table
+          if (!(blimpList.includes(blimp_name))) {
+            // Create a new row and cell for the blimp name
+            var newRow = document.createElement('h3');
+            var newCell = document.createElement('h3');
+            newCell.textContent = blimp_name;
+            newRow.appendChild(newCell);
+            blimpsTableBody.appendChild(newRow);
 
-                // Sort the rows based on your desired order
-                var sortedRows = Array.from(blimpsTableBody.getElementsByTagName('h3'));
-                sortedRows.sort(function(a, b) {
-                    return blimpOrder.indexOf(a.textContent) - blimpOrder.indexOf(b.textContent);
-                });
-                blimpsTableBody.innerHTML = ''; // Clear the table
-                sortedRows.forEach(function(row) {
-                    blimpsTableBody.appendChild(row);
-                    blimpRows[blimp_name] = row;
+            // Store the row in the blimpList
+            blimpList.push(blimp_name);
 
-                    // Goal Color Button does not exist
-                    if (!goal_color_button) {
-                        // Create new button
-                        goal_color_button = document.createElement('button');
-                        goal_color_button.id = `goal_color_button_${node_name}`;
-                        goal_color_button.style.backgroundColor = goal_color;
-                        
-                        // Attach the click event listener to the button
-                        goal_color_button.addEventListener('click', (event) => {
-                            if (client_ip === ip_allowed) {
-                              // Change the goal color and the data
-                              if (goal_color === 'orange') {
-                                  goal_color = 'yellow';
-                                  goal_color_data = 1;
-                              } else {
-                                  goal_color = 'orange';
-                                  goal_color_data = 0;
-                              }
-
-                              console.log(node_name, 'has a goal color:', goal_color)
-
-                              // Set goal color of the button
-                              goal_color_button.style.backgroundColor = goal_color;
-                              
-                              const data = {
-                                  node_name: node_name,
-                                  goal_color_data: goal_color_data
-                              };
-
-                              // Send the data to the backend to update over ROS
-                              socket.emit('update_goal_color', data);
-                            }
-                        });
-
-                      // Create a div element that will be used to wrap the button and force it to a new line
-                      const buttonWrapper = document.createElement('div');
-                      buttonWrapper.appendChild(goal_color_button);
-
-                      goalButtonsContainer.appendChild(buttonWrapper);
-                    } else {
-                      goal_color_button.style.backgroundColor = goal_color;
-                    }
-                });
-            }
-
-            goal_color_button.style.backgroundColor = goal_color;
-
-            // Set a new timer for this blimp name
-            blimp_name_timers[blimp_name] = setTimeout(() => {
-                // Check if the blimp name is in the list
-                if (blimpRows[blimp_name]) {
-
-                    blimpRows[blimp_name].textContent = ''; // Clear the content of the cell
-
-                    // Remove the specified blimp name using the filter method
-                    blimpList = blimpList.filter(function(blimpName) {
-                        return blimpName !== blimp_name;
-                    });
-
-                    console.log(blimpList)
-
-                    // Remove goal color button
-                    let goal_color_button = document.getElementById(`goal_color_button_${node_name}`);
-                    if (goal_color_button) {
-                        goal_color_button.remove();
-                    }
-                }
-
-                // Clear the timer entry
-                delete blimp_name_timers[blimp_name];
-                delete goal_color_timers[node_name]
-
-            }, TIMEOUT);
-        }
-
-        // Update Blimp Name
-        function update_blimp_name(node_name, blimp_name) {
-            // Clear the blimp name timer
-            clearTimeout(blimp_name_timers[blimp_name]);
-
-            // Get the blimpsTableBody
-            var tableBody = document.getElementById('blimpsTableBody');
-
-            // Only proceed if the name is not in the table
-            if (!(blimpList.includes(blimp_name))) {
-                // Create a new row and cell for the blimp name
-                var newRow = document.createElement('h3');
-                var newCell = document.createElement('h3');
-                newCell.textContent = blimp_name;
-                newRow.appendChild(newCell);
-                tableBody.appendChild(newRow);
-
-                // Store the row in the blimpList
-                blimpList.push(blimp_name);
-
-                // Store the row in the blimpRows mapping
-                // blimpRows[blimp_name] = newRow;
-
-                // Sort the rows based on your desired order
-                var sortedRows = Array.from(tableBody.getElementsByTagName('h3'));
-                sortedRows.sort(function(a, b) {
-                    return blimpOrder.indexOf(a.textContent) - blimpOrder.indexOf(b.textContent);
-                });
-                tableBody.innerHTML = ''; // Clear the table
-                sortedRows.forEach(function(row) {
-                    tableBody.appendChild(row);
-                    blimpRows[blimp_name] = row;
-                });
-            }
-
-            // Set a new timer for this blimp name
-            blimp_name_timers[blimp_name] = setTimeout(() => {
-                // Check if the blimp name is in the list
-                if (blimpRows[blimp_name]) {
-                    //console.log(blimp_name)
-
-                    blimpRows[blimp_name].textContent = ''; // Clear the content of the cell
-
-                    // Remove the specified blimp name using the filter method
-                    blimpList = blimpList.filter(function(blimpName) {
-                        return blimpName !== blimp_name;
-                    });
-
-                    // Remove goal color button
-                    let goal_color_button = document.getElementById(`goal_color_button_${node_name}`);
-                    if (goal_color_button) {
-                        goal_color_button.remove();
-                    }
-                }
-
-                // Clear the timer entry
-                delete blimp_name_timers[blimp_name];
-                delete goal_color_timers[node_name]
-
-            }, TIMEOUT);
-        }
-
-        // Update Goal Color Button
-        function update_goal_color(node_name, goal_color_data) {
-            // console.log('Node Name:', node_name);
-            // console.log('Goal Color Data:', goal_color_data);
-
-            // Clear the goal color timer
-            clearTimeout(goal_color_timers[node_name]);
-
-            var centerDiv = document.querySelector('.goalButtonsContainer');
-
-            // Get goal color from the data
-            if (goal_color_data === 0) {
-                goal_color = 'orange';
-            } else {
-                goal_color = 'yellow';
-            }
-
-            // Get the goal color button for the specific blimp
-            let goal_color_button = document.getElementById(`goal_color_button_${node_name}`);
-
+            // Sort the name rows based on your desired order
+            sortedNameRows = Array.from(blimpsTableBody.getElementsByTagName('h3'));
+            sortedNameRows.sort(function(a, b) {
+                return blimpOrder.indexOf(a.textContent) - blimpOrder.indexOf(b.textContent);
+            });
+            blimpsTableBody.innerHTML = ''; // Clear the table
+            sortedNameRows.forEach(function(row) {
+              blimpsTableBody.appendChild(row);
+            });
+            
             // Goal Color Button does not exist
             if (!goal_color_button) {
-                // Create new button
-                goal_color_button = document.createElement('button');
-                goal_color_button.id = `goal_color_button_${node_name}`;
-                goal_color_button.style.backgroundColor = goal_color;
-                
-                // Attach the click event listener to the button
-                goal_color_button.addEventListener('click', (event) => {
-                    // Client IP Address
-                    let client_ip = "{{ client_ip }}";
+              // Create new button
+              goal_color_button = document.createElement('button');
+              goal_color_button.id = `goal_color_button_${blimp_name}`;
+              goal_color_button.style.backgroundColor = goal_color;
+              
+              // Attach the click event listener to the button
+              goal_color_button.addEventListener('click', (event) => {
+                // Client IP Address
+                let client_ip = "{{ client_ip }}";
 
-                    if (client_ip === ip_allowed) {
-                      // Change the goal color and the data
-                      if (goal_color === 'orange') {
-                          goal_color = 'yellow';
-                          goal_color_data = 1;
-                      } else {
-                          goal_color = 'orange';
-                          goal_color_data = 0;
-                      }
+                if (client_ip === ip_allowed) {
+                  // Change the goal color and the data
+                  if (goal_color === 'orange') {
+                      goal_color = 'yellow';
+                      blimp_dict["goal_color"] = 1;
+                  } else {
+                      goal_color = 'orange';
+                      blimp_dict["goal_color"] = 0;
+                  }
 
-                      console.log(node_name, 'has a goal color:', goal_color)
+                  console.log(blimp_name, 'has a goal color:', goal_color)
 
-                      // Set goal color of the button
-                      goal_color_button.style.backgroundColor = goal_color;
-                      
-                      const data = {
-                          node_name: node_name,
-                          goal_color_data: goal_color_data
-                      };
+                  // Set goal color of the button
+                  goal_color_button.style.backgroundColor = goal_color;
 
-                      // Send the data to the backend to update over ROS
-                      socket.emit('update_goal_color', data);
-                    }
+                  // Send the data to the backend to update over ROS
+                  socket.emit('update_goal_color', blimp_dict);
+                }
+              });
+
+              // Create a div element that will be used to wrap the button and force it to a new line
+              const buttonWrapper = document.createElement('div');
+              buttonWrapper.appendChild(goal_color_button);
+              buttonWrapper.setAttribute('blimp_name', blimp_name); // Store the blimp name
+
+              goalButtonsContainer.appendChild(buttonWrapper);
+
+              // Sort the goal rows based on your desired order
+              sortedGoalRows = Array.from(goalButtonsContainer.querySelectorAll('[blimp_name]'));
+              sortedGoalRows.sort(function(a, b) {
+                  const blimpNameA = a.getAttribute('blimp_name');
+                  const blimpNameB = b.getAttribute('blimp_name');
+                  return blimpOrder.indexOf(blimpNameA) - blimpOrder.indexOf(blimpNameB);
+              });
+
+              goalButtonsContainer.innerHTML = ''; // Clear the container
+              sortedGoalRows.forEach(function(row) {
+                  goalButtonsContainer.appendChild(row);
+              });
+            }
+              
+          }
+          else {
+            // Set goal color of the button for all clients to see
+            goal_color_button.style.backgroundColor = goal_color;
+          }
+
+          // Set a new timer for this blimp name
+          blimp_name_timers[blimp_name] = setTimeout(() => {
+              // Check if the blimp name is in the list
+              if (blimpList.includes(blimp_name)) {
+                sortedNameRows.forEach(function(row) {
+                  if (row.textContent === blimp_name) {
+                      row.textContent = ''; // Clear the content of the cell
+                  }
                 });
 
-                // Create a div element that will be used to wrap the button and force it to a new line
-                const buttonWrapper = document.createElement('div');
-                buttonWrapper.appendChild(goal_color_button);
+                blimpList = blimpList.filter(item => item !== blimp_name);
 
-                centerDiv.appendChild(buttonWrapper);
-            }
-            // Goal Color Button exists
-            else {
-                // Set the goal color of the button
-                goal_color_button.style.backgroundColor = goal_color;
-            }
+                let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
+                if (goal_color_button) {
+                  goal_color_button.remove();
+                }
+              }
+
+              // Clear the timer entry
+              delete blimp_name_timers[blimp_name];
+              delete goal_color_timers[blimp_name]
+
+          }, TIMEOUT);
         }
 
         var keys = { w: false, a: false, s: false, d: false };
