@@ -4,6 +4,9 @@ class Blimp:
         # Blimp Name
         self.blimp_name = blimp_name
 
+        # Blimp Type
+        self.blimp_type = 0 # 0: Catching, 1: Attacking
+
         # Auto 
         self.auto = False
 
@@ -26,8 +29,9 @@ class Blimp:
         self.target_color = 0 # 0: Blue, 1: Red
 
         # State Machine
-        self.state_machine = 0 
+        self.state_machine = -1
         """
+        -1: None
         0: searching
         1: approach
         2: catching
@@ -42,6 +46,7 @@ class Blimp:
     def to_dict(self):
         return {
             "blimp_name": self.blimp_name,
+            "blimp_type": self.blimp_type,
             "auto": self.auto,
             "killed": self.killed,
             "motor_commands": self.motor_commands,
@@ -55,6 +60,8 @@ class Blimp:
     def update_dict(self, data_dict):
         if "blimp_name" in data_dict:
             self.blimp_name = data_dict["blimp_name"]
+        if "blimp_type" in data_dict:
+            self.blimp_type = data_dict["blimp_type"]
         if "auto" in data_dict:
             self.auto = data_dict["auto"]
         if "killed" in data_dict:
