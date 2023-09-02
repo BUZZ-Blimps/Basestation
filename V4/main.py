@@ -59,6 +59,7 @@ class Basestation(Node):
     def updateBlimpNodeHandlers(self):
         # Testing
         print(self.recognizedBlimpNodes)
+        # print(self.numNewBlimps)
 
         # Iterate through current nodes, look for new nodes
         infos = self.get_subscriptions_info_by_topic(self.topicName_identify)
@@ -73,7 +74,11 @@ class Basestation(Node):
         # Check for nodes that timed out
         for blimpNodeHandler in self.blimpNodeHandlers:
             # No Blimp ID Received
-            if blimpNodeHandler.lastReceived_blimpID is None:
+            if blimpNodeHandler.blimpID is None:
+                # Check if Blimp Timed Out
+                if self.getElapsedTime(blimpNodeHandler.timeCreated) > self.timeout:
+                    self.removeBlimpNodeHandler(blimpNodeHandler)
+            elif blimpNodeHandler.lastReceived_blimpID is None:
                 # Check if Blimp Timed Out
                 if self.getElapsedTime(blimpNodeHandler.timeCreated) > self.timeout:
                     self.removeBlimpNodeHandler(blimpNodeHandler)
@@ -94,6 +99,8 @@ class Basestation(Node):
 
         # Create New Blimp Node Handler
         newBlimpNodeHandler = BlimpNodeHandler(self, blimp_node_name)
+
+        self.connectBlimp(newBlimpNodeHandler)
 
         # Check for Blimp ID Topic
         topic_blimpID = "/" + blimp_node_name + "/blimpID"
@@ -120,7 +127,8 @@ class Basestation(Node):
 
         # Timeout Detected for Blimp Node
         if blimpNodeHandler is not None:
-            self.get_logger().info('Detected timeout of blimp ID "%s"' % blimpNodeHandler.blimpID)
+            if blimpNodeHandler.blimpID is not None:
+                self.get_logger().info('Detected timeout of blimp ID "%s"' % blimpNodeHandler.blimpID)
 
     # Timer Functions #
     
@@ -161,8 +169,8 @@ class BlimpNodeHandler:
         global blimps
         if self.blimpID is None:
             self.blimpID = msg.data
-            self.parentNode.get_logger().info('Identified new blimp with ID "%s"' % msg.data)
-            self.parentNode.connectBlimp(self)
+            # self.parentNode.get_logger().info('Identified new blimp with ID "%s"' % msg.data)
+            # self.parentNode.connectBlimp(self)
             self.createPublishers()
             self.blimp_name = self.get_blimp_name()
             if self.blimp_name not in blimps:
@@ -198,8 +206,8 @@ class BlimpNodeHandler:
 
     def get_blimp_name(self):
         self.blimp_name = 'Error'
-        if self.blimpID == 'WaffleBlimp':
-            self.blimp_name = 'Waffle Blimp'
+        if self.blimpID == 'SillyAhBlimp':
+            self.blimp_name = 'Silly Ah Blimp'
         elif self.blimpID == 'BurnCreamBlimp':
             self.blimp_name = 'Burn Cream Blimp'
         elif self.blimpID == 'Catch2':

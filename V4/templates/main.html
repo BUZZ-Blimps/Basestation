@@ -232,7 +232,7 @@
     <script>
 
         // IP Address Allowed
-        const ip_allowed = '10.140.72.58';
+        const ip_allowed = '192.168.0.203';
 
         // Connect to SocketIO server
         const socket = io();
@@ -254,8 +254,9 @@
             //console.log(blimp_dict)
             update_basestation(blimp_dict);
         });
-
-        var blimpOrder = ["Catch 1", "Catch 2", "Attack 1", "Attack 2", "Burn Cream Blimp"];
+        
+        // Catching Blimps before Attack Blimps
+        var blimpOrder = ["Catch 1", "Catch 2", "Burn Cream Blimp", "Silly Ah Blimp", "Attack 1", "Attack 2"];
 
         var blimpList = [];
 
@@ -377,6 +378,7 @@
             // Target number is 1 (Attack Blimps)
             else {
               update_target_button_color(blimp_dict, target_color, target_color_1_button, targetButtonsContainer);
+              update_empty_button_color(blimp_dict, 'white', goal_color_button, goalButtonsContainer);
             }
             // Sort the target rows based on your desired order
             sortedTargetRows = Array.from(targetButtonsContainer.querySelectorAll('[blimp_name]'));
@@ -393,9 +395,14 @@
           }
           else {
             // Set goal color of the button for all clients to see
-            if (goal_color_button) {
-              goal_color_button.style.backgroundColor = goal_color;
-              // update_goal_button_color(blimp_dict, goal_color, goal_color_button, goalButtonsContainer);
+            if (blimp_type === 0) {
+              if (goal_color_button) {
+                goal_color_button.style.backgroundColor = goal_color;
+              }
+            }
+            else {
+              goal_color_button.style.backgroundColor = 'white';
+              goal_color_button.style.border = "1px solid white"; ;
             }
             // Set target color of the button for all clients to see
             if (target_color_1_button) {
@@ -584,12 +591,43 @@
             }
         }
 
+        function update_empty_button_color(blimp_dict, goal_color, goal_color_button, goalButtonsContainer) {
+          // Get data from blimp dictionary
+          let blimp_name = blimp_dict["blimp_name"];
+          
+          // Goal Color Button does not exist
+          if (!goal_color_button) {
+              // Create new button
+              goal_color_button = document.createElement('button');
+              goal_color_button.id = `goal_color_button_${blimp_name}`;
+              goal_color_button.style.backgroundColor = goal_color;
+
+              // Create a div element that will be used to wrap the button and force it to a new line
+              const buttonWrapper = document.createElement('div');
+              buttonWrapper.appendChild(goal_color_button);
+              buttonWrapper.setAttribute('blimp_name', blimp_name); // Store the blimp name
+
+              goalButtonsContainer.appendChild(buttonWrapper);
+
+              // Sort the goal rows based on your desired order
+              sortedGoalRows = Array.from(goalButtonsContainer.querySelectorAll('[blimp_name]'));
+              sortedGoalRows.sort(function(a, b) {
+                  const blimpNameA = a.getAttribute('blimp_name');
+                  const blimpNameB = b.getAttribute('blimp_name');
+                  return blimpOrder.indexOf(blimpNameA) - blimpOrder.indexOf(blimpNameB);
+              });
+
+              goalButtonsContainer.innerHTML = ''; // Clear the container
+              sortedGoalRows.forEach(function(row) {
+                  goalButtonsContainer.appendChild(row);
+              });
+            }
+        }
+
         function get_state(number) {
           let state;
 
-          if (number === -1) {
-              state = "none"
-          } else if (number === 0) {
+          if (number === 0) {
               state = "searching";
           } else if (number === 1) {
               state = "approach";
