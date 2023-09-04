@@ -309,7 +309,7 @@ class BlimpNodeHandler:
 
 # Handle user connection to webpage
 @socketio.on('connect')
-def handle_connect():
+def handle_connecpt():
     print('Client connected with IP:', request.remote_addr)
 
 @app.route('/')
