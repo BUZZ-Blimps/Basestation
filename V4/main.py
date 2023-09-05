@@ -12,6 +12,8 @@ from std_msgs.msg import String, Int64, Bool, Float64, Float64MultiArray
 # Other Packages
 import threading
 import time
+import sys
+import signal
 
 # Blimp Class
 from blimp import Blimp
@@ -26,7 +28,7 @@ class Basestation(Node):
         super().__init__('Basestation')
 
         # Number of Blimps
-        self.numNewBlimps = 0
+        self.numBlimps = 0
 
         # Recognized Blimp Nodes
         self.recognizedBlimpNodes = []
@@ -43,23 +45,23 @@ class Basestation(Node):
         # Identify Topic for Teensy to Check if Basestation is On
         self.topicName_identify = "identify"
     
+    # This function is not working as intended !!!
     def connectBlimp(self, blimpNodeHandler):
 
-        if blimpNodeHandler.nodeName not in self.recognizedBlimpNodes:
-            # Increase Number of New Blimps
-            self.numNewBlimps += 1
+        if blimpNodeHandler.blimpID is not None:
+                # Increase Number of New Blimps
+                self.numBlimps += 1
 
-            # New Blimp Identified
-            self.get_logger().info("Identified new blimp (id: %s). Node name: %s" % (str(blimpNodeHandler.blimpID), blimpNodeHandler.nodeName))
-
+                # New Blimp Identified
+                self.get_logger().info("Identified new blimp (id: %s). Node name: %s" % (str(blimpNodeHandler.blimpID), blimpNodeHandler.nodeName))
         else:
-            # Blimp Already Identified
-            self.get_logger().info("BlimpID already identified: %s" % blimpNodeHandler.nodeName)
+                # Blimp Already Identified
+                self.get_logger().info("BlimpID already identified: %s" % blimpNodeHandler.nodeName)
     
     def updateBlimpNodeHandlers(self):
         # Testing
-        print(self.recognizedBlimpNodes)
-        # print(self.numNewBlimps)
+        #print(self.recognizedBlimpNodes)
+        #print("Number of Blimps:", self.numBlimps)
 
         # Iterate through current nodes, look for new nodes
         infos = self.get_subscriptions_info_by_topic(self.topicName_identify)
@@ -68,8 +70,12 @@ class Basestation(Node):
             # Testing
             # self.get_logger().info('Node Name: "%s"' % nodeName)
             if nodeName not in self.recognizedBlimpNodes:
+                # Testing
                 # self.get_logger().info('Node Name: "%s"' % nodeName)
-                self.createBlimpNodeHandler(nodeName)
+                if self.check_node_name(nodeName) == True:
+                    self.createBlimpNodeHandler(nodeName)
+
+        # Stress Test This !!!
 
         # Check for nodes that timed out
         for blimpNodeHandler in self.blimpNodeHandlers:
@@ -87,20 +93,16 @@ class Basestation(Node):
                 # Double Check if Blimp Timed Out
                 if self.getElapsedTime(blimpNodeHandler.lastReceived_blimpID) > self.timeout:
                     self.removeBlimpNodeHandler(blimpNodeHandler)
-
+    
+    # Stress Test This !!!
     def createBlimpNodeHandler(self, blimp_node_name):
         # Unknown Blimp Node Found
         if blimp_node_name == "_NODE_NAME_UNKNOWN_":
             self.get_logger().info("FLAG: Node Name Unknown")
             return
-
-        # Add New Blimp Node to Recognized Blimp Nodes
-        self.recognizedBlimpNodes.append(blimp_node_name)
-
+        
         # Create New Blimp Node Handler
         newBlimpNodeHandler = BlimpNodeHandler(self, blimp_node_name)
-
-        self.connectBlimp(newBlimpNodeHandler)
 
         # Check for Blimp ID Topic
         topic_blimpID = "/" + blimp_node_name + "/blimpID"
@@ -116,8 +118,14 @@ class Basestation(Node):
 
         # Add Blimp Node Handler to List
         self.blimpNodeHandlers.append(newBlimpNodeHandler)
+        
+        # Check if blimp is new or not
+        # self.connectBlimp(newBlimpNodeHandler)
 
-    # Fix this function eventually when New Method is Implemented !!!
+        # Add New Blimp Node to Recognized Blimp Nodes
+        self.recognizedBlimpNodes.append(blimp_node_name)
+
+    # Stress Test This !!!
     def removeBlimpNodeHandler(self, blimpNodeHandler):
         # Remove Blime Node Name from List
         self.recognizedBlimpNodes.remove(blimpNodeHandler.nodeName)
@@ -129,6 +137,14 @@ class Basestation(Node):
         if blimpNodeHandler is not None:
             if blimpNodeHandler.blimpID is not None:
                 self.get_logger().info('Detected timeout of blimp ID "%s"' % blimpNodeHandler.blimpID)
+                self.numBlimps -= 1
+
+    # Check if Node Name is valid
+    def check_node_name(self, nodeName):
+        if nodeName == 'SillyAhBlimp' or nodeName == 'BurnCreamBlimp' or nodeName == 'Catch2' or nodeName == 'Catch1' or nodeName == 'Attack1' or nodeName == 'Attack2':
+            return True
+        else:
+            return False
 
     # Timer Functions #
     
@@ -136,6 +152,7 @@ class Basestation(Node):
         # Update Blimp Nodes
         self.updateBlimpNodeHandlers()
 
+        # Currently not being used
         # Publish Node Topics
         for blimpNodeHandler in self.blimpNodeHandlers:
             blimpNodeHandler.publish()
@@ -169,14 +186,20 @@ class BlimpNodeHandler:
         global blimps
         if self.blimpID is None:
             self.blimpID = msg.data
-            # self.parentNode.get_logger().info('Identified new blimp with ID "%s"' % msg.data)
-            # self.parentNode.connectBlimp(self)
+            #self.parentNode.get_logger().info('Identified new blimp with ID "%s"' % msg.data)
+            #self.parentNode.numBlimps += 1
+            #self.parentNode.connectBlimp(self)
             self.createPublishers()
             self.blimp_name = self.get_blimp_name()
             if self.blimp_name not in blimps:
+                self.parentNode.get_logger().info('Identified Blimp with ID "%s"' % msg.data)
+                self.parentNode.numBlimps += 1
                 blimp = Blimp(self.blimp_name)
                 self.get_blimp_type(blimp)
                 blimps[self.blimp_name] = blimp
+            else:
+                self.parentNode.get_logger().info("BlimpID already identified: %s" % msg.data)
+                self.parentNode.numBlimps += 1
 
         self.lastReceived_blimpID = self.parentNode.get_clock().now()
         
@@ -192,11 +215,13 @@ class BlimpNodeHandler:
         self.publish_target_color()
         self.publish_goal_color()
 
+    # Continually Poll State Machine Data from Teensy
     def state_machine_callback(self, msg):
         global blimps
         if self.blimpID is not None:
             blimps[self.blimp_name].state_machine = msg.data
 
+    # Used for Attack Blimps Only
     def get_blimp_type(self, blimp):
         # Only need to check for Attack Blimps since default is catching type (0)
         if self.blimpID == 'Attack1':
@@ -235,7 +260,7 @@ class BlimpNodeHandler:
         msg.data = blimps[self.blimp_name].goal_color
         self.pub_goal_color.publish(msg)
 
-    # Update Goal Color
+    # Update Blimp Class with Dictionary Data
     @socketio.on('update_blimp_dict')
     def update_blimp_dict(data):
         global blimps
@@ -309,7 +334,7 @@ class BlimpNodeHandler:
 
 # Handle user connection to webpage
 @socketio.on('connect')
-def handle_connecpt():
+def handle_connect():
     print('Client connected with IP:', request.remote_addr)
 
 @app.route('/')
@@ -328,12 +353,20 @@ def ros_thread():
 
     rclpy.shutdown()
 
+def terminate(signal, frame):
+    print('\nTerminating...\n')
+    rclpy.shutdown()
+    sys.exit(0)
+
 if __name__ == '__main__':
     # Create init function for the following values
     # Initialize default value i.e. goal color value (default: 0)
     # Could make these read from a text file to make them permanent profiles
     global blimps
     blimps = {}
+
+    # Terminate if Ctrl+C Caught
+    signal.signal(signal.SIGINT, terminate)
 
     ros_thread = threading.Thread(target=ros_thread)
     ros_thread.start()

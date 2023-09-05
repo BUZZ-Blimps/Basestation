@@ -1,0 +1,49 @@
+[0.607s] Invoking command in '/home/local/GitHub/Basestation/V3_ws/src/BasestationV3': PYTHONPATH=/home/local/GitHub/Basestation/V3_ws/build/BasestationV3/prefix_override:/home/local/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py egg_info --egg-base ../../build/BasestationV3 build --build-base /home/local/GitHub/Basestation/V3_ws/build/BasestationV3/build install --record /home/local/GitHub/Basestation/V3_ws/build/BasestationV3/install.log --install-scripts $base/lib/BasestationV3 --single-version-externally-managed
+[0.680s] /home/local/.local/lib/python3.8/site-packages/setuptools/dist.py:745: SetuptoolsDeprecationWarning: Invalid dash-separated options
+[0.680s] !!
+[0.680s] 
+[0.680s]         ********************************************************************************
+[0.681s]         Usage of dash-separated 'script-dir' will not be supported in future
+[0.681s]         versions. Please use the underscore name 'script_dir' instead.
+[0.681s] 
+[0.681s]         By 2023-Sep-26, you need to update your project and remove deprecated calls
+[0.681s]         or your builds will no longer be supported.
+[0.681s] 
+[0.681s]         See https://setuptools.pypa.io/en/latest/userguide/declarative_config.html for details.
+[0.681s]         ********************************************************************************
+[0.681s] 
+[0.681s] !!
+[0.681s]   opt = self.warn_dash_deprecation(opt, section)
+[0.717s] running egg_info
+[0.723s] writing ../../build/BasestationV3/BasestationV3.egg-info/PKG-INFO
+[0.723s] writing dependency_links to ../../build/BasestationV3/BasestationV3.egg-info/dependency_links.txt
+[0.723s] writing entry points to ../../build/BasestationV3/BasestationV3.egg-info/entry_points.txt
+[0.723s] writing requirements to ../../build/BasestationV3/BasestationV3.egg-info/requires.txt
+[0.724s] writing top-level names to ../../build/BasestationV3/BasestationV3.egg-info/top_level.txt
+[0.774s] reading manifest file '../../build/BasestationV3/BasestationV3.egg-info/SOURCES.txt'
+[0.775s] writing manifest file '../../build/BasestationV3/BasestationV3.egg-info/SOURCES.txt'
+[0.775s] running build
+[0.775s] running build_py
+[0.775s] running install
+[0.775s] /home/local/.local/lib/python3.8/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.
+[0.776s] !!
+[0.776s] 
+[0.776s]         ********************************************************************************
+[0.776s]         Please avoid running ``setup.py`` directly.
+[0.776s]         Instead, use pypa/build, pypa/installer or other
+[0.776s]         standards-based tools.
+[0.776s] 
+[0.776s]         See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.
+[0.776s]         ********************************************************************************
+[0.776s] 
+[0.776s] !!
+[0.776s]   self.initialize_options()
+[0.778s] running install_lib
+[0.792s] running install_data
+[0.799s] running install_egg_info
+[0.805s] removing '/home/local/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3-0.0.0-py3.8.egg-info' (and everything under it)
+[0.805s] Copying ../../build/BasestationV3/BasestationV3.egg-info to /home/local/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3-0.0.0-py3.8.egg-info
+[0.805s] running install_scripts
+[0.832s] Installing Basestation script to /home/local/GitHub/Basestation/V3_ws/install/BasestationV3/lib/BasestationV3
+[0.832s] writing list of installed files to '/home/local/GitHub/Basestation/V3_ws/build/BasestationV3/install.log'
+[0.852s] Invoked command in '/home/local/GitHub/Basestation/V3_ws/src/BasestationV3' returned '0': PYTHONPATH=/home/local/GitHub/Basestation/V3_ws/build/BasestationV3/prefix_override:/home/local/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 setup.py egg_info --egg-base ../../build/BasestationV3 build --build-base /home/local/GitHub/Basestation/V3_ws/build/BasestationV3/build install --record /home/local/GitHub/Basestation/V3_ws/build/BasestationV3/install.log --install-scripts $base/lib/BasestationV3 --single-version-externally-managed
