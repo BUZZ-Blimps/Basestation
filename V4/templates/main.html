@@ -268,6 +268,10 @@
 
         var statesTableBody = document.getElementById('statesTableBody');
 
+        var goalButtonsContainer = document.querySelector('.goalButtonsContainer');
+
+        var targetButtonsContainer = document.querySelector('.targetButtonsContainer');
+
         function update_basestation(blimp_dict) {
           // Get data from blimp dictionary
           let blimp_name = blimp_dict["blimp_name"];
@@ -285,8 +289,6 @@
 
           // Get the goal color button for the specific blimp
           let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
-
-          var goalButtonsContainer = document.querySelector('.goalButtonsContainer');
 
           // Number of targets
           let target_num;
@@ -317,8 +319,6 @@
               target_color = 'red';
             }
           }
-
-          var targetButtonsContainer = document.querySelector('.targetButtonsContainer');
 
           // Only proceed if the name is not in the table
           if (!(blimpList.includes(blimp_name))) {
@@ -372,13 +372,13 @@
             });
 
             if (target_num === 2) {
-              update_target_button_colors(blimp_dict, 'green', target_color_1_button, 'purple', target_color_2_button, targetButtonsContainer);
-              update_goal_button_color(blimp_dict, goal_color, goal_color_button, goalButtonsContainer);
+              update_target_button_colors(blimp_dict, 'green', target_color_1_button, 'purple', target_color_2_button);
+              update_goal_button_color(blimp_dict, goal_color, goal_color_button);
             }
             // Target number is 1 (Attack Blimps)
             else {
-              update_target_button_color(blimp_dict, target_color, target_color_1_button, targetButtonsContainer);
-              update_empty_button_color(blimp_dict, 'white', goal_color_button, goalButtonsContainer);
+              update_target_button_color(blimp_dict, target_color, target_color_1_button);
+              update_empty_button_color(blimp_dict, 'white', goal_color_button);
             }
             // Sort the target rows based on your desired order
             sortedTargetRows = Array.from(targetButtonsContainer.querySelectorAll('[blimp_name]'));
@@ -455,7 +455,7 @@
           }, TIMEOUT);
         }
 
-        function update_target_button_color(blimp_dict, target_color, target_color_button, targetButtonsContainer) {
+        function update_target_button_color(blimp_dict, target_color, target_color_button) {
             // Get data from blimp dictionary
             let blimp_name = blimp_dict["blimp_name"];
             
@@ -481,7 +481,10 @@
                             blimp_dict["target_color"] = 0;
                         }
                         
-                        console.log(blimp_name, 'has a target color:', target_color)
+                        console.log(blimp_name, 'has a target color:', target_color);
+
+                        // Get the target color button for the specific blimp
+                        let target_color_button = document.getElementById(`target_color_1_button_${blimp_name}`);
                         
                         // Set target color of the button
                         target_color_button.style.backgroundColor = target_color;
@@ -504,7 +507,7 @@
             }
         }
 
-        function update_target_button_colors(blimp_dict, target_color_1, target_color_1_button, target_color_2, target_color_2_button, targetButtonsContainer) {
+        function update_target_button_colors(blimp_dict, target_color_1, target_color_1_button, target_color_2, target_color_2_button) {
           // Get data from blimp dictionary
           let blimp_name = blimp_dict["blimp_name"];
 
@@ -533,7 +536,7 @@
           targetButtonsContainer.appendChild(targetRowWrapper);
         }
 
-        function update_goal_button_color(blimp_dict, goal_color, goal_color_button, goalButtonsContainer) {
+        function update_goal_button_color(blimp_dict, goal_color, goal_color_button) {
           // Get data from blimp dictionary
           let blimp_name = blimp_dict["blimp_name"];
           
@@ -560,6 +563,9 @@
                   }
 
                   console.log(blimp_name, 'has a goal color:', goal_color)
+
+                  // Get the goal color button for the specific blimp
+                  let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
 
                   // Set goal color of the button
                   goal_color_button.style.backgroundColor = goal_color;

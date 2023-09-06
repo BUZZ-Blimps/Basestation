@@ -37,10 +37,10 @@ class Basestation(Node):
         self.blimpNodeHandlers = []
 
         # Create timer
-        self.loopSpeed = 0.5
+        self.loopSpeed = 0.33
         timer_period = 1.0/self.loopSpeed
         self.timer = self.create_timer(timer_period, self.timerLoop)
-        self.timeout = 1
+        self.timeout = 2
         
         # Identify Topic for Teensy to Check if Basestation is On
         self.topicName_identify = "identify"
@@ -365,8 +365,9 @@ if __name__ == '__main__':
     global blimps
     blimps = {}
 
+    # Causing Error Currently
     # Terminate if Ctrl+C Caught
-    signal.signal(signal.SIGINT, terminate)
+    #signal.signal(signal.SIGINT, terminate)
 
     ros_thread = threading.Thread(target=ros_thread)
     ros_thread.start()
