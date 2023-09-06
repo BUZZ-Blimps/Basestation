@@ -238,7 +238,7 @@
         const socket = io();
 
         // Timeout
-        const TIMEOUT = 1000;
+        const TIMEOUT = 2000;
 
         // Timers
         const blimp_timers = {};
@@ -725,6 +725,8 @@
           dot3.style.top = `${50 + leftStickY * 45}%`;
           dot4.style.left = `${50 + rightStickX * 45}%`;
           dot4.style.top = `${50 + rightStickY * 45}%`;
+
+          //console.log("Left Stick X: ", 50 + leftStickX * 45);
         }
 
         // Initialize a variable to keep track of the previous state of the controller buttons and right trigger
@@ -734,6 +736,13 @@
           left: false,
           right: false,
           rightTrigger: false,
+          leftTrigger: false,
+          rightBumper: false,
+          leftBumper: false,
+          xButton: false,
+          yButton: false,
+          bButton: false,
+          aButton: false
         };
 
         // Function to handle gamepad button presses and releases
@@ -760,6 +769,41 @@
             console.log('Xbox Right Trigger released.');
           }
 
+          // Check if the left trigger was pressed in the previous state but is not pressed now (released)
+          if (controllerState.leftTrigger && gamepad.buttons[6].value === 0) {
+            console.log('Xbox Left Trigger released.');
+          }
+
+          // Check if the right bumper was pressed in the previous state but is not pressed now (released)
+          if (controllerState.rightBumper && !gamepad.buttons[5].pressed) {
+            console.log('Xbox Right Bumper released.');
+          }
+
+          // Check if the left bumper was pressed in the previous state but is not pressed now (released)
+          if (controllerState.leftBumper && !gamepad.buttons[4].pressed) {
+            console.log('Xbox Left Bumper released.');
+          }
+
+          // Check if the X button was pressed in the previous state but is not pressed now (released)
+          if (controllerState.xButton && !gamepad.buttons[2].pressed) {
+            console.log('Xbox X Button released.');
+          }
+
+          // Check if the Y button was pressed in the previous state but is not pressed now (released)
+          if (controllerState.yButton && !gamepad.buttons[3].pressed) {
+            console.log('Xbox Y Button released.');
+          }
+
+          // Check if the B button was pressed in the previous state but is not pressed now (released)
+          if (controllerState.bButton && !gamepad.buttons[1].pressed) {
+            console.log('Xbox B Button released.');
+          }
+
+          // Check if the A button was pressed in the previous state but is not pressed now (released)
+          if (controllerState.aButton && !gamepad.buttons[0].pressed) {
+            console.log('Xbox A Button released.');
+          }
+
           // Update the previous state of the controller buttons and right trigger
           controllerState = {
             up: gamepad.buttons[12].pressed,
@@ -767,6 +811,13 @@
             left: gamepad.buttons[14].pressed,
             right: gamepad.buttons[15].pressed,
             rightTrigger: gamepad.buttons[7].value !== 0,
+            leftTrigger: gamepad.buttons[6].value !== 0,
+            rightBumper: gamepad.buttons[5].pressed,
+            leftBumper: gamepad.buttons[4].pressed,
+            xButton: gamepad.buttons[2].pressed,
+            yButton: gamepad.buttons[3].pressed,
+            bButton: gamepad.buttons[1].pressed,
+            aButton: gamepad.buttons[0].pressed
           };
         }
 
