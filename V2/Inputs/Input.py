@@ -1,12 +1,14 @@
-from .. import Text  # Had to mark parent directory as "namespace package"
 from abc import ABC, abstractmethod
+
+import pygame.font
+from pygame.locals import Color
 
 
 class Input(ABC):
     # ============================== SUPER INIT ====================================
     def __init__(self, name):
         self.name = name
-        self.nameSurface = Text.getTextSurface(self.name, 30)
+        self.nameSurface = getTextSurface(self.name, 30)
 
         self.recordedInput = [0, 0, 0, 0]
 
@@ -54,3 +56,12 @@ class Input(ABC):
 
     def getNameSurface(self):
         return self.nameSurface
+
+def getTextSurface(text, size=50, color=None):
+    font = pygame.font.SysFont("Calibri",size)
+    if(color==None):
+        textColor = Color(0,0,0)
+    else:
+        textColor = color
+    antialias = False
+    return font.render(text,antialias,textColor)

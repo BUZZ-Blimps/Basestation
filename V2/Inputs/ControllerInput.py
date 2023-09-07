@@ -1,4 +1,4 @@
-from V2_InProgress.Inputs.Input import Input
+from .Input import Input
 import time
 
 
