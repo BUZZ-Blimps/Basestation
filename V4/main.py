@@ -57,7 +57,7 @@ class Basestation(Node):
                 # New Blimp Identified
                 self.get_logger().info("Identified new blimp (id: %s). Node name: %s" % (str(blimpNodeHandler.blimpID), blimpNodeHandler.nodeName))
         else:
-                # Blimp Already Identified
+                # Blimp Altimer_period = 1.0/self.loopSpeedeady Identified
                 self.get_logger().info("BlimpID already identified: %s" % blimpNodeHandler.nodeName)
     
     def updateBlimpNodeHandlers(self):
@@ -202,6 +202,7 @@ class BlimpNodeHandler:
             else:
                 self.parentNode.get_logger().info("BlimpID already identified: %s" % msg.data)
                 self.parentNode.numBlimps += 1
+                self.parentNode.get_logger().info("%i" % self.parentNode.numBlimps)
 
         self.lastReceived_blimpID = self.parentNode.get_clock().now()
         
@@ -268,9 +269,9 @@ class BlimpNodeHandler:
         global blimps
         # Publish motor commands value to the ROS topic
         msg = Float64MultiArray()
-        #msg.data = blimps[self.blimp_name].motorCommands
-        msg.data = blimps['Burn Cream Blimp'].motorCommands
-        self.pub_motorCommands.publish(msg)
+        # msg.data = blimps[self.blimp_name].motorCommands
+        # msg.data = blimps['Burn Cream Blimp'].motorCommands
+        # self.pub_motorCommands.publish(msg)
 
     def publish_auto(self):
         global blimps
@@ -291,7 +292,7 @@ class BlimpNodeHandler:
         global blimps
         # Hard-Coded for Testing
         blimp_name = 'Burn Cream Blimp'
-        blimps[blimp_name].motorCommands = motorCommands
+        #blimps[blimp_name].motorCommands = motorCommands
         #print(blimps[blimp_name].motorCommands)
 
     # Update Blimp Class with Dictionary Data
