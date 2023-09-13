@@ -381,6 +381,7 @@ def index():
 def ros_thread():
     rclpy.init()
 
+    global node
     node = Basestation()
 
     rclpy.spin(node)
@@ -391,6 +392,8 @@ def ros_thread():
 
 def terminate(signal, frame):
     print('\nTerminating...\n')
+    global node
+    node.destroy_node()
     rclpy.shutdown()
     sys.exit(0)
 
@@ -401,9 +404,8 @@ if __name__ == '__main__':
     global blimps
     blimps = {}
 
-    # Causing Error Currently
     # Terminate if Ctrl+C Caught
-    #signal.signal(signal.SIGINT, terminate)
+    signal.signal(signal.SIGINT, terminate)
 
     ros_thread = threading.Thread(target=ros_thread)
     ros_thread.start()
