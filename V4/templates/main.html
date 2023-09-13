@@ -424,7 +424,7 @@
           
           // Convert the values to Float64
           var motorCommands = new Float64Array([leftStickX, leftStickY, rightStickX, rightStickY]);
-          console.log(motorCommands);
+          //console.log(motorCommands);
 
           // Convert the Float64Array to binary data
           const binaryData = new Uint8Array(motorCommands.buffer)
@@ -774,9 +774,9 @@
           // The joystick returns a value between -1 and 1.
           // We shift this range to be 0 - 100% for use with the CSS styles.
           dot3.style.left = `${50 + leftStickX * 45}%`;
-          dot3.style.top = `${50 + leftStickY * 45}%`;
+          dot3.style.top = `${50 + leftStickY * -45}%`;
           dot4.style.left = `${50 + rightStickX * 45}%`;
-          dot4.style.top = `${50 + rightStickY * 45}%`;
+          dot4.style.top = `${50 + rightStickY * -45}%`;
 
           //console.log("Left Stick X: ", 50 + leftStickX * 45);
         }

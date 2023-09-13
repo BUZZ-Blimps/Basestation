@@ -292,7 +292,7 @@ class BlimpNodeHandler:
         # Hard-Coded for Testing
         blimp_name = 'Burn Cream Blimp'
         blimps[blimp_name].motorCommands = motorCommands
-        print(blimps[blimp_name].motorCommands)
+        #print(blimps[blimp_name].motorCommands)
 
     # Update Blimp Class with Dictionary Data
     @socketio.on('update_blimp_dict')

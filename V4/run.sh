@@ -1,6 +1,6 @@
 #!/bin/bash
 
-URL="http://192.168.0.200:5000"
+URL="http://192.168.0.203:5000"
 
 echo ""
 echo "Basestation Starting..."
