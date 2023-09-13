@@ -6,7 +6,7 @@
 python3 main.py
 ```
 2. To connect to the web-server, verify you're on the same wi-fi network as the web-server.
-3. Open a web-browser (Google Chrome) and enter the second IP-address listed by the web-server as your destination website.
+3. Open a web-browser (Google Chrome) and enter the second IP-address listed by the web-server as your destination website (should begin with 192.168.0.).
 
 ## Notes (Advanced)
 Austin, feel free to add any important notes or documentation

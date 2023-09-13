@@ -39,7 +39,7 @@ class Basestation(Node):
         self.blimpNodeHandlers = []
 
         # Create timer
-        self.loopSpeed = 0.33
+        self.loopSpeed = 10
         timer_period = 1.0/self.loopSpeed
         self.timer = self.create_timer(timer_period, self.timerLoop)
         self.timeout = 2
@@ -366,6 +366,7 @@ class BlimpNodeHandler:
         self.pub_shooting.publish(msg_shooting)
         self.pub_baseBarometer.publish(msg_baseBarometer)
         """
+
 
 # Handle user connection to webpage
 @socketio.on('connect')
