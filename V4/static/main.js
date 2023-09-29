@@ -23,7 +23,7 @@ socket.on('update', (blimp_dict) => {
 });
 
 // Catching Blimps before Attack Blimps
-var blimpOrder = ["Catch 1", "Catch 2", "Burn Cream Blimp", "Silly Ah Blimp", "Attack 1", "Attack 2"];
+var blimpOrder = ["Burn Cream Blimp", "Silly Ah Blimp", "Turbo Blimp", "Game Chamber Blimp", "Five Guys Blimp", "Catch 1", "Catch 2", "Attack 1", "Attack 2"];
 
 var blimpList = [];
 
@@ -44,199 +44,8 @@ var leftStickY = 0;
 var rightStickX = 0;
 var rightStickY = 0;
 
-function update_basestation(blimp_dict) {
-  // Get data from blimp dictionary
-  let blimp_name = blimp_dict["blimp_name"];
-
-  // Clear the timers
-  clearTimeout(blimp_timers[blimp_name]);
-
-  // Get goal color from the data
-  let goal_color;
-  if (blimp_dict["goal_color"] === 0) {
-      goal_color = 'orange';
-  } else {
-      goal_color = 'yellow';
-  }
-
-  // Get the goal color button for the specific blimp
-  let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
-
-  // Number of targets
-  let target_num;
-
-  // Target Buttons
-  let target_color_1_button;
-  let target_color_2_button;
-
-  // Target Color (Attack Blimps)
-  let target_color;
-
-  // State Machine
-  let state;
-
-  // Get blimp type from the data
-  let blimp_type = blimp_dict["blimp_type"];
-  if (blimp_type === 0) {
-    target_num = 2;
-    target_color_1_button = document.getElementById(`target_color_1_button_${blimp_name}`);
-    target_color_2_button = document.getElementById(`target_color_2_button_${blimp_name}`);
-  }
-  else {
-    target_num = 1;
-    target_color_1_button = document.getElementById(`target_color_1_button_${blimp_name}`);
-    if (blimp_dict["target_color"] === 0) {
-      target_color = 'blue';
-    } else {
-      target_color = 'red';
-    }
-  }
-
-  // Only proceed if the name is not in the table
-  if (!(blimpList.includes(blimp_name))) {
-    // Create a new row and cell for the blimp name
-    var newRow = document.createElement('h3');
-    var newCell = document.createElement('h3');
-    newCell.textContent = blimp_name;
-    newRow.appendChild(newCell);
-    blimpsTableBody.appendChild(newRow);
-
-    // Store the row in the blimpList
-    blimpList.push(blimp_name);
-
-    // Sort the name rows based on your desired order
-    sortedNameRows = Array.from(blimpsTableBody.getElementsByTagName('h3'));
-    sortedNameRows.sort(function(a, b) {
-        return blimpOrder.indexOf(a.textContent) - blimpOrder.indexOf(b.textContent);
-    });
-    blimpsTableBody.innerHTML = ''; // Clear the table
-    sortedNameRows.forEach(function(row) {
-      blimpsTableBody.appendChild(row);
-    });
-
-    // State Machine
-    state = get_state(blimp_dict['state_machine']);
-
-    // Clear the statesTableBody
-    statesTableBody.innerHTML = '';
-
-    // Create a new row and cell for the blimp state
-    var newRow = document.createElement('h3');
-    var newCell = document.createElement('h3');
-    newCell.textContent = state; // Get the state using blimp_name
-    newRow.appendChild(newCell);
-    statesTableBody.appendChild(newRow);
-
-    // Store the state in sortedStateRows using blimp_name as the key
-    sortedStateRows[blimp_name] = newRow;
-
-    // Sort the state rows based on the blimp names and their states
-    var sortedRows = Object.keys(sortedStateRows).sort(function (a, b) {
-        return blimpOrder.indexOf(a) - blimpOrder.indexOf(b);
-    });
-
-    // Clear the existing content of statesTableBody
-    statesTableBody.innerHTML = '';
-
-    // Append the sorted rows to statesTableBody
-    sortedRows.forEach(function (rowKey) {
-        statesTableBody.appendChild(sortedStateRows[rowKey]);
-    });
-
-    if (target_num === 2) {
-      update_target_button_colors(blimp_dict, 'green', target_color_1_button, 'purple', target_color_2_button);
-      update_goal_button_color(blimp_dict, goal_color, goal_color_button);
-    }
-    // Target number is 1 (Attack Blimps)
-    else {
-      update_target_button_color(blimp_dict, target_color, target_color_1_button);
-      update_empty_button_color(blimp_dict, 'white', goal_color_button);
-    }
-    // Sort the target rows based on your desired order
-    sortedTargetRows = Array.from(targetButtonsContainer.querySelectorAll('[blimp_name]'));
-    sortedTargetRows.sort(function(a, b) {
-        const blimpNameA = a.getAttribute('blimp_name');
-        const blimpNameB = b.getAttribute('blimp_name');
-        return blimpOrder.indexOf(blimpNameA) - blimpOrder.indexOf(blimpNameB);
-    });
-    
-    targetButtonsContainer.innerHTML = ''; // Clear the container
-    sortedTargetRows.forEach(function(row) {
-        targetButtonsContainer.appendChild(row);
-    });
-  }
-  else {
-    // Set goal color of the button for all clients to see
-    if (blimp_type === 0) {
-      if (goal_color_button) {
-        goal_color_button.style.backgroundColor = goal_color;
-      }
-    }
-    else {
-      if (goal_color_button) {
-        goal_color_button.style.backgroundColor = 'white';
-        goal_color_button.style.border = "1px solid white";
-      }
-    }
-    // Set target color of the button for all clients to see
-    if (target_color_1_button) {
-      target_color_1_button.style.backgroundColor = target_color;
-    }
-    // Update the state row's textContent for all clients to see
-    state = get_state(blimp_dict['state_machine']);
-    if (sortedStateRows[blimp_name]) {
-      sortedStateRows[blimp_name].textContent = state;
-    }
-  }
-  
-  // Convert the values to Float64
-  var motorCommands = new Float64Array([leftStickX, leftStickY, rightStickX, rightStickY]);
-  //console.log(motorCommands);
-
-  // Convert the Float64Array to binary data
-  const binaryData = new Uint8Array(motorCommands.buffer)
-  // Add UI for only connected blimp eventually
-  socket.emit('update_motorCommands', binaryData);
-
-  // Set a new timer for this blimp name
-  blimp_timers[blimp_name] = setTimeout(() => {
-      // Check if the blimp name is in the list
-      if (blimpList.includes(blimp_name)) {
-        sortedNameRows.forEach(function(row) {
-          if (row.textContent === blimp_name) {
-              row.textContent = ''; // Clear the content of the cell
-          }
-        });
-
-        blimpList = blimpList.filter(item => item !== blimp_name);
-
-        // Remove the state row from the map if the key matches blimp_name
-        Object.entries(sortedStateRows).forEach(([key, value]) => {
-          if (key === blimp_name) {
-            value.textContent = ''; // Set the value to ''
-          }
-        });
-
-        let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
-        if (goal_color_button) {
-          goal_color_button.remove();
-        }
-
-        let target_color_1_button = document.getElementById(`target_color_1_button_${blimp_name}`);
-        let target_color_2_button = document.getElementById(`target_color_2_button_${blimp_name}`);
-        if (target_color_1_button) {
-          target_color_1_button.remove();
-        }
-        if (target_color_2_button) {
-          target_color_2_button.remove();
-        }
-      }
-
-      // Clear the timer entry
-      delete blimp_timers[blimp_name];
-
-  }, TIMEOUT);
-}
+//Keeps track of which blimp the controller is connected to
+var Controller_1_currConnection = -1;
 
 function update_target_button_color(blimp_dict, target_color, target_color_button) {
     // Get data from blimp dictionary
@@ -638,4 +447,236 @@ function handleGamepadButtons(gamepad) {
     bButton: gamepad.buttons[1].pressed,
     aButton: gamepad.buttons[0].pressed
   };
+
+}
+
+function update_basestation(blimp_dict) {
+  // Get data from blimp dictionary
+  let blimp_name = blimp_dict["blimp_name"];
+
+  // Clear the timers
+  clearTimeout(blimp_timers[blimp_name]);
+
+  // Get goal color from the data
+  let goal_color;
+  if (blimp_dict["goal_color"] === 0) {
+      goal_color = 'orange';
+  } else {
+      goal_color = 'yellow';
+  }
+
+  // Get the goal color button for the specific blimp
+  let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
+
+  // Number of targets
+  let target_num;
+
+  // Target Buttons
+  let target_color_1_button;
+  let target_color_2_button;
+
+  // Target Color (Attack Blimps)
+  let target_color;
+
+  // State Machine
+  let state;
+
+  // Get blimp type from the data
+  let blimp_type = blimp_dict["blimp_type"];
+  if (blimp_type === 0) {
+    target_num = 2;
+    target_color_1_button = document.getElementById(`target_color_1_button_${blimp_name}`);
+    target_color_2_button = document.getElementById(`target_color_2_button_${blimp_name}`);
+  }
+  else {
+    target_num = 1;
+    target_color_1_button = document.getElementById(`target_color_1_button_${blimp_name}`);
+    if (blimp_dict["target_color"] === 0) {
+      target_color = 'blue';
+    } else {
+      target_color = 'red';
+    }    
+  }
+
+  // Only proceed if the name is not in the table
+  if (!(blimpList.includes(blimp_name))) {
+    // Create a new row and cell for the blimp name
+    var newRow = document.createElement('h3');
+    var newCell = document.createElement('h3');
+    newCell.textContent = blimp_name;
+    newRow.appendChild(newCell);
+    blimpsTableBody.appendChild(newRow);
+
+    // Store the row in the blimpList
+    blimpList.push(blimp_name);
+
+    // Sort the name rows based on your desired order
+    sortedNameRows = Array.from(blimpsTableBody.getElementsByTagName('h3'));
+    sortedNameRows.sort(function(a, b) {
+        return blimpOrder.indexOf(a.textContent) - blimpOrder.indexOf(b.textContent);
+    });
+    blimpsTableBody.innerHTML = ''; // Clear the table
+    sortedNameRows.forEach(function(row) {
+      blimpsTableBody.appendChild(row);
+    });
+
+    // State Machine
+    state = get_state(blimp_dict['state_machine']);
+
+    // Clear the statesTableBody
+    statesTableBody.innerHTML = '';
+
+    // Create a new row and cell for the blimp state
+    var newRow = document.createElement('h3');
+    var newCell = document.createElement('h3');
+    newCell.textContent = state; // Get the state using blimp_name
+    newRow.appendChild(newCell);
+    statesTableBody.appendChild(newRow);
+
+    // Store the state in sortedStateRows using blimp_name as the key
+    sortedStateRows[blimp_name] = newRow;
+
+    // Sort the state rows based on the blimp names and their states
+    var sortedRows = Object.keys(sortedStateRows).sort(function (a, b) {
+        return blimpOrder.indexOf(a) - blimpOrder.indexOf(b);
+    });
+
+    // Clear the existing content of statesTableBody
+    statesTableBody.innerHTML = '';
+
+    // Append the sorted rows to statesTableBody
+    sortedRows.forEach(function (rowKey) {
+        statesTableBody.appendChild(sortedStateRows[rowKey]);
+    });
+
+    if (target_num === 2) {
+      update_target_button_colors(blimp_dict, 'green', target_color_1_button, 'purple', target_color_2_button);
+      update_goal_button_color(blimp_dict, goal_color, goal_color_button);
+    }
+    // Target number is 1 (Attack Blimps)
+    else {
+      update_target_button_color(blimp_dict, target_color, target_color_1_button);
+      update_empty_button_color(blimp_dict, 'white', goal_color_button);
+    }
+    // Sort the target rows based on your desired order
+    sortedTargetRows = Array.from(targetButtonsContainer.querySelectorAll('[blimp_name]'));
+    sortedTargetRows.sort(function(a, b) {
+        const blimpNameA = a.getAttribute('blimp_name');
+        const blimpNameB = b.getAttribute('blimp_name');
+        return blimpOrder.indexOf(blimpNameA) - blimpOrder.indexOf(blimpNameB);
+    });
+    
+    targetButtonsContainer.innerHTML = ''; // Clear the container
+    sortedTargetRows.forEach(function(row) {
+        targetButtonsContainer.appendChild(row);
+    });
+  }
+  else {
+
+    //If up or down is pressed, then check if a connection had been established
+    //WARNING: This logic only works with one blimp
+    //Gamepad not working
+    
+    if(controllerState.up || controllerState.down)
+    {
+      //If not, establish connection with first value in blimp list
+      if(Controller_1_currConnection === -1)
+      {
+        blimp_dict["connected"] = true;
+        socket.emit('update_connection', blimp_dict);
+        Controller_1_currConnection = 0;
+      }
+    }
+
+    if(controllerState.left) // && !gamepad.buttons[14].pressed)
+    {
+      console.log("Disconnecting " + blimp_name);
+      blimp_dict["connected"] = false;
+      socket.emit('update_connection', blimp_dict);
+      Controller_1_currConnection = -1;
+    }
+
+    // Set goal color of the button for all clients to see
+    if (blimp_type === 0) {
+      if (goal_color_button) {
+        goal_color_button.style.backgroundColor = goal_color;
+      }
+    }
+    else {
+      if (goal_color_button) {
+        goal_color_button.style.backgroundColor = 'white';
+        goal_color_button.style.border = "1px solid white";
+      }
+    }
+    // Set target color of the button for all clients to see
+    if (target_color_1_button) {
+      target_color_1_button.style.backgroundColor = target_color;
+    }
+
+    //Verify if controller is connected to this blimp
+    if(blimp_dict["connected"])
+    {
+      console.log(blimp_name + " is connected");
+      sortedStateRows[blimp_name].style.color = 'blue';
+    }
+    else
+    {
+      console.log(blimp_name + " Not working");      
+      sortedStateRows[blimp_name].style.color = 'black';
+    }
+
+    // Update the state row's textContent for all clients to see
+    state = get_state(blimp_dict['state_machine']);
+    if (sortedStateRows[blimp_name]) {
+      sortedStateRows[blimp_name].textContent = state;
+    }
+  }
+  
+  // Convert the values to Float64
+  var motorCommands = new Float64Array([leftStickX, leftStickY, rightStickX, rightStickY]);
+  //console.log(motorCommands);
+
+  // Convert the Float64Array to binary data
+  const binaryData = new Uint8Array(motorCommands.buffer)
+  // Add UI for only connected blimp eventually
+  socket.emit('update_motorCommands', binaryData);
+
+  // Set a new timer for this blimp name
+  blimp_timers[blimp_name] = setTimeout(() => {
+      // Check if the blimp name is in the list
+      if (blimpList.includes(blimp_name)) {
+        sortedNameRows.forEach(function(row) {
+          if (row.textContent === blimp_name) {
+              row.textContent = ''; // Clear the content of the cell
+          }
+        });
+
+        blimpList = blimpList.filter(item => item !== blimp_name);
+
+        // Remove the state row from the map if the key matches blimp_name
+        Object.entries(sortedStateRows).forEach(([key, value]) => {
+          if (key === blimp_name) {
+            value.textContent = ''; // Set the value to ''
+          }
+        });
+
+        let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
+        if (goal_color_button) {
+          goal_color_button.remove();
+        }
+
+        let target_color_1_button = document.getElementById(`target_color_1_button_${blimp_name}`);
+        let target_color_2_button = document.getElementById(`target_color_2_button_${blimp_name}`);
+        if (target_color_1_button) {
+          target_color_1_button.remove();
+        }
+        if (target_color_2_button) {
+          target_color_2_button.remove();
+        }
+      }
+
+      // Clear the timer entry
+      delete blimp_timers[blimp_name];
+
+  }, TIMEOUT);
 }

@@ -34,7 +34,7 @@ body {
     align-items: flex-start;
   }
   .column {
-    min-width: calc(100vw / 7); /* Each column is one-sixth of the page width */
+    min-width: calc(110vw / 7); /* Each column is one-sixth of the page width */
     flex-wrap: wrap; /* Allow columns to wrap to a new line if needed */
     text-transform: uppercase; /* Capitalize the header name */
     /* height: 50px; /* Adjust this height as needed */

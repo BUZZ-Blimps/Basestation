@@ -16,6 +16,7 @@ import sys
 import signal
 import numpy as np
 import json
+import subprocess
 
 # Blimp Class
 from blimp import Blimp
@@ -42,7 +43,7 @@ class Basestation(Node):
         self.loopSpeed = 10
         timer_period = 1.0/self.loopSpeed
         self.timer = self.create_timer(timer_period, self.timerLoop)
-        self.timeout = 2
+        self.timeout = 6
         
         # Identify Topic for Teensy to Check if Basestation is On
         self.topicName_identify = "identify"
@@ -173,6 +174,7 @@ class BlimpNodeHandler:
         self.blimpID = None
         self.lastReceived_blimpID = None
         self.blimp_name = None
+        self.identified_count = 0
 
         self.pub_auto = None
         self.pub_goal_color = None
@@ -202,7 +204,8 @@ class BlimpNodeHandler:
             else:
                 self.parentNode.get_logger().info("BlimpID already identified: %s" % msg.data)
                 self.parentNode.numBlimps += 1
-                self.parentNode.get_logger().info("%i" % self.parentNode.numBlimps)
+                # Not working
+                #self.parentNode.get_logger().info("%i" % self.parentNode.numBlimps)
 
         self.lastReceived_blimpID = self.parentNode.get_clock().now()
         
@@ -235,15 +238,35 @@ class BlimpNodeHandler:
             blimp.blimp_type = 1
 
     def get_blimp_name(self):
+        # Blimp Name not Recognized (This should not happen!)
         self.blimp_name = 'Error'
-        if self.blimpID == 'SillyAhBlimp':
-            self.blimp_name = 'Silly Ah Blimp'
-        elif self.blimpID == 'BurnCreamBlimp':
+
+        # Real Blimps #
+
+        # Catching Blimps
+        if self.blimpID == 'BurnCreamBlimp':
             self.blimp_name = 'Burn Cream Blimp'
+        elif self.blimpID == 'SillyAhBlimp':
+            self.blimp_name = 'Silly Ah Blimp'
+        elif self.blimpID == 'TurboBlimp':
+            self.blimp_name = 'Turbo Blimp'
+        elif self.blimpID == 'GameChamberBlimp':
+            self.blimp_name = 'Game Chamber Blimp'
+        elif self.blimpID == 'FiveGuysBlimp':
+            self.blimp_name = 'Five Guys Blimp'   
+
+        # Attacking Blimps   
+        # None so far...    
+
+        # Fake Blimps #
+
+        # Catching Blimps
         elif self.blimpID == 'Catch2':
             self.blimp_name = 'Catch 2'
         elif self.blimpID == 'Catch1':
             self.blimp_name = 'Catch 1'
+
+        # Attacking Blimps
         elif self.blimpID == 'Attack1':
             self.blimp_name = 'Attack 1'
         elif self.blimpID == 'Attack2':
@@ -283,6 +306,8 @@ class BlimpNodeHandler:
     # Update Target Color
     @socketio.on('update_motorCommands')
     def update_motorCommands(data):
+        # Fix this When Connection to Controller are working!!!
+
         #print('\n')
         array = np.frombuffer(data, dtype=np.float64)
         motorCommands = array.tolist()
@@ -300,7 +325,14 @@ class BlimpNodeHandler:
     def update_blimp_dict(data):
         global blimps
         blimp_name = data['blimp_name']
-        blimps[blimp_name].update_dict(data)
+        blimps[blimp_name] = data[blimp_name]
+
+    #Update Connection
+    @socketio.on('update_connection')
+    def update_connection(data):
+        global blimps
+        blimp_name = data['blimp_name']
+        blimps[blimp_name].connected = data['connected']
 
     # Update Target Color
     @socketio.on('update_target_color')
@@ -309,20 +341,12 @@ class BlimpNodeHandler:
         blimp_name = data['blimp_name']
         blimps[blimp_name].target_color = data['target_color']
 
-        # Testing
-        # target_color = data['target_color']
-        # print(target_color)
-
     # Update Goal Color
     @socketio.on('update_goal_color')
     def update_goal_color(data):
         global blimps
         blimp_name = data['blimp_name']
         blimps[blimp_name].goal_color = data['goal_color']
-
-        # Testing
-        # goal_color = data['goal_color']
-        # print(goal_color)
 
     def createPublishers(self):
         topic_auto =            "/" + self.nodeName + "/auto"
@@ -397,18 +421,29 @@ def terminate(signal, frame):
     rclpy.shutdown()
     sys.exit(0)
 
+def check_wifi_ssid():
+    output = subprocess.check_output(["iwconfig", "2>/dev/null | grep 'ESSID:' | cut -d '\"' -f 2"], shell=True)
+    ssid = output.decode('utf-8').strip()
+    if(ssid.find("COREBlimp") == -1 and ssid.find("COREBlimp_5G_1") == -1 and ssid.find("COREBlimp_5G_2") == -1):
+        print("Invalid WiFi selected! Must be on COREBlimp")
+        return False
+    else:
+        return True
+
 if __name__ == '__main__':
-    # Create init function for the following values
-    # Initialize default value i.e. goal color value (default: 0)
-    # Could make these read from a text file to make them permanent profiles
-    global blimps
-    blimps = {}
+    
+    if(check_wifi_ssid()):
+        # Create init function for the following values
+        # Initialize default value i.e. goal color value (default: 0)
+        # Could make these read from a text file to make them permanent profiles
+        global blimps
+        blimps = {}
 
-    # Terminate if Ctrl+C Caught
-    signal.signal(signal.SIGINT, terminate)
+        # Terminate if Ctrl+C Caught
+        signal.signal(signal.SIGINT, terminate)
 
-    ros_thread = threading.Thread(target=ros_thread)
-    ros_thread.start()
+        ros_thread = threading.Thread(target=ros_thread)
+        ros_thread.start()
 
-    socketio.run(app, host='0.0.0.0', port=5000)
+        socketio.run(app, host='192.168.0.200', port=5000)
 
