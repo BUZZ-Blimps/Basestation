@@ -217,6 +217,15 @@ function update_basestation(blimp_dict) {
       sortedNameRows[blimp_name].style.color = 'black';  
       sortedStateRows[blimp_name].style.color = 'black';
     }
+
+    if(blimp_dict["auto"])
+    {
+      sortedNameRows[blimp_name].textContent = blimp_name + ' - A';
+    }
+    else
+    {
+      sortedNameRows[blimp_name].textContent = blimp_name
+    }
   }
 
   // Set a new timer for this blimp name
@@ -656,21 +665,34 @@ function handleGamepadButtons(gamepad) {
   
   // Check if the right trigger was pressed in the previous state but is not pressed now (released)
   if (controllerState.rightTrigger && gamepad.buttons[7].value === 0) {
+    connected_blimp_name = blimpList[Controller_1_currConnection];
+    if (typeof connected_blimp_name !== "undefined") {
+      socket.emit('update_auto', connected_blimp_name);
+    }
     console.log('Xbox Right Trigger released.');
   }
 
   // Check if the left trigger was pressed in the previous state but is not pressed now (released)
   if (controllerState.leftTrigger && gamepad.buttons[6].value === 0) {
+    socket.emit('update_auto_panic');
     console.log('Xbox Left Trigger released.');
   }
 
   // Check if the right bumper was pressed in the previous state but is not pressed now (released)
   if (controllerState.rightBumper && !gamepad.buttons[5].pressed) {
+    connected_blimp_name = blimpList[Controller_1_currConnection];
+    if (typeof connected_blimp_name !== "undefined") {
+      socket.emit('update_grabbing', connected_blimp_name);
+    }
     console.log('Xbox Right Bumper released.');
   }
 
   // Check if the left bumper was pressed in the previous state but is not pressed now (released)
   if (controllerState.leftBumper && !gamepad.buttons[4].pressed) {
+    connected_blimp_name = blimpList[Controller_1_currConnection];
+    if (typeof connected_blimp_name !== "undefined") {
+      socket.emit('update_shooting', connected_blimp_name);
+    }
     console.log('Xbox Left Bumper released.');
   }
 

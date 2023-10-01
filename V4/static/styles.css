@@ -34,7 +34,14 @@ body {
     align-items: flex-start;
   }
   .column {
-    min-width: calc(110vw / 7); /* Each column is one-sixth of the page width */
+    min-width: calc(100vw / 7); /* Each column is one-sixth of the page width */
+    flex-wrap: wrap; /* Allow columns to wrap to a new line if needed */
+    text-transform: uppercase; /* Capitalize the header name */
+    /* height: 50px; /* Adjust this height as needed */
+    flex-direction: column;
+  }
+  .blimp-column {
+    min-width: calc(100vw / 5); /* Each column is one-sixth of the page width */
     flex-wrap: wrap; /* Allow columns to wrap to a new line if needed */
     text-transform: uppercase; /* Capitalize the header name */
     /* height: 50px; /* Adjust this height as needed */
@@ -53,7 +60,8 @@ body {
   }
   .grid-container {
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
+    align-items: center;
     margin-top: 1px;
   }
   #grid1, #grid2, #grid3, #grid4 {

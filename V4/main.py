@@ -222,6 +222,8 @@ class BlimpNodeHandler:
         self.publish_goal_color()
         self.publish_motorCommands()
         self.publish_auto()
+        self.publish_grabbing()
+        self.publish_shooting()
 
     # Continually Poll State Machine Data from Teensy
     def state_machine_callback(self, msg):
@@ -302,20 +304,19 @@ class BlimpNodeHandler:
         msg.data = blimps[self.blimp_name].auto
         self.pub_auto.publish(msg)
 
-    # Update Target Color
-    @socketio.on('update_motorCommands')
-    def update_motorCommands(data):
-        #print('\n')
-        array = np.frombuffer(data, dtype=np.float64)
-        motorCommands = array.tolist()
-        #print('Received Data:', motorCommands)
-        #print('\n')
-        # Iterate through which blimp_name is connected
+    def publish_grabbing(self):
         global blimps
-        for blimp in blimps:
-            if blimps[blimp].connected == True:
-                blimps[blimp].motorCommands = motorCommands
-                #print(blimps[blimp].motorCommands)
+        # Publish grabbing value to the ROS topic
+        msg = Bool()
+        msg.data = blimps[self.blimp_name].grabbing
+        self.pub_grabbing.publish(msg)
+
+    def publish_shooting(self):
+        global blimps
+        # Publish shooting value to the ROS topic
+        msg = Bool()
+        msg.data = blimps[self.blimp_name].shooting
+        self.pub_shooting.publish(msg)
 
     # Update Blimp Class with Dictionary Data
     @socketio.on('update_blimp_dict')
@@ -330,18 +331,63 @@ class BlimpNodeHandler:
         global blimps
         blimps[data].connected = True
 
-    # Update Connection
+    # Update Disconnection
     @socketio.on('update_disconnection')
     def update_disconnection(data):
         global blimps
         blimps[data].connected = False
 
-    # Update Connection
+    # Update Total Disconnection
     @socketio.on('update_total_disconnection')
     def update_total_disconnection():
         global blimps
         for blimp in blimps:
             blimps[blimp].connected = False
+
+    # Update Motor Commands
+    @socketio.on('update_motorCommands')
+    def update_motorCommands(data):
+        #print('\n')
+        array = np.frombuffer(data, dtype=np.float64)
+        motorCommands = array.tolist()
+        #print('Received Data:', motorCommands)
+        #print('\n')
+        # Iterate through which blimp_name is connected
+        global blimps
+        for blimp in blimps:
+            if blimps[blimp].connected == True:
+                blimps[blimp].motorCommands = motorCommands
+                #print(blimps[blimp].motorCommands)
+
+    # Update Grabbing
+    @socketio.on('update_grabbing')
+    def update_grabbing(data):
+        global blimps
+        blimps[data].grabbing = not blimps[data].grabbing
+        print("grabbing")
+        print(data)
+        print(blimps[data].grabbing)
+
+    # Update Shooting
+    @socketio.on('update_shooting')
+    def update_shooting(data):
+        global blimps
+        blimps[data].shooting = not blimps[data].shooting
+        print("shooting")
+        print(data)
+        print(blimps[data].shooting)
+
+    # Update Autonomous Mode
+    @socketio.on('update_auto_panic')
+    def update_auto_panic():
+        global blimps
+        global auto_panic
+        for blimp in blimps:
+            if auto_panic == False:
+                blimps[blimp].auto = True
+            elif auto_panic == True:
+                blimps[blimp].auto = False
+        auto_panic = not auto_panic
 
     # Update Target Color
     @socketio.on('update_target_color')
@@ -446,6 +492,9 @@ if __name__ == '__main__':
         # Could make these read from a text file to make them permanent profiles
         global blimps
         blimps = {}
+
+        global auto_panic
+        auto_panic = False
 
         # Terminate if Ctrl+C Caught
         signal.signal(signal.SIGINT, terminate)
