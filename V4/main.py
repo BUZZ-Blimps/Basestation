@@ -144,7 +144,7 @@ class Basestation(Node):
 
     # Check if Node Name is valid
     def check_node_name(self, nodeName):
-        if nodeName == 'SillyAhBlimp' or nodeName == 'BurnCreamBlimp' or nodeName == 'Catch2' or nodeName == 'Catch1' or nodeName == 'Attack1' or nodeName == 'Attack2':
+        if nodeName == 'BurnCreamBlimp' or nodeName == 'SillyAhBlimp' or nodeName == 'TurboBlimp' or nodeName == 'GameChamberBlimp' or nodeName == 'FiveGuysBlimp' or nodeName == 'Catch2' or nodeName == 'Catch1' or nodeName == 'Attack1' or nodeName == 'Attack2':
             return True
         else:
             return False
@@ -292,9 +292,8 @@ class BlimpNodeHandler:
         global blimps
         # Publish motor commands value to the ROS topic
         msg = Float64MultiArray()
-        # msg.data = blimps[self.blimp_name].motorCommands
-        # msg.data = blimps['Burn Cream Blimp'].motorCommands
-        # self.pub_motorCommands.publish(msg)
+        msg.data = blimps[self.blimp_name].motorCommands
+        self.pub_motorCommands.publish(msg)
 
     def publish_auto(self):
         global blimps
@@ -306,8 +305,6 @@ class BlimpNodeHandler:
     # Update Target Color
     @socketio.on('update_motorCommands')
     def update_motorCommands(data):
-        # Fix this When Connection to Controller are working!!!
-
         #print('\n')
         array = np.frombuffer(data, dtype=np.float64)
         motorCommands = array.tolist()
@@ -315,10 +312,10 @@ class BlimpNodeHandler:
         #print('\n')
         # Iterate through which blimp_name is connected
         global blimps
-        # Hard-Coded for Testing
-        blimp_name = 'Burn Cream Blimp'
-        #blimps[blimp_name].motorCommands = motorCommands
-        #print(blimps[blimp_name].motorCommands)
+        for blimp in blimps:
+            if blimps[blimp].connected == True:
+                blimps[blimp].motorCommands = motorCommands
+                #print(blimps[blimp].motorCommands)
 
     # Update Blimp Class with Dictionary Data
     @socketio.on('update_blimp_dict')
@@ -327,12 +324,24 @@ class BlimpNodeHandler:
         blimp_name = data['blimp_name']
         blimps[blimp_name] = data[blimp_name]
 
-    #Update Connection
+    # Update Connection
     @socketio.on('update_connection')
     def update_connection(data):
         global blimps
-        blimp_name = data['blimp_name']
-        blimps[blimp_name].connected = data['connected']
+        blimps[data].connected = True
+
+    # Update Connection
+    @socketio.on('update_disconnection')
+    def update_disconnection(data):
+        global blimps
+        blimps[data].connected = False
+
+    # Update Connection
+    @socketio.on('update_total_disconnection')
+    def update_total_disconnection():
+        global blimps
+        for blimp in blimps:
+            blimps[blimp].connected = False
 
     # Update Target Color
     @socketio.on('update_target_color')
@@ -390,7 +399,6 @@ class BlimpNodeHandler:
         self.pub_shooting.publish(msg_shooting)
         self.pub_baseBarometer.publish(msg_baseBarometer)
         """
-
 
 # Handle user connection to webpage
 @socketio.on('connect')
