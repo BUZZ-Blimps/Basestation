@@ -364,18 +364,18 @@ class BlimpNodeHandler:
     def update_grabbing(data):
         global blimps
         blimps[data].grabbing = not blimps[data].grabbing
-        print("grabbing")
-        print(data)
-        print(blimps[data].grabbing)
 
     # Update Shooting
     @socketio.on('update_shooting')
     def update_shooting(data):
         global blimps
         blimps[data].shooting = not blimps[data].shooting
-        print("shooting")
-        print(data)
-        print(blimps[data].shooting)
+
+    # Update Shooting
+    @socketio.on('update_auto')
+    def update_auto(data):
+        global blimps
+        blimps[data].auto = not blimps[data].auto
 
     # Update Autonomous Mode
     @socketio.on('update_auto_panic')
