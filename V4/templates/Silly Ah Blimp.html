@@ -1,9 +1,17 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="UTF-8">
+        <title>Silly Ah Blimp Livestream</title>
 
-    </head>
+        <!-- Include external style sheet-->
+        <link rel="stylesheet" href="{{url_for('static', filename='styles.css')}}">
+        
+        <!-- Include the SocketIO script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <body>
-        <p>This is the Silly Ah Blimp Video Page</p>
+        <h4>Silly Ah Blimp Livestream</h4>
+        <img src="{{ url_for('video_feed', feed_name='Silly Ah Blimp') }}" alt="Stream Unavailable">
     </body>
-</html>>
+</html>

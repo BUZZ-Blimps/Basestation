@@ -255,7 +255,7 @@ class BlimpNodeHandler:
 
     # Continually Poll Image Raw Data from Pi
     def image_raw_callback(self, msg):
-        print("Hello")
+        # print("Hello")
         global blimps
         if self.blimpID is not None:
             try:
@@ -263,17 +263,14 @@ class BlimpNodeHandler:
                 cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
                 self.frame = cv_image
 
-                # print(type(self.frame))
-
                 if self.frame is not None:
                     flag, jpeg = cv2.imencode('.jpg', self.frame)
-                    self.frame = jpeg.tobytes()
-                    yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + self.frame + b'\r\n\r\n')
-                    blimps[self.blimp_name].frame = self.frame
+                    blimps[self.blimp_name].frame = jpeg
                 
                 # Uncomment the following line if you want to see the image using OpenCV
-                cv2.imshow("Received Image", cv_image)
-                cv2.waitKey(1)
+                # cv2.imshow("Received Image", cv_image)
+                # cv2.waitKey(1)
+
             except Exception as e:
                 self.parentNode.get_logger().error(f"Failed to convert image: {e}")
 
@@ -504,17 +501,18 @@ def index():
     client_ip = request.remote_addr
     return render_template('main.html', client_ip=client_ip)
 
+def generate(feed_name):
+    while True:
+        # Yield the output frame in the byte format
+        yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(blimps[feed_name].frame) + b'\r\n')
+
 @app.route('/video_feed/<string:feed_name>')
 def video_feed(feed_name):
-    print(feed_name)
     global blimps
-    if feed_name in blimps:
-        frame = blimps[feed_name].frame
-        print("Image Available")
-        print(frame)
-        return Response(frame, mimetype='multipart/x-mixed-replace; boundary=frame')
+    if blimps[feed_name].frame is not None:\
+        return Response(generate(feed_name), mimetype='multipart/x-mixed-replace; boundary=frame')
     else:
-        print("No Image")
+        # print("No Image Found")
         return Response(status=204)
 
 # Streaming Endpoints
