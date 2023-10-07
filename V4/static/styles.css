@@ -117,6 +117,21 @@ body {
     margin-top: 39px;
     margin-bottom: 39px;
   }
+  h4 {
+    text-align: center;
+    font-size: 35px;
+    margin-top: 39px;
+    margin-bottom: 39px;
+  }
+  a {
+    text-align: center;
+    font-size: 25px;
+    margin-top: 39px;
+    margin-bottom: 39px;
+  }
+  .container {
+    text-align: center;
+  }
   #goalButton {
     width: 50px;
     height: 50px;

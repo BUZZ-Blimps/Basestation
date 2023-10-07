@@ -45,6 +45,9 @@ class Blimp:
         # Connected status
         self.connected = False  # Initially not connected
 
+        # Blimp Livestream Current Frame
+        self.frame = None
+
     def to_dict(self):
         return {
             "blimp_name": self.blimp_name,

@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 
 # Flask Packages
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
 from flask_socketio import SocketIO
 
 # ROS Packages
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from std_msgs.msg import String, Int64, Bool, Float64, Float64MultiArray
+
+# Livestream Packages
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+import cv2
 
 # Other Packages
 import threading
@@ -119,6 +125,17 @@ class Basestation(Node):
         # Subscribe to the State Machine Topic
         newBlimpNodeHandler.sub_state_machine = self.create_subscription(Int64, topic_state_machine, newBlimpNodeHandler.state_machine_callback, 10)
 
+        # Check for Image Raw Topic
+        topic_image_raw = "/" + blimp_node_name + "/left/image_raw"
+
+        # Subscribe to the Image Raw Topic
+        qos_profile = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10,
+            reliability=ReliabilityPolicy.BEST_EFFORT
+        )
+        newBlimpNodeHandler.sub_image_raw = self.create_subscription(Image, topic_image_raw, newBlimpNodeHandler.image_raw_callback, qos_profile)
+
         # Add Blimp Node Handler to List
         self.blimpNodeHandlers.append(newBlimpNodeHandler)
         
@@ -129,6 +146,7 @@ class Basestation(Node):
         self.recognizedBlimpNodes.append(blimp_node_name)
 
     # Stress Test This !!!
+    # Fix this function !!!
     def removeBlimpNodeHandler(self, blimpNodeHandler):
         # Remove Blime Node Name from List
         self.recognizedBlimpNodes.remove(blimpNodeHandler.nodeName)
@@ -184,6 +202,10 @@ class BlimpNodeHandler:
         self.pub_shooting = None
         # self.pub_base_barometer = None
 
+        # Livestream Most Recent Frame
+        self.frame = None
+        self.bridge = CvBridge()
+
     def listener_callback(self, msg):
         # Check blimp ID and give it a name on the Basestation
         # Make the following if statement a function !!!
@@ -230,6 +252,31 @@ class BlimpNodeHandler:
         global blimps
         if self.blimpID is not None:
             blimps[self.blimp_name].state_machine = msg.data
+
+    # Continually Poll Image Raw Data from Pi
+    def image_raw_callback(self, msg):
+        print("Hello")
+        global blimps
+        if self.blimpID is not None:
+            try:
+                # Convert the ROS Image message to a CV2 image (numpy ndarray)
+                cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+                self.frame = cv_image
+
+                # print(type(self.frame))
+
+                if self.frame is not None:
+                    flag, jpeg = cv2.imencode('.jpg', self.frame)
+                    self.frame = jpeg.tobytes()
+                    yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + self.frame + b'\r\n\r\n')
+                    blimps[self.blimp_name].frame = self.frame
+                
+                # Uncomment the following line if you want to see the image using OpenCV
+                cv2.imshow("Received Image", cv_image)
+                cv2.waitKey(1)
+            except Exception as e:
+                self.parentNode.get_logger().error(f"Failed to convert image: {e}")
+
 
     # Used for Attack Blimps Only
     def get_blimp_type(self, blimp):
@@ -451,10 +498,61 @@ class BlimpNodeHandler:
 def handle_connect():
     print('Client connected with IP:', request.remote_addr)
 
+#Main Basestation Page
 @app.route('/')
 def index():
     client_ip = request.remote_addr
     return render_template('main.html', client_ip=client_ip)
+
+@app.route('/video_feed/<string:feed_name>')
+def video_feed(feed_name):
+    print(feed_name)
+    global blimps
+    if feed_name in blimps:
+        frame = blimps[feed_name].frame
+        print("Image Available")
+        print(frame)
+        return Response(frame, mimetype='multipart/x-mixed-replace; boundary=frame')
+    else:
+        print("No Image")
+        return Response(status=204)
+
+# Streaming Endpoints
+@app.route('/Burn Cream Blimp')
+def burnCreamBlimpPage():
+    return render_template('Burn Cream Blimp.html')
+
+@app.route('/Silly Ah Blimp')
+def sillyAhhBlimpPage():
+    return render_template('Silly Ah Blimp.html')
+
+@app.route('/Turbo Blimp')
+def turboBlimpPage():
+    return render_template('Turbo Blimp.html')  
+
+@app.route('/Game Chamber Blimp')
+def gameChamberBlimpPage():
+    return render_template('Game Chamber Blimp.html')
+
+@app.route('/Five Guys Blimp')
+def fiveGuysBlimpPage():
+    return render_template('Five Guys Blimp.html')
+
+@app.route('/Catch 1')
+def catch1Page():
+    return render_template('Catch 1.html')
+
+@app.route('/Catch 2')
+def catch2Page():
+    return render_template('Catch 2.html')
+
+@app.route('/Attack 1')
+def attack1Page():
+    return render_template('Attack 1.html')
+
+@app.route('/Attack 2')
+def attack2Page():
+    return render_template('Attack 2.html')
 
 def ros_thread():
     rclpy.init()

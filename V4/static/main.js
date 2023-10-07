@@ -36,9 +36,13 @@ var sortedNameRows = {};
 
 var sortedStateRows = {};
 
+var sortedLinkRows = {};
+
 var blimpsTableBody = document.getElementById('blimpsTableBody');
 
 var statesTableBody = document.getElementById('statesTableBody');
+
+var streamTableBody = document.getElementById('streamTableBody');
 
 var goalButtonsContainer = document.querySelector('.goalButtonsContainer');
 
@@ -112,18 +116,18 @@ function update_basestation(blimp_dict) {
     // Store the row in the blimpList
     blimpList.push(blimp_name);
 
-    // Store the state in sortedStateRows using blimp_name as the key
+    // Store the state in sortedNameRows using blimp_name as the key
     sortedNameRows[blimp_name] = newRow;
 
-    // Sort the state rows based on the blimp names and their states
+    // Sort the name rows based on the blimp names and their states
     var sortedRows = Object.keys(sortedNameRows).sort(function (a, b) {
         return blimpOrder.indexOf(a) - blimpOrder.indexOf(b);
     });
 
-    // Clear the existing content of statesTableBody
+    // Clear the existing content of blimpsTableBody
     blimpsTableBody.innerHTML = '';
 
-    // Append the sorted rows to statesTableBody
+    // Append the sorted rows to blimpsTableBody
     sortedRows.forEach(function (rowKey) {
         blimpsTableBody.appendChild(sortedNameRows[rowKey]);
     });
@@ -178,6 +182,40 @@ function update_basestation(blimp_dict) {
     sortedTargetRows.forEach(function(row) {
         targetButtonsContainer.appendChild(row);
     });
+
+    // Clear the existing content of streamTableBody
+    streamTableBody.innerHTML = '';
+    
+    // Create hyperlink on basestation
+    var newRow = document.createElement('h3');
+    var newCell = document.createElement('h3');
+    var hyperlink = document.createElement('a');
+
+    // Set the hyperlink attributes
+    hyperlink.href = "/" + blimp_name;
+    hyperlink.target = "_blank";  // This will open the link in a new tab/window
+    hyperlink.textContent = "View Stream";
+
+    // Append the hyperlink to the newCell and then to the newRow
+    newCell.appendChild(hyperlink);
+    newRow.appendChild(newCell);
+    streamTableBody.appendChild(newRow);
+
+    // Store the link in sortedLinkRows using blimp_name as the key
+    sortedLinkRows[blimp_name] = newRow;
+
+    // Sort the link rows based on the blimp names
+    var sortedRows = Object.keys(sortedLinkRows).sort(function (a, b) {
+      return blimpOrder.indexOf(a) - blimpOrder.indexOf(b);
+    });
+
+    // Append the sorted rows to streamTableBody
+    sortedRows.forEach(function (rowKey) {
+      streamTableBody.appendChild(sortedLinkRows[rowKey]);
+    });
+
+    // Append the sorted rows to streamTableBody
+    //hyperlink.href = "https://" + client_ip + "/" + blimp_name;    
   }
   else {
 
@@ -261,6 +299,13 @@ function update_basestation(blimp_dict) {
         if (target_color_2_button) {
           target_color_2_button.remove();
         }
+
+        // Remove the link row from the map if the key matches blimp_name
+        Object.entries(sortedLinkRows).forEach(([key, value]) => {
+          if (key === blimp_name) {
+            value.textContent = ''; // Set the value to ''
+          }
+        });
       }
 
       // Clear the timer entry
