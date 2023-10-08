@@ -48,6 +48,9 @@ class Blimp:
         # Blimp Livestream Current Frame
         self.frame = None
 
+        # Bounding Box Values
+        self.bounding_box = None
+
     def to_dict(self):
         return {
             "blimp_name": self.blimp_name,
@@ -60,7 +63,7 @@ class Blimp:
             "goal_color": self.goal_color,
             "target_color": self.target_color,
             "state_machine": self.state_machine,
-            "connected": self.connected  # Include connected status
+            "connected": self.connected
         }
 
     def update_dict(self, data_dict):
@@ -85,4 +88,4 @@ class Blimp:
         if "state_machine" in data_dict:
             self.state_machine = data_dict["state_machine"]
         if "connected" in data_dict:
-            self.connected = data_dict["connected"]  # Update connected status
+            self.connected = data_dict["connected"]   

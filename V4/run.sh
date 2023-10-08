@@ -12,6 +12,8 @@ echo "Getting Logs..."
 
 ./freePort.sh
 
+source ~/ros2_stereo/install/setup.bash
+
 # Use -o flag to open website and run the program
 if [ "$1" == "-o" ]; then
     xdg-open "$URL" > /dev/null 2>&1;

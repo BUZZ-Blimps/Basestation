@@ -120,8 +120,19 @@ body {
   h4 {
     text-align: center;
     font-size: 35px;
-    margin-top: 39px;
+    margin-top: 15px;
     margin-bottom: 39px;
+  }
+  h5 {
+    text-align: left;
+    font-size: 25px;
+    margin-bottom: 5px;
+  }
+  h6 {
+    text-align: left;
+    font-size: 21px;
+    margin-top: 20px;
+    margin-bottom: 5px;
   }
   a {
     text-align: center;
@@ -131,6 +142,19 @@ body {
   }
   .container {
     text-align: center;
+  }
+  .container2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .video-stream {
+      flex: 0 0 100%;
+  }
+  .data-display {
+      flex: 0 0 50%;
+      padding: 20px;
+      border-left: 1px solid #ccc;
   }
   #goalButton {
     width: 50px;

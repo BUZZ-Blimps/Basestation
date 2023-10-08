@@ -23,6 +23,11 @@ socket.on('update', (blimp_dict) => {
     update_basestation(blimp_dict);
 });
 
+socket.on('remove', (blimp_name) => {
+  //console.log(blimp_name)
+  remove_blimp(blimp_name);
+});
+
 // Catching Blimps before Attack Blimps
 var blimpOrder = ["Burn Cream Blimp", "Silly Ah Blimp", "Turbo Blimp", "Game Chamber Blimp", "Five Guys Blimp", "Catch 1", "Catch 2", "Attack 1", "Attack 2"];
 
@@ -267,51 +272,52 @@ function update_basestation(blimp_dict) {
   }
 
   // Set a new timer for this blimp name
-  blimp_timers[blimp_name] = setTimeout(() => {
-      // Check if the blimp name is in the list
-      if (blimpList.includes(blimp_name)) {
-        // Remove the name row from the map if the key matches blimp_name
-        Object.entries(sortedNameRows).forEach(([key, value]) => {
-          if (key === blimp_name) {
-            value.textContent = ''; // Set the value to ''
-          }
-        });
+  // blimp_timers[blimp_name] = setTimeout(() => {
+  //     console.log(blimp_name);
+  //     // Check if the blimp name is in the list
+  //     if (blimpList.includes(blimp_name)) {
+  //       // Remove the name row from the map if the key matches blimp_name
+  //       Object.entries(sortedNameRows).forEach(([key, value]) => {
+  //         if (key === blimp_name) {
+  //           value.textContent = ''; // Set the value to ''
+  //         }
+  //       });
 
-        blimpList = blimpList.filter(item => item !== blimp_name);
+  //       blimpList = blimpList.filter(item => item !== blimp_name);
 
-        // Remove the state row from the map if the key matches blimp_name
-        Object.entries(sortedStateRows).forEach(([key, value]) => {
-          if (key === blimp_name) {
-            value.textContent = ''; // Set the value to ''
-          }
-        });
+  //       // Remove the state row from the map if the key matches blimp_name
+  //       Object.entries(sortedStateRows).forEach(([key, value]) => {
+  //         if (key === blimp_name) {
+  //           value.textContent = ''; // Set the value to ''
+  //         }
+  //       });
 
-        let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
-        if (goal_color_button) {
-          goal_color_button.remove();
-        }
+  //       let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
+  //       if (goal_color_button) {
+  //         goal_color_button.remove();
+  //       }
 
-        let target_color_1_button = document.getElementById(`target_color_1_button_${blimp_name}`);
-        let target_color_2_button = document.getElementById(`target_color_2_button_${blimp_name}`);
-        if (target_color_1_button) {
-          target_color_1_button.remove();
-        }
-        if (target_color_2_button) {
-          target_color_2_button.remove();
-        }
+  //       let target_color_1_button = document.getElementById(`target_color_1_button_${blimp_name}`);
+  //       let target_color_2_button = document.getElementById(`target_color_2_button_${blimp_name}`);
+  //       if (target_color_1_button) {
+  //         target_color_1_button.remove();
+  //       }
+  //       if (target_color_2_button) {
+  //         target_color_2_button.remove();
+  //       }
 
-        // Remove the link row from the map if the key matches blimp_name
-        Object.entries(sortedLinkRows).forEach(([key, value]) => {
-          if (key === blimp_name) {
-            value.textContent = ''; // Set the value to ''
-          }
-        });
-      }
+  //       // Remove the link row from the map if the key matches blimp_name
+  //       Object.entries(sortedLinkRows).forEach(([key, value]) => {
+  //         if (key === blimp_name) {
+  //           value.textContent = ''; // Set the value to ''
+  //         }
+  //       });
+  //     }
 
-      // Clear the timer entry
-      delete blimp_timers[blimp_name];
+  //     // Clear the timer entry
+  //     delete blimp_timers[blimp_name];
 
-  }, TIMEOUT);
+  // }, TIMEOUT);
 }
 
 function update_target_button_color(blimp_dict, target_color, target_color_button) {
@@ -488,6 +494,48 @@ function update_empty_button_color(blimp_dict, goal_color, goal_color_button, go
           goalButtonsContainer.appendChild(row);
       });
     }
+}
+
+function remove_blimp(blimp_name) {
+  // Check if the blimp name is in the list
+  if (blimpList.includes(blimp_name)) {
+    // Remove the name row from the map if the key matches blimp_name
+    Object.entries(sortedNameRows).forEach(([key, value]) => {
+      if (key === blimp_name) {
+        value.textContent = ''; // Set the value to ''
+      }
+    });
+
+    blimpList = blimpList.filter(item => item !== blimp_name);
+
+    // Remove the state row from the map if the key matches blimp_name
+    Object.entries(sortedStateRows).forEach(([key, value]) => {
+      if (key === blimp_name) {
+        value.textContent = ''; // Set the value to ''
+      }
+    });
+
+    let goal_color_button = document.getElementById(`goal_color_button_${blimp_name}`);
+    if (goal_color_button) {
+      goal_color_button.remove();
+    }
+
+    let target_color_1_button = document.getElementById(`target_color_1_button_${blimp_name}`);
+    let target_color_2_button = document.getElementById(`target_color_2_button_${blimp_name}`);
+    if (target_color_1_button) {
+      target_color_1_button.remove();
+    }
+    if (target_color_2_button) {
+      target_color_2_button.remove();
+    }
+
+    // Remove the link row from the map if the key matches blimp_name
+    Object.entries(sortedLinkRows).forEach(([key, value]) => {
+      if (key === blimp_name) {
+        value.textContent = ''; // Set the value to ''
+      }
+    });
+  }
 }
 
 function get_state(number) {

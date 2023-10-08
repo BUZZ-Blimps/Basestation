@@ -9,6 +9,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from std_msgs.msg import String, Int64, Bool, Float64, Float64MultiArray
+from yolo_msgs.msg import BoundingBox
 
 # Livestream Packages
 from sensor_msgs.msg import Image
@@ -42,6 +43,9 @@ class Basestation(Node):
         # Recognized Blimp Nodes
         self.recognizedBlimpNodes = []
 
+        # Recognized Blimp Nodes
+        self.currentBlimps = []
+
         # Blimp Node Handlers
         self.blimpNodeHandlers = []
 
@@ -69,8 +73,9 @@ class Basestation(Node):
     
     def updateBlimpNodeHandlers(self):
         # Testing
-        #print(self.recognizedBlimpNodes)
-        #print("Number of Blimps:", self.numBlimps)
+        # print(self.recognizedBlimpNodes)
+        # print(self.currentBlimps)
+        # print("Number of Blimps:", self.numBlimps)
 
         # Iterate through current nodes, look for new nodes
         infos = self.get_subscriptions_info_by_topic(self.topicName_identify)
@@ -78,7 +83,7 @@ class Basestation(Node):
             nodeName = info.node_name
             # Testing
             # self.get_logger().info('Node Name: "%s"' % nodeName)
-            if nodeName not in self.recognizedBlimpNodes:
+            if nodeName not in self.currentBlimps:
                 # Testing
                 # self.get_logger().info('Node Name: "%s"' % nodeName)
                 if self.check_node_name(nodeName) == True:
@@ -89,19 +94,29 @@ class Basestation(Node):
         # Check for nodes that timed out
         for blimpNodeHandler in self.blimpNodeHandlers:
             # No Blimp ID Received
-            if blimpNodeHandler.blimpID is None:
-                # Check if Blimp Timed Out
-                if self.getElapsedTime(blimpNodeHandler.timeCreated) > self.timeout:
-                    self.removeBlimpNodeHandler(blimpNodeHandler)
-            elif blimpNodeHandler.lastReceived_blimpID is None:
-                # Check if Blimp Timed Out
-                if self.getElapsedTime(blimpNodeHandler.timeCreated) > self.timeout:
-                    self.removeBlimpNodeHandler(blimpNodeHandler)
+            # if blimpNodeHandler.blimpID is None:
+            #     # Check if Blimp Timed Out
+            #     if self.getElapsedTime(blimpNodeHandler.timeCreated) > self.timeout:
+            #         self.removeBlimpNodeHandler(blimpNodeHandler)
+            # elif blimpNodeHandler.lastReceived_blimpID is None:
+            #     # Check if Blimp Timed Out
+            #     if self.getElapsedTime(blimpNodeHandler.timeCreated) > self.timeout:
+            #         self.removeBlimpNodeHandler(blimpNodeHandler)
             # Blimp ID Received
-            else:
-                # Double Check if Blimp Timed Out
-                if self.getElapsedTime(blimpNodeHandler.lastReceived_blimpID) > self.timeout:
-                    self.removeBlimpNodeHandler(blimpNodeHandler)
+            # else:
+            # Remove Blimp Node Handler from List
+            if blimpNodeHandler.blimpID is not None:
+                if blimpNodeHandler.blimpID not in self.currentBlimps:        
+                    self.blimpNodeHandlers.remove(blimpNodeHandler)
+                    del blimpNodeHandler
+                    continue
+
+            if blimpNodeHandler.blimpID is not None:
+                if blimpNodeHandler.lastReceived_blimpID is not None:
+                    print(blimpNodeHandler.blimpID + ": " + str(self.getElapsedTime(blimpNodeHandler.lastReceived_blimpID)))
+                    # Check if Blimp Timed Out
+                    if self.getElapsedTime(blimpNodeHandler.lastReceived_blimpID) > self.timeout:
+                        self.removeBlimpNodeHandler(blimpNodeHandler)
     
     # Stress Test This !!!
     def createBlimpNodeHandler(self, blimp_node_name):
@@ -136,6 +151,12 @@ class Basestation(Node):
         )
         newBlimpNodeHandler.sub_image_raw = self.create_subscription(Image, topic_image_raw, newBlimpNodeHandler.image_raw_callback, qos_profile)
 
+        # Check for State Machine Topic
+        topic_bounding_box = "/" + blimp_node_name + "/bounding_box"
+
+        # Subscribe to the State Machine Topic
+        newBlimpNodeHandler.sub_state_machine = self.create_subscription(BoundingBox, topic_bounding_box, newBlimpNodeHandler.bounding_box_callback, 10)
+
         # Add Blimp Node Handler to List
         self.blimpNodeHandlers.append(newBlimpNodeHandler)
         
@@ -148,17 +169,17 @@ class Basestation(Node):
     # Stress Test This !!!
     # Fix this function !!!
     def removeBlimpNodeHandler(self, blimpNodeHandler):
-        # Remove Blime Node Name from List
-        self.recognizedBlimpNodes.remove(blimpNodeHandler.nodeName)
-
-        # Remove Blimp Node Handler from List
-        self.blimpNodeHandlers.remove(blimpNodeHandler)
-
         # Timeout Detected for Blimp Node
         if blimpNodeHandler is not None:
             if blimpNodeHandler.blimpID is not None:
-                self.get_logger().info('Detected timeout of blimp ID "%s"' % blimpNodeHandler.blimpID)
-                self.numBlimps -= 1
+                if blimpNodeHandler.blimpID in self.currentBlimps:
+                    self.get_logger().info('Detected timeout of blimp ID "%s"' % blimpNodeHandler.blimpID)
+                    self.numBlimps -= 1
+
+                    if blimpNodeHandler.blimpID in self.currentBlimps:
+                        socketio.emit('remove', blimpNodeHandler.blimp_name)
+                        self.currentBlimps.remove(blimpNodeHandler.blimpID)
+                    del blimpNodeHandler
 
     # Check if Node Name is valid
     def check_node_name(self, nodeName):
@@ -228,8 +249,10 @@ class BlimpNodeHandler:
                 self.parentNode.numBlimps += 1
                 # Not working
                 #self.parentNode.get_logger().info("%i" % self.parentNode.numBlimps)
-
-        self.lastReceived_blimpID = self.parentNode.get_clock().now()
+        else:
+            if self.blimpID not in self.parentNode.currentBlimps:
+                self.parentNode.currentBlimps.append(self.blimpID)
+            self.lastReceived_blimpID = self.parentNode.get_clock().now()
         
         # Do we still need a heartbeat ???
         # if blimp is not None:
@@ -250,30 +273,81 @@ class BlimpNodeHandler:
     # Continually Poll State Machine Data from Teensy
     def state_machine_callback(self, msg):
         global blimps
-        if self.blimpID is not None:
-            blimps[self.blimp_name].state_machine = msg.data
+        if self.blimp_name is not None:
+            if self.blimp_name in blimps:
+                if self.blimpID is not None:
+                    blimps[self.blimp_name].state_machine = msg.data
 
     # Continually Poll Image Raw Data from Pi
     def image_raw_callback(self, msg):
-        # print("Hello")
         global blimps
-        if self.blimpID is not None:
-            try:
-                # Convert the ROS Image message to a CV2 image (numpy ndarray)
-                cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-                self.frame = cv_image
+        if self.blimp_name is not None:
+            if self.blimp_name in blimps:
+                if self.blimpID is not None:
+                    try:
+                        # Convert the ROS Image message to a CV2 image (numpy ndarray)
+                        cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+                        self.frame = cv_image
 
-                if self.frame is not None:
-                    flag, jpeg = cv2.imencode('.jpg', self.frame)
-                    blimps[self.blimp_name].frame = jpeg
-                
-                # Uncomment the following line if you want to see the image using OpenCV
-                # cv2.imshow("Received Image", cv_image)
-                # cv2.waitKey(1)
+                        if self.frame is not None:
+                            flag, jpeg = cv2.imencode('.jpg', self.frame)
+                            blimps[self.blimp_name].frame = jpeg
+                        
+                        # Uncomment the following line if you want to see the image using OpenCV
+                        # cv2.imshow("Received Image", cv_image)
+                        # cv2.waitKey(1)
 
-            except Exception as e:
-                self.parentNode.get_logger().error(f"Failed to convert image: {e}")
+                    except Exception as e:
+                        self.parentNode.get_logger().error(f"Failed to convert image: {e}")
 
+    # Continually Poll State Machine Data from Teensy
+    def bounding_box_callback(self, msg):
+        global blimps
+        bb_dict = self.bounding_box_to_dict(msg)
+        if self.blimp_name is not None:
+            if blimps[self.blimp_name] in blimps:
+                if self.blimpID is not None:
+                    if bb_dict is not None:
+                        blimps[self.blimp_name].bounding_box = bb_dict
+                        # Emit the bounding box data to the webpage
+                        socketio.emit('bounding_box', blimps[self.blimp_name].bounding_box)
+
+    def bounding_box_to_dict(self, bb_msg):
+        """
+        Convert BoundingBox message to Python dictionary.
+
+        :param bb_msg: BoundingBox message instance.
+        :type bb_msg: yolo_msgs.msg.BoundingBox
+        :return: Dictionary representation of the message.
+        :rtype: dict
+        """
+        return {
+            "header": {
+                "stamp": {
+                    "sec": bb_msg.header.stamp.sec,
+                    "nanosec": bb_msg.header.stamp.nanosec
+                },
+                "frame_id": bb_msg.header.frame_id
+            },
+            "balloon": {
+                "x_center": bb_msg.x_center_balloon,
+                "y_center": bb_msg.y_center_balloon,
+                "width": bb_msg.width_balloon,
+                "height": bb_msg.height_balloon
+            },
+            "y_goal": {
+                "x_center": bb_msg.x_center_y_goal,
+                "y_center": bb_msg.y_center_y_goal,
+                "width": bb_msg.width_y_goal,
+                "height": bb_msg.height_y_goal
+            },
+            "o_goal": {
+                "x_center": bb_msg.x_center_o_goal,
+                "y_center": bb_msg.y_center_o_goal,
+                "width": bb_msg.width_o_goal,
+                "height": bb_msg.height_o_goal
+            }
+        }
 
     # Used for Attack Blimps Only
     def get_blimp_type(self, blimp):
@@ -509,10 +583,12 @@ def generate(feed_name):
 @app.route('/video_feed/<string:feed_name>')
 def video_feed(feed_name):
     global blimps
-    if blimps[feed_name].frame is not None:\
-        return Response(generate(feed_name), mimetype='multipart/x-mixed-replace; boundary=frame')
+    if feed_name in blimps:
+        if blimps[feed_name].frame is not None:
+            return Response(generate(feed_name), mimetype='multipart/x-mixed-replace; boundary=frame')
+        else:
+            return Response(status=204)
     else:
-        # print("No Image Found")
         return Response(status=204)
 
 # Streaming Endpoints
