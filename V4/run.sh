@@ -12,6 +12,7 @@ echo "Getting Logs..."
 
 ./freePort.sh
 
+# For Bounded Box Custom Messages
 source ~/ros2_stereo/install/setup.bash
 
 # Use -o flag to open website and run the program
