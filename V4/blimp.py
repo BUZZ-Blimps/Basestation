@@ -51,6 +51,9 @@ class Blimp:
         # Bounding Box Values
         self.bounding_box = None
 
+        # Barometer
+        self.barometer = 100700.0
+
     def to_dict(self):
         return {
             "blimp_name": self.blimp_name,
@@ -63,7 +66,8 @@ class Blimp:
             "goal_color": self.goal_color,
             "target_color": self.target_color,
             "state_machine": self.state_machine,
-            "connected": self.connected
+            "connected": self.connected,
+            "barometer": self.barometer
         }
 
     def update_dict(self, data_dict):
@@ -89,3 +93,5 @@ class Blimp:
             self.state_machine = data_dict["state_machine"]
         if "connected" in data_dict:
             self.connected = data_dict["connected"]   
+        if "barometer" in data_dict:
+            self.connected = data_dict["barometer"]

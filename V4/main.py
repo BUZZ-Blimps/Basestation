@@ -21,6 +21,7 @@ import threading
 import time
 import sys
 import signal
+import serial
 import numpy as np
 import json
 import subprocess
@@ -31,6 +32,9 @@ from blimp import Blimp
 # Initialize Flask App and SocketIO
 app = Flask(__name__)
 socketio = SocketIO(app)
+
+# barometer = serial.Serial('/dev/ttyACM0', 115200) changes need to fix 
+barometer = serial.Serial('/dev/ttyACM1', 115200)
 
 class Basestation(Node):
 
@@ -70,7 +74,7 @@ class Basestation(Node):
         else:
                 # Blimp Altimer_period = 1.0/self.loopSpeedeady Identified
                 self.get_logger().info("BlimpID already identified: %s" % blimpNodeHandler.nodeName)
-    
+
     def updateBlimpNodeHandlers(self):
         # Testing
         # print(self.recognizedBlimpNodes)
@@ -157,6 +161,12 @@ class Basestation(Node):
         # Subscribe to the State Machine Topic
         newBlimpNodeHandler.sub_state_machine = self.create_subscription(BoundingBox, topic_bounding_box, newBlimpNodeHandler.bounding_box_callback, 10)
 
+        # Check for State Machine Topic
+        topic_baseBarometer = "/" + blimp_node_name + "/baseBarometer"
+
+        # Subscribe to the State Machine Topic
+        newBlimpNodeHandler.sub_baseBarometer = self.create_subscription(Float64, topic_baseBarometer, newBlimpNodeHandler.baseBarometer_callback, qos_profile)
+
         # Add Blimp Node Handler to List
         self.blimpNodeHandlers.append(newBlimpNodeHandler)
         
@@ -186,6 +196,17 @@ class Basestation(Node):
             return True
         else:
             return False
+        
+    # Barometer
+    def updateBarometer(self):
+        global blimps
+        try:
+            data = barometer.readline()  # Read a line of data from the serial port
+            print(data.decode('utf-8'))  # Assuming data is encoded as UTF-8
+            for blimp in blimps:
+                blimps[blimp].barometer = float(data.decode('utf-8'))
+        except KeyboardInterrupt:
+            barometer.close()  # Close the serial port on Ctrl+C
 
     # Timer Functions #
     
@@ -220,7 +241,7 @@ class BlimpNodeHandler:
         self.pub_motorCommands = None
         self.pub_grabbing = None
         self.pub_shooting = None
-        # self.pub_base_barometer = None
+        self.pub_baseBarometer = None
 
         # Livestream Most Recent Frame
         self.frame = None
@@ -268,6 +289,7 @@ class BlimpNodeHandler:
         self.publish_auto()
         self.publish_grabbing()
         self.publish_shooting()
+        self.publish_barometer()
 
     # Continually Poll State Machine Data from Teensy
     def state_machine_callback(self, msg):
@@ -310,6 +332,17 @@ class BlimpNodeHandler:
                         blimps[self.blimp_name].bounding_box = bb_dict
                         # Emit the bounding box data to the webpage
                         socketio.emit('bounding_box', blimps[self.blimp_name].bounding_box)
+
+    # Continually Poll State Machine Data from Teensy
+    def baseBarometer_callback(self, msg):
+        global blimps
+        try:
+            data = barometer.readline()  # Read a line of data from the serial port
+            # print(data.decode('utf-8'))  # Assuming data is encoded as UTF-8
+            for blimp in blimps:
+                blimps[blimp].barometer = float(data.decode('utf-8'))
+        except:
+            pass
 
     def bounding_box_to_dict(self, bb_msg):
         """
@@ -435,6 +468,13 @@ class BlimpNodeHandler:
         msg.data = blimps[self.blimp_name].shooting
         self.pub_shooting.publish(msg)
 
+    def publish_barometer(self):
+        global blimps
+        # Publish barometer value to the ROS topic
+        msg = Float64()
+        msg.data = blimps[self.blimp_name].barometer
+        self.pub_baseBarometer.publish(msg)
+
     # Update Blimp Class with Dictionary Data
     @socketio.on('update_blimp_dict')
     def update_blimp_dict(data):
@@ -528,7 +568,7 @@ class BlimpNodeHandler:
         topic_motorCommands =  "/" + self.nodeName + "/motorCommands"
         topic_grabbing =        "/" + self.nodeName + "/grabbing"
         topic_shooting =        "/" + self.nodeName + "/shooting"
-        # topic_base_barometer =   "/" + self.nodeName + "/base_barometer"
+        topic_baseBarometer =   "/" + self.nodeName + "/baseBarometer"
 
         bufferSize = 1
         self.pub_auto = self.parentNode.create_publisher(Bool, topic_auto, bufferSize)
@@ -538,7 +578,7 @@ class BlimpNodeHandler:
         self.pub_motorCommands = self.parentNode.create_publisher(Float64MultiArray, topic_motorCommands, bufferSize)
         self.pub_grabbing = self.parentNode.create_publisher(Bool, topic_grabbing, bufferSize)
         self.pub_shooting = self.parentNode.create_publisher(Bool, topic_shooting, bufferSize)
-        # self.pub_base_barometer = self.parentNode.create_publisher(Float64, topic_base_barometer, bufferSize)
+        self.pub_baseBarometer = self.parentNode.create_publisher(Float64, topic_baseBarometer, bufferSize)
 
     def publish(self):
         pass
@@ -644,6 +684,7 @@ def terminate(signal, frame):
     global node
     node.destroy_node()
     rclpy.shutdown()
+    barometer.close()
     sys.exit(0)
 
 def check_wifi_ssid():
