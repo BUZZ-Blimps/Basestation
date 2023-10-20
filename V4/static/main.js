@@ -200,6 +200,7 @@ function update_basestation(blimp_dict) {
     hyperlink.href = "/" + blimp_name;
     hyperlink.target = "_blank";  // This will open the link in a new tab/window
     hyperlink.textContent = "View Stream";
+    hyperlink.setAttribute("blimp_name", blimp_name);
 
     // Append the hyperlink to the newCell and then to the newRow
     newCell.appendChild(hyperlink);
@@ -685,7 +686,10 @@ let controllerState = {
   xButton: false,
   yButton: false,
   bButton: false,
-  aButton: false
+  aButton: false,
+  homeButton: false,
+  helpButton: false,
+  menuButton: false
 };
 
 // Function to handle gamepad button presses and releases
@@ -753,6 +757,26 @@ function handleGamepadButtons(gamepad) {
   }
   // Check if the D-pad Right button was pressed in the previous state but is not pressed now (released)
   if (controllerState.right && !gamepad.buttons[15].pressed) {
+    if (Controller_1_currConnection !== blimpList.length - 1) {
+      Controller_1_currConnection++;
+      connected_blimp_name = blimpList[Controller_1_currConnection];
+      for (let i = 0; i < blimpList.length; i++) {
+        socket.emit('update_disconnection', blimpList[i]);
+      }
+      if (typeof connected_blimp_name !== "undefined") {
+        socket.emit('update_connection', connected_blimp_name);
+      }    
+    }
+    else {
+      Controller_1_currConnection = 0;
+      connected_blimp_name = blimpList[Controller_1_currConnection];
+      for (let i = 0; i < blimpList.length; i++) {
+        socket.emit('update_disconnection', blimpList[i]);
+      }
+      if (typeof connected_blimp_name !== "undefined") {
+        socket.emit('update_connection', connected_blimp_name);
+      } 
+    }
     console.log('Xbox D-Pad Right released.');
   }
   
@@ -797,16 +821,49 @@ function handleGamepadButtons(gamepad) {
   // Check if the Y button was pressed in the previous state but is not pressed now (released)
   if (controllerState.yButton && !gamepad.buttons[3].pressed) {
     console.log('Xbox Y Button released.');
+    socket.emit('update_all_goal_colors');
   }
 
   // Check if the B button was pressed in the previous state but is not pressed now (released)
   if (controllerState.bButton && !gamepad.buttons[1].pressed) {
     console.log('Xbox B Button released.');
+    connected_blimp_name = blimpList[Controller_1_currConnection];
+    if (typeof connected_blimp_name !== "undefined") {
+      // Get all anchor elements on the page
+      var allLinks = document.getElementsByTagName("a");
+
+      // Loop through each anchor element and extract the href attribute
+      for (var i = 0; i < allLinks.length; i++) {
+          var link = allLinks[i];
+          let blimp_name = link.getAttribute("blimp_name");
+          if (blimp_name === connected_blimp_name) {
+            link.click();
+          }
+      }
+    }
   }
 
   // Check if the A button was pressed in the previous state but is not pressed now (released)
   if (controllerState.aButton && !gamepad.buttons[0].pressed) {
     console.log('Xbox A Button released.');
+    window.location.reload();
+  }
+
+  // Check if the Home button was pressed in the previous state but is not pressed now (released)
+  if (controllerState.homeButton && !gamepad.buttons[16].pressed) {
+    console.log('Xbox Home Button released.');
+    socket.emit('kill_basestation');
+  }
+
+  // Takes user to documentation page
+  // Check if the Help button was pressed in the previous state but is not pressed now (released)
+  if (controllerState.helpButton && !gamepad.buttons[8].pressed) {
+    console.log('Xbox Help Button released.');
+  }
+
+  // Check if the Menu button was pressed in the previous state but is not pressed now (released)
+  if (controllerState.menuButton && !gamepad.buttons[9].pressed) {
+    console.log('Xbox Menu Button released.');
   }
 
   // Update the previous state of the controller buttons and right trigger
@@ -822,7 +879,10 @@ function handleGamepadButtons(gamepad) {
     xButton: gamepad.buttons[2].pressed,
     yButton: gamepad.buttons[3].pressed,
     bButton: gamepad.buttons[1].pressed,
-    aButton: gamepad.buttons[0].pressed
+    aButton: gamepad.buttons[0].pressed,
+    homeButton: gamepad.buttons[16].pressed,
+    helpButton: gamepad.buttons[8].pressed,
+    menuButton: gamepad.buttons[9].pressed
   };
 
   // Convert the values to Float64

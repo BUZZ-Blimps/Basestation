@@ -54,6 +54,8 @@ class Blimp:
         # Barometer
         self.barometer = 100700.0
 
+        self.lastHeartbeatDetected = 0
+
     def to_dict(self):
         return {
             "blimp_name": self.blimp_name,
