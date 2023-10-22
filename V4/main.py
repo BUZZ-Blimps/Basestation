@@ -9,7 +9,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from std_msgs.msg import String, Int64, Bool, Float64, Float64MultiArray
-from yolo_msgs.msg import BoundingBox
+from yolo_msgs.msg import BoundingBox # type: ignore
 
 # Livestream Packages
 from sensor_msgs.msg import Image
@@ -37,6 +37,7 @@ socketio = SocketIO(app)
 # Get the PID of the current process
 current_pid = os.getpid()
 
+# Initialize Barometer (Do a try/catch?)
 # barometer = serial.Serial('/dev/ttyACM0', 115200) changes need to fix
 # barometer = serial.Serial('/dev/ttyACM1', 115200)
 
@@ -589,12 +590,13 @@ class BlimpNodeHandler:
 def handle_connect():
     print('Client connected with IP:', request.remote_addr)
 
-#Main Basestation Page
+# Main Basestation Page
 @app.route('/')
 def index():
     client_ip = request.remote_addr
     return render_template('main.html', client_ip=client_ip)
 
+# Streaming Feeds/Pages
 def generate(feed_name):
     while True:
         # Yield the output frame in the byte format
@@ -611,7 +613,6 @@ def video_feed(feed_name):
     else:
         return Response(status=204)
 
-# Streaming Endpoints
 @app.route('/BurnCreamBlimp')
 def burnCreamBlimpPage():
     return render_template('BurnCreamBlimp.html')
@@ -640,6 +641,7 @@ def catch1Page():
 def catch2Page():
     return render_template('Catch2.html')
 
+# ROS 2 Thread
 def ros_thread():
     rclpy.init()
 
@@ -652,6 +654,7 @@ def ros_thread():
 
     rclpy.shutdown()
 
+# Terminate Code
 def terminate(signal, frame):
     print('\nDestroying Basestation Node...\n')
     global node
@@ -661,6 +664,7 @@ def terminate(signal, frame):
     print('\nTerminating Program...\n')
     os.kill(current_pid, signal.SIGTERM)
 
+# Check Wifi
 def check_wifi_ssid():
     output = subprocess.check_output(["iwconfig", "2>/dev/null | grep 'ESSID:' | cut -d '\"' -f 2"], shell=True)
     ssid = output.decode('utf-8').strip()
