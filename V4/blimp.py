@@ -1,8 +1,10 @@
-
 class Blimp:
-    def __init__(self, blimp_name):
-        # Blimp Name
-        self.blimp_name = blimp_name
+    def __init__(self, blimp_id):
+        # Blimp ID
+        self.blimp_id = blimp_id
+
+        # Blimp Name (will be set by node handler)
+        self.blimp_name = None
 
         # Blimp Type
         self.blimp_type = 0 # 0: Catching, 1: Attacking
@@ -14,7 +16,7 @@ class Blimp:
         self.killed = False
 
         # Motor Commands
-        self.motorCommands = [0.0, 0.0, 0.0, 0.0]
+        self.motorCommands = [0.0, -0.0, 0.0, -0.0]
 
         # Grabbing
         self.grabbing = False
@@ -54,10 +56,11 @@ class Blimp:
         # Barometer
         self.barometer = 100700.0
 
-        self.lastHeartbeatDetected = 0
+        self.last_online = 0
 
     def to_dict(self):
         return {
+            "blimp_id": self.blimp_id,
             "blimp_name": self.blimp_name,
             "blimp_type": self.blimp_type,
             "auto": self.auto,
@@ -73,6 +76,8 @@ class Blimp:
         }
 
     def update_dict(self, data_dict):
+        if "blimp_id" in data_dict:
+            self.blimp_id = data_dict["blimp_id"]
         if "blimp_name" in data_dict:
             self.blimp_name = data_dict["blimp_name"]
         if "blimp_type" in data_dict:

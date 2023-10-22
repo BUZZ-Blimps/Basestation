@@ -41,66 +41,97 @@ current_pid = os.getpid()
 # barometer = serial.Serial('/dev/ttyACM1', 115200)
 
 class Basestation(Node):
-
     def __init__(self):
         super().__init__('Basestation')
 
         # Number of Blimps
-        self.numBlimps = 0
+        self.num_blimps = 0
 
-        # Recognized Blimp Nodes
-        self.recognizedBlimpNodes = []
-
-        # Recognized Blimp Nodes
-        self.currentBlimps = []
+        # Connected Blimp Nodes
+        self.connected_blimps = []
 
         # Blimp Node Handlers
-        self.blimpNodeHandlers = []
+        self.blimp_node_handlers = []
 
         # Create timer
         self.loopSpeed = 10
         timer_period = 1.0/self.loopSpeed
         self.timer = self.create_timer(timer_period, self.timerLoop)
-        self.timeout = 8
+        self.timeout = 3
         
         # Identify Topic for Teensy to Check if Basestation is On
-        self.topicName_identify = "identify"
+        self.topicName_identify = "/identify"
+        self.identify_sub = self.create_subscription(String, self.topicName_identify, self.identify_callback, 10)
     
-    # This function is not working as intended !!!
-    def connectBlimp(self, blimpNodeHandler):
+    def identify_callback(self, msg):
+        global blimps
 
-        if blimpNodeHandler.blimpID is not None:
-                # Increase Number of New Blimps
-                self.numBlimps += 1
-
-                # New Blimp Identified
-                self.get_logger().info("Identified new blimp (id: %s). Node name: %s" % (str(blimpNodeHandler.blimpID), blimpNodeHandler.nodeName))
+        #Identify message is just a string with the blimp ID
+        blimp_id = msg.data
+        if blimp_id in self.connected_blimps:
+            #Update last online here because update is only called while the node is subscribed
+            blimps[blimp_id].last_online = self.get_clock().now()
         else:
-                # Blimp Altimer_period = 1.0/self.loopSpeedeady Identified
-                self.get_logger().info("BlimpID already identified: %s" % blimpNodeHandler.nodeName)
+            #Otherwise, check its validity and create a handler for it
+            # Testing
+            # self.get_logger().info('Node Name: "%s"' % nodeName)
+            #Make sure node name is valid
+            if self.check_node_name(blimp_id) == True:
+                print("ADDING BLIMP")
+                self.create_blimp_node_handler(blimp_id)
+                blimps[blimp_id].last_online = self.get_clock().now()
 
-    def updateBlimpNodeHandlers(self):
+    # This function is not working as intended !!! (So I removed it - Willie)
+    # def connectBlimp(self, blimp_node_handler):
+        # if blimp_node_handler.blimp_id is not None:
+            # Increase Number of New Blimps
+            # self.num_blimps += 1          
+
+            # New Blimp Identified
+            # self.get_logger().info("Identified new blimp (id: %s)." % (str(blimp_node_handler.blimp_id)))
+        # else:
+            # Blimp Altimer_period = 1.0/self.loopSpeedeady Identified
+            # self.get_logger().info("BlimpID already identified: %s" % blimpNodeHandler.nodeName)
+            # self.get_logger().error("connect_blimp called with no blimp!")
+
+    def update_blimp_node_handlers(self):
+        global blimps
+
         # Testing
+        # print('update')
         # print(self.recognizedBlimpNodes)
         # print(self.currentBlimps)
         # print("Number of Blimps:", self.numBlimps)
 
         # Iterate through current nodes, look for new nodes
-        infos = self.get_subscriptions_info_by_topic(self.topicName_identify)
-        for info in infos:
-            nodeName = info.node_name
+        # infos = self.get_subscriptions_info_by_topic(self.topicName_identify)
+
+        #First, parse node list from infos
+        # identify_node_list = []
+        # for info in infos:
+        #     identify_node_list.append(info.node_name)
+
+        #Next, find subbed nodes that aren't in the connected blimp list and validate them
+        # print(identify_node_list)
+
+        #Finally, check for subscription timeout for all connected blimps
+        for blimp_node_handler in self.blimp_node_handlers:
+            if self.getElapsedTime(blimps[blimp_node_handler.blimp_id].last_online) > self.timeout:
+                print("REMOVING BLIMP")
+                self.remove_blimp_node_handler(blimp_node_handler.blimp_id)
+            else:
+                #Run handler update routine
+                blimp_node_handler.update()
+
+        # for info in infos:
+        #     nodeName = info.node_name
             # Testing
             # self.get_logger().info('Node Name: "%s"' % nodeName)
-            if nodeName not in self.currentBlimps:
-                # Testing
-                # self.get_logger().info('Node Name: "%s"' % nodeName)
-                if self.check_node_name(nodeName) == True:
-                    self.createBlimpNodeHandler(nodeName)
 
         # Stress Test This !!!
 
         # Check for nodes that timed out
-        for blimpNodeHandler in self.blimpNodeHandlers:
+        # for blimpNodeHandler in self.blimpNodeHandlers:
             # No Blimp ID Received
             # if blimpNodeHandler.blimpID is None:
             #     # Check if Blimp Timed Out
@@ -122,39 +153,38 @@ class Basestation(Node):
             #     else:
             #         blimpNodeHandler.update()
 
-            if blimpNodeHandler.blimpID is not None:
-                if blimpNodeHandler.lastReceived_blimpID is not None:
-                    # print(blimpNodeHandler.blimpID + ": " + str(self.getElapsedTime(blimpNodeHandler.lastReceived_blimpID)))
-                    # Check if Blimp Timed Out
-                    if self.getElapsedTime(blimpNodeHandler.lastReceived_blimpID) > self.timeout:
-                        self.removeBlimpNodeHandler(blimpNodeHandler)
-                    else:
-                        blimpNodeHandler.update()
+            # if blimpNodeHandler.blimpID is not None:
+            #     if blimpNodeHandler.lastReceived_blimpID is not None:
+            #         # print(blimpNodeHandler.blimpID + ": " + str(self.getElapsedTime(blimpNodeHandler.lastReceived_blimpID)))
+            #         # Check if Blimp Timed Out
+            #         if self.getElapsedTime(blimpNodeHandler.lastReceived_blimpID) > self.timeout:
+            #             self.removeBlimpNodeHandler(blimpNodeHandler)
+            #         else:
+            #             blimpNodeHandler.update()
     
     # Stress Test This !!!
-    def createBlimpNodeHandler(self, blimp_node_name):
+    def create_blimp_node_handler(self, blimp_id):
         # Unknown Blimp Node Found
-        if blimp_node_name == "_NODE_NAME_UNKNOWN_":
+        if blimp_id == "_NODE_NAME_UNKNOWN_":
             self.get_logger().info("FLAG: Node Name Unknown")
             return
         
         # Create New Blimp Node Handler
-        newBlimpNodeHandler = BlimpNodeHandler(self, blimp_node_name)
+        new_blimp_node_handler = BlimpNodeHandler(self, blimp_id)
 
         # Check for Blimp ID Topic
-        topic_blimpID = "/" + blimp_node_name + "/blimpID"
+        # topic_blimpID = "/" + blimp_node_name + "/blimpID"
+        # Subscribe to the Blimp ID Topic (WDW REMOVED)
+        # newBlimpNodeHandler.sub_blimpID = self.create_subscription(String, topic_blimpID, newBlimpNodeHandler.listener_callback, 10)
 
-        # Subscribe to the Blimp ID Topic
-        newBlimpNodeHandler.sub_blimpID = self.create_subscription(String, topic_blimpID, newBlimpNodeHandler.listener_callback, 10)
-
-        # Check for State Machine Topic
-        topic_state_machine = "/" + blimp_node_name + "/state_machine"
+        # State Machine Topic
+        topic_state_machine = "/" + blimp_id + "/state_machine"
 
         # Subscribe to the State Machine Topic
-        newBlimpNodeHandler.sub_state_machine = self.create_subscription(Int64, topic_state_machine, newBlimpNodeHandler.state_machine_callback, 10)
+        new_blimp_node_handler.sub_state_machine = self.create_subscription(Int64, topic_state_machine, new_blimp_node_handler.state_machine_callback, 10)
 
-        # Check for Image Raw Topic
-        topic_image_raw = "/" + blimp_node_name + "/left/image_raw"
+        # Image Raw Topic
+        topic_image_raw = "/" + blimp_id + "/left/image_raw"
 
         # Subscribe to the Image Raw Topic
         qos_profile = QoSProfile(
@@ -162,46 +192,73 @@ class Basestation(Node):
             depth=10,
             reliability=ReliabilityPolicy.BEST_EFFORT
         )
-        newBlimpNodeHandler.sub_image_raw = self.create_subscription(Image, topic_image_raw, newBlimpNodeHandler.image_raw_callback, qos_profile)
+        new_blimp_node_handler.sub_image_raw = self.create_subscription(Image, topic_image_raw, new_blimp_node_handler.image_raw_callback, qos_profile)
 
-        # Check for State Machine Topic
-        topic_bounding_box = "/" + blimp_node_name + "/bounding_box"
+        # Check for Bounding Box Topic
+        topic_bounding_box = "/" + blimp_id + "/bounding_box"
+
+        # Subscribe to the Bounding Box Topic
+        new_blimp_node_handler.sub_bounding_box = self.create_subscription(BoundingBox, topic_bounding_box, new_blimp_node_handler.bounding_box_callback, 10)
+
+        # Check for Base Barometer Topic
+        topic_baseBarometer = "/" + blimp_id + "/baseBarometer"
 
         # Subscribe to the State Machine Topic
-        newBlimpNodeHandler.sub_state_machine = self.create_subscription(BoundingBox, topic_bounding_box, newBlimpNodeHandler.bounding_box_callback, 10)
+        # new_blimp_node_handler.sub_baseBarometer = self.create_subscription(Float64, topic_baseBarometer, new_blimp_node_handler.baseBarometer_callback, qos_profile)
 
-        # Check for State Machine Topic
-        #topic_baseBarometer = "/" + blimp_node_name + "/baseBarometer"
+        # self.connectBlimp(new_blimp_node_handler)
+        new_blimp_node_handler.connect_blimp()
 
-        # Subscribe to the State Machine Topic
-        #newBlimpNodeHandler.sub_baseBarometer = self.create_subscription(Float64, topic_baseBarometer, newBlimpNodeHandler.baseBarometer_callback, qos_profile)
+        # Add New Blimp Node to Connected Blimp Nodes
+        self.connected_blimps.append(new_blimp_node_handler.blimp_id)
 
         # Add Blimp Node Handler to List
-        self.blimpNodeHandlers.append(newBlimpNodeHandler)
-        
-        # Check if blimp is new or not
-        # self.connectBlimp(newBlimpNodeHandler)
-
-        # Add New Blimp Node to Recognized Blimp Nodes
-        self.recognizedBlimpNodes.append(blimp_node_name)
+        self.blimp_node_handlers.append(new_blimp_node_handler)
 
     # Stress Test This !!!
     # Fix this function !!!
-    def removeBlimpNodeHandler(self, blimpNodeHandler):
+    def remove_blimp_node_handler(self, blimp_id):
+        global blimps
+
         # Timeout Detected for Blimp Node
-        if blimpNodeHandler is not None:
-            if blimpNodeHandler.blimpID is not None:
-                if blimpNodeHandler.blimpID in self.currentBlimps:
-                    if blimpNodeHandler.blimpID in self.currentBlimps:
-                        self.get_logger().info('Detected timeout of blimp ID "%s"' % blimpNodeHandler.blimpID)
-                        self.numBlimps -= 1
-                        socketio.emit('remove', blimpNodeHandler.blimp_name)
-                        self.currentBlimps.remove(blimpNodeHandler.blimpID)
-                    del blimpNodeHandler
+        if blimp_id is not None:
+            self.get_logger().info('Detected timeout of blimp ID "%s"' % blimp_id)
+
+            #First, get the handle of the node handler
+            handler_found = False
+            handler_id = None
+            for id, handler in enumerate(self.blimp_node_handlers):
+                if handler.blimp_id == blimp_id:
+                    handler_found = True
+                    handler_id = id
+
+            if not handler_found:
+                self.get_logger().error('Blimp ID "%s" Handler not found!' % blimp_id)
+                return
+            
+            #Now, gracefully shut down the node handler
+            #Destroy subscribers (publishers will timeout anyways)
+            self.blimp_node_handlers[handler_id].destroy_subscribers()
+            self.blimp_node_handlers[handler_id].destroy_publishers()
+
+            #Remove blimp from list of connected blimps
+            self.connected_blimps.remove(blimp_id)
+
+            #Finally, delete the handler object for good
+            del self.blimp_node_handlers[handler_id]
+
+            #Delete from global blimps dict
+            del blimps[blimp_id]
+
+            self.num_blimps -= 1
+
+            #Remove blimp from frontend display
+            socketio.emit('remove', blimp_id)
 
     # Check if Node Name is valid
-    def check_node_name(self, nodeName):
-        if nodeName == 'BurnCreamBlimp' or nodeName == 'SillyAhBlimp' or nodeName == 'TurboBlimp' or nodeName == 'GameChamberBlimp' or nodeName == 'FiveGuysBlimp' or nodeName == 'Catch2' or nodeName == 'Catch1' or nodeName == 'Attack1' or nodeName == 'Attack2':
+    def check_node_name(self, node_name):
+        #Todo: Search for node name in global dictionary
+        if node_name == 'BurnCreamBlimp' or node_name == 'SillyAhBlimp' or node_name == 'TurboBlimp' or node_name == 'GameChamberBlimp' or node_name == 'FiveGuysBlimp' or node_name == 'Catch2' or node_name == 'Catch1' or node_name == 'Attack1' or node_name == 'Attack2':
             return True
         else:
             return False
@@ -221,12 +278,12 @@ class Basestation(Node):
     
     def timerLoop(self):
         # Update Blimp Nodes
-        self.updateBlimpNodeHandlers()
+        self.update_blimp_node_handlers()
 
         # Currently not being used
         # Publish Node Topics
-        for blimpNodeHandler in self.blimpNodeHandlers:
-            blimpNodeHandler.publish()
+        # for blimp_node_handler in self.blimp_node_handlers:
+        #     blimp_node_handler.publish()
 
     def getElapsedTime(self, prevTime):
         elapsedTime = self.get_clock().now() - prevTime
@@ -234,65 +291,76 @@ class Basestation(Node):
         return elapsedTimeSec
 
 class BlimpNodeHandler:
-    def __init__(self, parentNode, nodeName):
-        self.parentNode = parentNode
-        self.nodeName = nodeName
-        self.timeCreated = self.parentNode.get_clock().now()
+    def __init__(self, parent_node, node_name):
+        self.parent_node = parent_node
+        self.blimp_id = node_name
+        self.blimp_name = self.get_blimp_name(self.blimp_id)
+        self.time_created = self.parent_node.get_clock().now()
 
-        self.blimpID = None
-        self.lastReceived_blimpID = None
-        self.blimp_name = None
         self.identified_count = 0
 
-        self.pub_auto = None
-        self.pub_target_color = None
-        self.pub_goal_color = None
-        self.pub_killed = None
-        self.pub_motorCommands = None
-        self.pub_grabbing = None
-        self.pub_shooting = None
-        # self.pub_baseBarometer = None
+        #Create publishers now
+        self.create_publishers()
+
+        #Initialize all subscribers to None; parent will handle their creation
+        self.sub_state_machine = None
+        self.sub_image_raw = None
+        self.sub_bounding_box = None
+        self.sub_baseBarometer = None
 
         # Livestream Most Recent Frame
         self.frame = None
         self.bridge = CvBridge()
 
-    def listener_callback(self, msg):
+    def connect_blimp(self):
+        global blimps
+        self.parent_node.get_logger().info('Identified Blimp with ID "%s"' % str(self.blimp_id))
+        self.parent_node.num_blimps += 1
+
+        #Create a Blimp object for storing the blimp state
+        #Todo: fix redundancies between Blimp objects and handlers (they're one-to-one)
+        blimp = Blimp(self.blimp_id)
+        blimp.blimp_name = self.blimp_name
+
+        #Set the blimp type
+        self.get_blimp_type(blimp)
+        blimps[self.blimp_id] = blimp
+
+    # def listener_callback(self, msg):
         # Check blimp ID and give it a name on the Basestation
         # Make the following if statement a function !!!
-        global blimps
-        if self.blimpID is None:
-            self.blimpID = msg.data
+        # global blimps
+        # if self.blimpID is None:
+        #     self.blimpID = msg.data
             #self.parentNode.get_logger().info('Identified new blimp with ID "%s"' % msg.data)
             #self.parentNode.numBlimps += 1
             #self.parentNode.connectBlimp(self)
-            self.createPublishers()
-            self.blimp_name = self.get_blimp_name()
-            if self.blimp_name not in blimps:
-                self.parentNode.get_logger().info('Identified Blimp with ID "%s"' % msg.data)
-                self.parentNode.numBlimps += 1
-                blimp = Blimp(self.blimp_name)
-                self.get_blimp_type(blimp)
-                blimps[self.blimp_name] = blimp
-            else:
+            # self.createPublishers()
+            # self.blimp_name = self.get_blimp_name()
+            # if self.blimp_name not in blimps:
+            #     self.parentNode.get_logger().info('Identified Blimp with ID "%s"' % msg.data)
+            #     self.parentNode.numBlimps += 1
+            #     blimp = Blimp(self.blimp_name)
+            #     self.get_blimp_type(blimp)
+            #     blimps[self.blimp_name] = blimp
+            # else:
                 # Not working
-                pass
+                # pass
                 #self.parentNode.get_logger().info("BlimpID already identified: %s" % msg.data)
                 #self.parentNode.numBlimps += 1
                 # Not working
                 #self.parentNode.get_logger().info("%i" % self.parentNode.numBlimps)
-        else:
-            if self.blimpID not in self.parentNode.currentBlimps:
-                self.parentNode.currentBlimps.append(self.blimpID)
-            self.lastReceived_blimpID = self.parentNode.get_clock().now()
+        # else:
+        #     if self.blimpID not in self.parentNode.currentBlimps:
+        #         self.parentNode.currentBlimps.append(self.blimpID)
+        #     self.lastReceived_blimpID = self.parentNode.get_clock().now()
             # Is heartbeat necessary?
-            blimps[self.blimp_name].lastHeartbeatDetected = time.time()
+            # blimps[self.blimp_name].lastHeartbeatDetected = time.time()
 
             # if self.blimp_name is not None:
             #     if self.blimp_name in blimps:
             #         if self.blimpID is not None:
-            #             # Emit the blimp data to the webpage
-            #             socketio.emit('update', blimps[self.blimp_name].to_dict())
+
                     
             #             # Publish the target and/or goal color values to ROS
             #             # Make this independent of the listener callback !!!
@@ -306,67 +374,106 @@ class BlimpNodeHandler:
             #                 self.publish_grabbing()
             #                 self.publish_shooting()
 
+    def create_publishers(self):
+        topic_auto =            "/" + self.blimp_id + "/auto"
+        topic_goal_color =      "/" + self.blimp_id + "/goal_color"
+        topic_target_color =      "/" + self.blimp_id + "/target_color"
+        topic_killed =          "/" + self.blimp_id + "/killed"
+        topic_motorCommands =  "/" + self.blimp_id + "/motorCommands"
+        topic_grabbing =        "/" + self.blimp_id + "/grabbing"
+        topic_shooting =        "/" + self.blimp_id + "/shooting"
+        # topic_baseBarometer =   "/" + self.nodeName + "/baseBarometer"
+
+        bufferSize = 1
+        self.pub_auto = self.parent_node.create_publisher(Bool, topic_auto, bufferSize)
+        self.pub_goal_color = self.parent_node.create_publisher(Int64, topic_goal_color, bufferSize)
+        self.pub_target_color = self.parent_node.create_publisher(Int64, topic_target_color, bufferSize)
+        self.pub_killed = self.parent_node.create_publisher(Bool, topic_killed, bufferSize)
+        self.pub_motorCommands = self.parent_node.create_publisher(Float64MultiArray, topic_motorCommands, bufferSize)
+        self.pub_grabbing = self.parent_node.create_publisher(Bool, topic_grabbing, bufferSize)
+        self.pub_shooting = self.parent_node.create_publisher(Bool, topic_shooting, bufferSize)
+
+        # self.pub_baseBarometer = self.parent_node.create_publisher(Float64, topic_baseBarometer, bufferSize)
+
+    def destroy_publishers(self):
+        self.pub_auto.destroy()
+        self.pub_goal_color.destroy()
+        self.pub_target_color.destroy()
+        self.pub_killed.destroy()
+        self.pub_motorCommands.destroy()
+        self.pub_grabbing.destroy()
+        self.pub_shooting.destroy()
+
+    #Function to destroy subscribers for elegant behavior
+    def destroy_subscribers(self):
+        self.parent_node.destroy_subscription(self.sub_state_machine)
+        self.parent_node.destroy_subscription(self.sub_image_raw)
+        self.parent_node.destroy_subscription(self.sub_bounding_box)
+        self.parent_node.destroy_subscription(self.sub_baseBarometer)
+
     def update(self):
-        if self.blimp_name is not None:
-            if self.blimp_name in blimps:
-                if self.blimpID is not None:
-                    # Emit the blimp data to the webpage
-                    socketio.emit('update', blimps[self.blimp_name].to_dict())
-                
-                    # Publish the target and/or goal color values to ROS
-                    # Make this independent of the listener callback !!!
-                    self.publish_motorCommands()
-                    self.publish_auto()
-                    # self.publish_barometer()
-                    if (self.get_blimp_type(blimps[self.blimp_name]) == True):
-                        self.publish_target_color()
-                    else:
-                        self.publish_goal_color()
-                        self.publish_grabbing()
-                        self.publish_shooting()
+        # Todo: Change frequency of each publisher!
+        # self.parent_node.get_logger().info("Updating")
+
+        global blimps
+        if self.blimp_id in blimps:
+            # Emit the blimp data to the webpage
+            socketio.emit('update', blimps[self.blimp_id].to_dict())
+        
+            # Publish the target and/or goal color values to ROS
+            self.publish_motorCommands()
+
+            #Need to publish this as needed
+            self.publish_auto()
+
+            # self.publish_barometer()
+
+            if (self.get_blimp_type(blimps[self.blimp_id]) == True):
+                #If blimp is an attack blimp, publish the target color
+                self.publish_target_color()
+            else:
+                #Otherwise, publish catching blimp stuff
+                self.publish_goal_color()
+
+                #Need to publish these as needed!
+                self.publish_grabbing()
+                self.publish_shooting()
 
     # Continually Poll State Machine Data from Teensy
     def state_machine_callback(self, msg):
         global blimps
-        if self.blimp_name is not None:
-            if self.blimp_name in blimps:
-                if self.blimpID is not None:
-                    blimps[self.blimp_name].lastHeartbeatDetected = time.time()
-                    blimps[self.blimp_name].state_machine = msg.data
+        if self.blimp_id in blimps:
+            blimps[self.blimp_id].state_machine = msg.data
 
     # Continually Poll Image Raw Data from Pi
     def image_raw_callback(self, msg):
         global blimps
-        if self.blimp_name is not None:
-            if self.blimp_name in blimps:
-                if self.blimpID is not None:
-                    try:
-                        # Convert the ROS Image message to a CV2 image (numpy ndarray)
-                        cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-                        self.frame = cv_image
+        if self.blimp_id in blimps:
+            try:
+                # Convert the ROS Image message to a CV2 image (numpy ndarray)
+                cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+                self.frame = cv_image
 
-                        if self.frame is not None:
-                            flag, jpeg = cv2.imencode('.jpg', self.frame)
-                            blimps[self.blimp_name].frame = jpeg
-                        
-                        # Uncomment the following line if you want to see the image using OpenCV
-                        # cv2.imshow("Received Image", cv_image)
-                        # cv2.waitKey(1)
+                if self.frame is not None:
+                    flag, jpeg = cv2.imencode('.jpg', self.frame)
+                    blimps[self.blimp_id].frame = jpeg
+                
+                # Uncomment the following line if you want to see the image using OpenCV
+                # cv2.imshow("Received Image", cv_image)
+                # cv2.waitKey(1)
 
-                    except Exception as e:
-                        self.parentNode.get_logger().error(f"Failed to convert image: {e}")
+            except Exception as e:
+                self.parent_node.get_logger().error(f"Failed to convert image: {e}")
 
     # Continually Poll State Machine Data from Teensy
     def bounding_box_callback(self, msg):
         global blimps
         bb_dict = self.bounding_box_to_dict(msg)
-        if self.blimp_name is not None:
-            if self.blimp_name in blimps:
-                if self.blimpID is not None:
-                    if bb_dict is not None:
-                        blimps[self.blimp_name].bounding_box = bb_dict
-                        # Emit the bounding box data to the webpage
-                        socketio.emit('bounding_box', blimps[self.blimp_name].bounding_box)
+        if self.blimp_id in blimps:
+            if bb_dict is not None:
+                blimps[self.blimp_id].bounding_box = bb_dict
+                # Emit the bounding box data to the webpage
+                socketio.emit('bounding_box', blimps[self.blimp_id].bounding_box)
 
     # Continually Poll State Machine Data from Teensy
     # def baseBarometer_callback(self, msg):
@@ -419,88 +526,71 @@ class BlimpNodeHandler:
     # Used for Attack Blimps Only
     def get_blimp_type(self, blimp):
         # Only need to check for Attack Blimps since default is catching type (0)
-        if self.blimpID == 'Attack1':
+        if self.blimp_id == 'Attack1':
             blimp.blimp_type = 1
-        elif self.blimpID == 'Attack2':
+        elif self.blimp_id == 'Attack2':
             blimp.blimp_type = 1
 
-    def get_blimp_name(self):
+    def get_blimp_name(self, blimp_id):
         # Blimp Name not Recognized (This should not happen!)
-        self.blimp_name = 'Error'
+        # self.blimp_id = 'Error'
+        blimp_names_by_id = {
+            # Catching Blimps
+            'BurnCreamBlimp': 'Burn Cream Blimp',
+            'SillyAhBlimp': 'Silly Ah Blimp',
+            'TurboBlimp': 'Turbo Blimp',
+            'GameChamberBlimp': 'Game Chamber Blimp',
+            'FiveGuysBlimp': 'Five Guys Blimp',
+            # Fake Blimps #
+            'Catch1': 'Catch 1',
+            'Catch2': 'Catch 2',
+            # Attacking Blimps 
+            'Attack1': 'Attack 1',
+            'Attack2': 'Attack 2'
+        }
 
-        # Real Blimps #
-
-        # Catching Blimps
-        if self.blimpID == 'BurnCreamBlimp':
-            self.blimp_name = 'Burn Cream Blimp'
-        elif self.blimpID == 'SillyAhBlimp':
-            self.blimp_name = 'Silly Ah Blimp'
-        elif self.blimpID == 'TurboBlimp':
-            self.blimp_name = 'Turbo Blimp'
-        elif self.blimpID == 'GameChamberBlimp':
-            self.blimp_name = 'Game Chamber Blimp'
-        elif self.blimpID == 'FiveGuysBlimp':
-            self.blimp_name = 'Five Guys Blimp'   
-
-        # Attacking Blimps   
-        # None so far...    
-
-        # Fake Blimps #
-
-        # Catching Blimps
-        elif self.blimpID == 'Catch2':
-            self.blimp_name = 'Catch 2'
-        elif self.blimpID == 'Catch1':
-            self.blimp_name = 'Catch 1'
-
-        # Attacking Blimps
-        elif self.blimpID == 'Attack1':
-            self.blimp_name = 'Attack 1'
-        elif self.blimpID == 'Attack2':
-            self.blimp_name = 'Attack 2'
-
-        return self.blimp_name
+        return blimp_names_by_id[blimp_id]
 
     def publish_target_color(self):
         global blimps
         # Publish goal color value to the ROS topic
         msg = Int64()
-        msg.data = blimps[self.blimp_name].target_color
+        msg.data = blimps[self.blimp_id].target_color
         self.pub_target_color.publish(msg)
 
     def publish_goal_color(self):
         global blimps
         # Publish goal color value to the ROS topic
         msg = Int64()
-        msg.data = blimps[self.blimp_name].goal_color
+        msg.data = blimps[self.blimp_id].goal_color
         self.pub_goal_color.publish(msg)
 
     def publish_motorCommands(self):
         global blimps
         # Publish motor commands value to the ROS topic
         msg = Float64MultiArray()
-        msg.data = blimps[self.blimp_name].motorCommands
+        msg.data = blimps[self.blimp_id].motorCommands
         self.pub_motorCommands.publish(msg)
 
     def publish_auto(self):
         global blimps
         # Publish auto value to the ROS topic
         msg = Bool()
-        msg.data = blimps[self.blimp_name].auto
+        msg.data = blimps[self.blimp_id].auto
         self.pub_auto.publish(msg)
 
     def publish_grabbing(self):
         global blimps
         # Publish grabbing value to the ROS topic
         msg = Bool()
-        msg.data = blimps[self.blimp_name].grabbing
+        msg.data = blimps[self.blimp_id].grabbing
         self.pub_grabbing.publish(msg)
 
     def publish_shooting(self):
         global blimps
         # Publish shooting value to the ROS topic
         msg = Bool()
-        msg.data = blimps[self.blimp_name].shooting
+        msg.data = blimps[self.blimp_id].shooting
         self.pub_shooting.publish(msg)
 
     # def publish_barometer(self):
@@ -528,8 +618,8 @@ class BlimpNodeHandler:
     @socketio.on('update_blimp_dict')
     def update_blimp_dict(data):
         global blimps
-        blimp_name = data['blimp_name']
-        blimps[blimp_name] = data[blimp_name]
+        blimp_id = data['blimp_id']
+        blimps[blimp_id] = data[blimp_id]
 
     # Update Connection
     @socketio.on('update_connection')
@@ -564,19 +654,21 @@ class BlimpNodeHandler:
             if blimps[blimp].connected == True:
                 blimps[blimp].motorCommands = motorCommands
                 #print(blimps[blimp].motorCommands)
+            else:
+                blimps[blimp].motorCommands = [0.0, -0.0, 0.0, -0.0]
+                #print(blimps[blimp].motorCommands)
 
     # Update All Goal Colors
     @socketio.on('update_all_goal_colors')
     def update_goal_colors():
         global blimps
         global all_goal_color
+        print(all_goal_color)
+
+        all_goal_color = not all_goal_color
+
         for blimp in blimps:
-            if all_goal_color is False:
-                all_goal_color = True
-                blimps[blimp].goal_color = 1
-            else:
-                all_goal_color = False
-                blimps[blimp].goal_color = 0
+            blimps[blimp].goal_color = 1 if all_goal_color else 0
 
     # Update Grabbing
     @socketio.on('update_grabbing')
@@ -612,58 +704,15 @@ class BlimpNodeHandler:
     @socketio.on('update_target_color')
     def update_target_color(data):
         global blimps
-        blimp_name = data['blimp_name']
-        blimps[blimp_name].target_color = data['target_color']
+        blimp_id = data['blimp_id']
+        blimps[blimp_id].target_color = data['target_color']
 
     # Update Goal Color
     @socketio.on('update_goal_color')
     def update_goal_color(data):
         global blimps
-        blimp_name = data['blimp_name']
-        blimps[blimp_name].goal_color = data['goal_color']
-
-    def createPublishers(self):
-        topic_auto =            "/" + self.nodeName + "/auto"
-        topic_goal_color =      "/" + self.nodeName + "/goal_color"
-        topic_target_color =      "/" + self.nodeName + "/target_color"
-        topic_killed =          "/" + self.nodeName + "/killed"
-        topic_motorCommands =  "/" + self.nodeName + "/motorCommands"
-        topic_grabbing =        "/" + self.nodeName + "/grabbing"
-        topic_shooting =        "/" + self.nodeName + "/shooting"
-        # topic_baseBarometer =   "/" + self.nodeName + "/baseBarometer"
-
-        bufferSize = 1
-        self.pub_auto = self.parentNode.create_publisher(Bool, topic_auto, bufferSize)
-        self.pub_goal_color = self.parentNode.create_publisher(Int64, topic_goal_color, bufferSize)
-        self.pub_target_color = self.parentNode.create_publisher(Int64, topic_target_color, bufferSize)
-        self.pub_killed = self.parentNode.create_publisher(Bool, topic_killed, bufferSize)
-        self.pub_motorCommands = self.parentNode.create_publisher(Float64MultiArray, topic_motorCommands, bufferSize)
-        self.pub_grabbing = self.parentNode.create_publisher(Bool, topic_grabbing, bufferSize)
-        self.pub_shooting = self.parentNode.create_publisher(Bool, topic_shooting, bufferSize)
-        # self.pub_baseBarometer = self.parentNode.create_publisher(Float64, topic_baseBarometer, bufferSize)
-
-    def publish(self):
-        pass
-        """
-        if self.blimp is None:
-            return
-        
-        msg_auto = Bool(data=self.blimp.auto)
-        msg_goal_color = Bool(data=self.blimp.auto)
-        msg_killed = Bool(data=self.blimp.killed)
-        msg_motorCommands = Float64MultiArray(data=self.blimp.motorCommands)
-        msg_grabbing = Bool(data=self.blimp.grabbing)
-        msg_shooting = Bool(data=self.blimp.shooting)
-        msg_baseBarometer = Float64(data=self.blimp.baseBarometer)
-
-        self.pub_auto.publish(msg_auto)
-        self.pub_goal_color.publish(msg_goal_color)
-        self.pub_killed.publish(msg_killed)
-        self.pub_motorCommands.publish(msg_motorCommands)
-        self.pub_grabbing.publish(msg_grabbing)
-        self.pub_shooting.publish(msg_shooting)
-        self.pub_baseBarometer.publish(msg_baseBarometer)
-        """
+        blimp_id = data['blimp_id']
+        blimps[blimp_id].goal_color = data['goal_color']
 
 # Handle user connection to webpage
 @socketio.on('connect')
@@ -693,41 +742,33 @@ def video_feed(feed_name):
         return Response(status=204)
 
 # Streaming Endpoints
-@app.route('/Burn Cream Blimp')
+@app.route('/BurnCreamBlimp')
 def burnCreamBlimpPage():
-    return render_template('Burn Cream Blimp.html')
+    return render_template('BurnCreamBlimp.html')
 
-@app.route('/Silly Ah Blimp')
+@app.route('/SillyAhBlimp')
 def sillyAhhBlimpPage():
-    return render_template('Silly Ah Blimp.html')
+    return render_template('SillyAhBlimp.html')
 
-@app.route('/Turbo Blimp')
+@app.route('/TurboBlimp')
 def turboBlimpPage():
-    return render_template('Turbo Blimp.html')  
+    return render_template('TurboBlimp.html')  
 
-@app.route('/Game Chamber Blimp')
+@app.route('/GameChamberBlimp')
 def gameChamberBlimpPage():
-    return render_template('Game Chamber Blimp.html')
+    return render_template('GameChamberBlimp.html')
 
-@app.route('/Five Guys Blimp')
+@app.route('/FiveGuysBlimp')
 def fiveGuysBlimpPage():
-    return render_template('Five Guys Blimp.html')
+    return render_template('FiveGuysBlimp.html')
 
-@app.route('/Catch 1')
+@app.route('/Catch1')
 def catch1Page():
-    return render_template('Catch 1.html')
+    return render_template('Catch1.html')
 
-@app.route('/Catch 2')
+@app.route('/Catch2')
 def catch2Page():
-    return render_template('Catch 2.html')
-
-@app.route('/Attack 1')
-def attack1Page():
-    return render_template('Attack 1.html')
-
-@app.route('/Attack 2')
-def attack2Page():
-    return render_template('Attack 2.html')
+    return render_template('Catch2.html')
 
 def ros_thread():
     rclpy.init()
