@@ -66,116 +66,37 @@ class Basestation(Node):
     def identify_callback(self, msg):
         global blimps
 
-        #Identify message is just a string with the blimp ID
+        # Identify message is just a string with the blimp ID
         blimp_id = msg.data
         if blimp_id in self.connected_blimps:
-            #Update last online here because update is only called while the node is subscribed
+            # Update last online here because update is only called while the node is subscribed
             blimps[blimp_id].last_online = self.get_clock().now()
         else:
-            #Otherwise, check its validity and create a handler for it
+            # Otherwise, check its validity and create a handler for it
             # Testing
             # self.get_logger().info('Node Name: "%s"' % nodeName)
-            #Make sure node name is valid
+            # Make sure node name is valid
             if self.check_node_name(blimp_id) == True:
                 print("ADDING BLIMP")
                 self.create_blimp_node_handler(blimp_id)
                 blimps[blimp_id].last_online = self.get_clock().now()
 
-    # This function is not working as intended !!! (So I removed it - Willie)
-    # def connectBlimp(self, blimp_node_handler):
-        # if blimp_node_handler.blimp_id is not None:
-            # Increase Number of New Blimps
-            # self.num_blimps += 1          
-
-            # New Blimp Identified
-            # self.get_logger().info("Identified new blimp (id: %s)." % (str(blimp_node_handler.blimp_id)))
-        # else:
-            # Blimp Altimer_period = 1.0/self.loopSpeedeady Identified
-            # self.get_logger().info("BlimpID already identified: %s" % blimpNodeHandler.nodeName)
-            # self.get_logger().error("connect_blimp called with no blimp!")
-
     def update_blimp_node_handlers(self):
         global blimps
 
-        # Testing
-        # print('update')
-        # print(self.recognizedBlimpNodes)
-        # print(self.currentBlimps)
-        # print("Number of Blimps:", self.numBlimps)
-
-        # Iterate through current nodes, look for new nodes
-        # infos = self.get_subscriptions_info_by_topic(self.topicName_identify)
-
-        #First, parse node list from infos
-        # identify_node_list = []
-        # for info in infos:
-        #     identify_node_list.append(info.node_name)
-
-        #Next, find subbed nodes that aren't in the connected blimp list and validate them
-        # print(identify_node_list)
-
-        #Finally, check for subscription timeout for all connected blimps
+        # Finally, check for subscription timeout for all connected blimps
         for blimp_node_handler in self.blimp_node_handlers:
             if self.getElapsedTime(blimps[blimp_node_handler.blimp_id].last_online) > self.timeout:
                 print("REMOVING BLIMP")
                 self.remove_blimp_node_handler(blimp_node_handler.blimp_id)
             else:
-                #Run handler update routine
+                # Run handler update routine
                 blimp_node_handler.update()
-
-        # for info in infos:
-        #     nodeName = info.node_name
-            # Testing
-            # self.get_logger().info('Node Name: "%s"' % nodeName)
-
-        # Stress Test This !!!
-
-        # Check for nodes that timed out
-        # for blimpNodeHandler in self.blimpNodeHandlers:
-            # No Blimp ID Received
-            # if blimpNodeHandler.blimpID is None:
-            #     # Check if Blimp Timed Out
-            #     if self.getElapsedTime(blimpNodeHandler.timeCreated) > self.timeout:
-            #         self.removeBlimpNodeHandler(blimpNodeHandler)
-            # elif blimpNodeHandler.lastReceived_blimpID is None:
-            #     # Check if Blimp Timed Out
-            #     if self.getElapsedTime(blimpNodeHandler.timeCreated) > self.timeout:
-            #         self.removeBlimpNodeHandler(blimpNodeHandler)
-            # Blimp ID Received
-            # else:
-
-            # Remove Blimp Node Handler from List
-            # if blimpNodeHandler.blimpID is not None:
-            #     if blimpNodeHandler.blimpID not in self.currentBlimps:        
-            #         self.blimpNodeHandlers.remove(blimpNodeHandler)
-            #         del blimpNodeHandler
-            #         continue
-            #     else:
-            #         blimpNodeHandler.update()
-
-            # if blimpNodeHandler.blimpID is not None:
-            #     if blimpNodeHandler.lastReceived_blimpID is not None:
-            #         # print(blimpNodeHandler.blimpID + ": " + str(self.getElapsedTime(blimpNodeHandler.lastReceived_blimpID)))
-            #         # Check if Blimp Timed Out
-            #         if self.getElapsedTime(blimpNodeHandler.lastReceived_blimpID) > self.timeout:
-            #             self.removeBlimpNodeHandler(blimpNodeHandler)
-            #         else:
-            #             blimpNodeHandler.update()
     
-    # Stress Test This !!!
     def create_blimp_node_handler(self, blimp_id):
-        # Unknown Blimp Node Found
-        if blimp_id == "_NODE_NAME_UNKNOWN_":
-            self.get_logger().info("FLAG: Node Name Unknown")
-            return
         
         # Create New Blimp Node Handler
         new_blimp_node_handler = BlimpNodeHandler(self, blimp_id)
-
-        # Check for Blimp ID Topic
-        # topic_blimpID = "/" + blimp_node_name + "/blimpID"
-        # Subscribe to the Blimp ID Topic (WDW REMOVED)
-        # newBlimpNodeHandler.sub_blimpID = self.create_subscription(String, topic_blimpID, newBlimpNodeHandler.listener_callback, 10)
 
         # State Machine Topic
         topic_state_machine = "/" + blimp_id + "/state_machine"
@@ -201,7 +122,7 @@ class Basestation(Node):
         new_blimp_node_handler.sub_bounding_box = self.create_subscription(BoundingBox, topic_bounding_box, new_blimp_node_handler.bounding_box_callback, 10)
 
         # Check for Base Barometer Topic
-        topic_baseBarometer = "/" + blimp_id + "/baseBarometer"
+        # topic_baseBarometer = "/" + blimp_id + "/baseBarometer"
 
         # Subscribe to the State Machine Topic
         # new_blimp_node_handler.sub_baseBarometer = self.create_subscription(Float64, topic_baseBarometer, new_blimp_node_handler.baseBarometer_callback, qos_profile)
@@ -215,8 +136,6 @@ class Basestation(Node):
         # Add Blimp Node Handler to List
         self.blimp_node_handlers.append(new_blimp_node_handler)
 
-    # Stress Test This !!!
-    # Fix this function !!!
     def remove_blimp_node_handler(self, blimp_id):
         global blimps
 
@@ -224,7 +143,7 @@ class Basestation(Node):
         if blimp_id is not None:
             self.get_logger().info('Detected timeout of blimp ID "%s"' % blimp_id)
 
-            #First, get the handle of the node handler
+            # First, get the handle of the node handler
             handler_found = False
             handler_id = None
             for id, handler in enumerate(self.blimp_node_handlers):
@@ -236,28 +155,28 @@ class Basestation(Node):
                 self.get_logger().error('Blimp ID "%s" Handler not found!' % blimp_id)
                 return
             
-            #Now, gracefully shut down the node handler
-            #Destroy subscribers (publishers will timeout anyways)
+            # Now, gracefully shut down the node handler
+            # Destroy subscribers (publishers will timeout anyways)
             self.blimp_node_handlers[handler_id].destroy_subscribers()
             self.blimp_node_handlers[handler_id].destroy_publishers()
 
-            #Remove blimp from list of connected blimps
+            # Remove blimp from list of connected blimps
             self.connected_blimps.remove(blimp_id)
 
-            #Finally, delete the handler object for good
+            # Finally, delete the handler object for good
             del self.blimp_node_handlers[handler_id]
 
-            #Delete from global blimps dict
+            # Delete from global blimps dict
             del blimps[blimp_id]
 
             self.num_blimps -= 1
 
-            #Remove blimp from frontend display
+            # Remove blimp from frontend display
             socketio.emit('remove', blimp_id)
 
     # Check if Node Name is valid
     def check_node_name(self, node_name):
-        #Todo: Search for node name in global dictionary
+        # Todo!!!: Search for node name in global dictionary
         if node_name == 'BurnCreamBlimp' or node_name == 'SillyAhBlimp' or node_name == 'TurboBlimp' or node_name == 'GameChamberBlimp' or node_name == 'FiveGuysBlimp' or node_name == 'Catch2' or node_name == 'Catch1' or node_name == 'Attack1' or node_name == 'Attack2':
             return True
         else:
@@ -299,10 +218,10 @@ class BlimpNodeHandler:
 
         self.identified_count = 0
 
-        #Create publishers now
+        # Create publishers now
         self.create_publishers()
 
-        #Initialize all subscribers to None; parent will handle their creation
+        # Initialize all subscribers to None; parent will handle their creation
         self.sub_state_machine = None
         self.sub_image_raw = None
         self.sub_bounding_box = None
@@ -317,62 +236,42 @@ class BlimpNodeHandler:
         self.parent_node.get_logger().info('Identified Blimp with ID "%s"' % str(self.blimp_id))
         self.parent_node.num_blimps += 1
 
-        #Create a Blimp object for storing the blimp state
-        #Todo: fix redundancies between Blimp objects and handlers (they're one-to-one)
+        # Create a Blimp object for storing the blimp state
+        # Todo!!!: fix redundancies between Blimp objects and handlers (they're one-to-one)
         blimp = Blimp(self.blimp_id)
         blimp.blimp_name = self.blimp_name
 
-        #Set the blimp type
+        # Set the blimp type
         self.get_blimp_type(blimp)
         blimps[self.blimp_id] = blimp
 
-    # def listener_callback(self, msg):
-        # Check blimp ID and give it a name on the Basestation
-        # Make the following if statement a function !!!
-        # global blimps
-        # if self.blimpID is None:
-        #     self.blimpID = msg.data
-            #self.parentNode.get_logger().info('Identified new blimp with ID "%s"' % msg.data)
-            #self.parentNode.numBlimps += 1
-            #self.parentNode.connectBlimp(self)
-            # self.createPublishers()
-            # self.blimp_name = self.get_blimp_name()
-            # if self.blimp_name not in blimps:
-            #     self.parentNode.get_logger().info('Identified Blimp with ID "%s"' % msg.data)
-            #     self.parentNode.numBlimps += 1
-            #     blimp = Blimp(self.blimp_name)
-            #     self.get_blimp_type(blimp)
-            #     blimps[self.blimp_name] = blimp
-            # else:
-                # Not working
-                # pass
-                #self.parentNode.get_logger().info("BlimpID already identified: %s" % msg.data)
-                #self.parentNode.numBlimps += 1
-                # Not working
-                #self.parentNode.get_logger().info("%i" % self.parentNode.numBlimps)
-        # else:
-        #     if self.blimpID not in self.parentNode.currentBlimps:
-        #         self.parentNode.currentBlimps.append(self.blimpID)
-        #     self.lastReceived_blimpID = self.parentNode.get_clock().now()
-            # Is heartbeat necessary?
-            # blimps[self.blimp_name].lastHeartbeatDetected = time.time()
+    def update(self):
+        # Todo!!!: Change frequency of each publisher!
+        # self.parent_node.get_logger().info("Updating")
+        global blimps
+        if self.blimp_id in blimps:
+            # Emit the blimp data to the webpage
+            socketio.emit('update', blimps[self.blimp_id].to_dict())
+        
+            # Publish the target and/or goal color values to ROS
+            self.publish_motorCommands()
 
-            # if self.blimp_name is not None:
-            #     if self.blimp_name in blimps:
-            #         if self.blimpID is not None:
+            # Need to publish this as needed
+            self.publish_auto()
 
-                    
-            #             # Publish the target and/or goal color values to ROS
-            #             # Make this independent of the listener callback !!!
-            #             self.publish_motorCommands()
-            #             self.publish_auto()
-            #             # self.publish_barometer()
-            #             if (self.get_blimp_type(blimps[self.blimp_name]) == True):
-            #                 self.publish_target_color()
-            #             else:
-            #                 self.publish_goal_color()
-            #                 self.publish_grabbing()
-            #                 self.publish_shooting()
+            # Publish barometer data
+            # self.publish_barometer()
+
+            if (self.get_blimp_type(blimps[self.blimp_id]) == True):
+                # If blimp is an attack blimp, publish the target color
+                self.publish_target_color()
+            else:
+                # Otherwise, publish catching blimp stuff
+                self.publish_goal_color()
+
+                # Need to publish these as needed!
+                self.publish_grabbing()
+                self.publish_shooting()
 
     def create_publishers(self):
         topic_auto =            "/" + self.blimp_id + "/auto"
@@ -392,7 +291,6 @@ class BlimpNodeHandler:
         self.pub_motorCommands = self.parent_node.create_publisher(Float64MultiArray, topic_motorCommands, bufferSize)
         self.pub_grabbing = self.parent_node.create_publisher(Bool, topic_grabbing, bufferSize)
         self.pub_shooting = self.parent_node.create_publisher(Bool, topic_shooting, bufferSize)
-
         # self.pub_baseBarometer = self.parent_node.create_publisher(Float64, topic_baseBarometer, bufferSize)
 
     def destroy_publishers(self):
@@ -403,41 +301,14 @@ class BlimpNodeHandler:
         self.pub_motorCommands.destroy()
         self.pub_grabbing.destroy()
         self.pub_shooting.destroy()
+        # self.pub_baseBarometer.destroy()
 
-    #Function to destroy subscribers for elegant behavior
+    # Function to destroy subscribers for elegant behavior
     def destroy_subscribers(self):
         self.parent_node.destroy_subscription(self.sub_state_machine)
         self.parent_node.destroy_subscription(self.sub_image_raw)
         self.parent_node.destroy_subscription(self.sub_bounding_box)
         self.parent_node.destroy_subscription(self.sub_baseBarometer)
-
-    def update(self):
-        # Todo: Change frequency of each publisher!
-        # self.parent_node.get_logger().info("Updating")
-
-        global blimps
-        if self.blimp_id in blimps:
-            # Emit the blimp data to the webpage
-            socketio.emit('update', blimps[self.blimp_id].to_dict())
-        
-            # Publish the target and/or goal color values to ROS
-            self.publish_motorCommands()
-
-            #Need to publish this as needed
-            self.publish_auto()
-
-            # self.publish_barometer()
-
-            if (self.get_blimp_type(blimps[self.blimp_id]) == True):
-                #If blimp is an attack blimp, publish the target color
-                self.publish_target_color()
-            else:
-                #Otherwise, publish catching blimp stuff
-                self.publish_goal_color()
-
-                #Need to publish these as needed!
-                self.publish_grabbing()
-                self.publish_shooting()
 
     # Continually Poll State Machine Data from Teensy
     def state_machine_callback(self, msg):
@@ -535,7 +406,7 @@ class BlimpNodeHandler:
         # Blimp Name not Recognized (This should not happen!)
         # self.blimp_id = 'Error'
         blimp_names_by_id = {
-            # Catching Blimps
+            # Catching Blimps #
             'BurnCreamBlimp': 'Burn Cream Blimp',
             'SillyAhBlimp': 'Silly Ah Blimp',
             'TurboBlimp': 'Turbo Blimp',
@@ -544,7 +415,7 @@ class BlimpNodeHandler:
             # Fake Blimps #
             'Catch1': 'Catch 1',
             'Catch2': 'Catch 2',
-            # Attacking Blimps 
+            # Attacking Blimps #
             'Attack1': 'Attack 1',
             'Attack2': 'Attack 2'
         }
@@ -663,7 +534,6 @@ class BlimpNodeHandler:
     def update_goal_colors():
         global blimps
         global all_goal_color
-        print(all_goal_color)
 
         all_goal_color = not all_goal_color
 
