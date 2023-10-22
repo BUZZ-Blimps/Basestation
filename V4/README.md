@@ -5,6 +5,10 @@
 ```bash
 ./run.sh -o
 ```
+Or run the following command if the webpage is already open:
+```bash
+./run.sh
+```
 2. To connect to the web-server, verify you're on the same wi-fi network as the web-server.
 
 ## Notes (Advanced)
