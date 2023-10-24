@@ -2,8 +2,7 @@
 
 ## Summary
 - The basestation is used as an interface between human operators and blimps
-- [BasestationV3](V3_ws) is the latest working version (Python UI with ROS2)
-- [BasestationV4](V4) is in-development (Web-based UI with ROS2)
+- [BasestationV4](V4) is the latest working version (Web-based UI with ROS2)
 
 
 ## Description
