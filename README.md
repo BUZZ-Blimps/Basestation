@@ -3,12 +3,13 @@
 ## Summary
 - The basestation is used as an interface between human operators and blimps
 - [BasestationV4](V4) is the latest working version (Web-based UI with ROS2)
-
+  
+![Screenshot](https://github.com/SWAMP-Blimps/Basestation/assets/116739351/7a92a1f9-1ac5-49fb-bf95-2db0ca944dee)
 
 ## Description
 The "basestation" has been used since the beginning of SWAMP Blimps and serves as an interface between human operators and our swarm of blimps. For most of its history, the basestation has taken the form of a Python program, with a UI rendered with Pygame (shown below).
 
-![Screenshot](Screenshot.png)
+![image](https://github.com/SWAMP-Blimps/Basestation/assets/116739351/27851673-6e29-45d7-bc16-5b4270a3c82b)
 
 The primary functions of the basestation are:
 - List all inputs (keyboard, controllers)
