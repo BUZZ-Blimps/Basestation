@@ -58,6 +58,8 @@ class Blimp:
 
         self.last_online = 0
 
+        self.log = None
+
     def to_dict(self):
         return {
             "blimp_id": self.blimp_id,
@@ -72,7 +74,8 @@ class Blimp:
             "target_color": self.target_color,
             "state_machine": self.state_machine,
             "connected": self.connected,
-            "barometer": self.barometer
+            "barometer": self.barometer,
+            "log": self.log
         }
 
     def update_dict(self, data_dict):
@@ -102,3 +105,5 @@ class Blimp:
             self.connected = data_dict["connected"]   
         if "barometer" in data_dict:
             self.connected = data_dict["barometer"]
+        if "log" in data_dict:
+            self.connected = data_dict["log"]

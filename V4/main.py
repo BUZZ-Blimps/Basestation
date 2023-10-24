@@ -58,7 +58,7 @@ class Basestation(Node):
         self.loopSpeed = 10
         timer_period = 1.0/self.loopSpeed
         self.timer = self.create_timer(timer_period, self.timerLoop)
-        self.timeout = 3
+        self.timeout = 5
         
         # Identify Topic for Teensy to Check if Basestation is On
         self.topicName_identify = "/identify"
@@ -109,24 +109,30 @@ class Basestation(Node):
         topic_image_raw = "/" + blimp_id + "/left/image_raw"
 
         # Subscribe to the Image Raw Topic
-        qos_profile = QoSProfile(
-            history=HistoryPolicy.KEEP_LAST,
-            depth=10,
-            reliability=ReliabilityPolicy.BEST_EFFORT
-        )
-        new_blimp_node_handler.sub_image_raw = self.create_subscription(Image, topic_image_raw, new_blimp_node_handler.image_raw_callback, qos_profile)
+        # qos_profile = QoSProfile(
+        #     history=HistoryPolicy.KEEP_LAST,
+        #     depth=20,
+        #     reliability=ReliabilityPolicy.BEST_EFFORT
+        # )
+        new_blimp_node_handler.sub_image_raw = self.create_subscription(Image, topic_image_raw, new_blimp_node_handler.image_raw_callback, 1)
 
         # Check for Bounding Box Topic
         topic_bounding_box = "/" + blimp_id + "/bounding_box"
 
         # Subscribe to the Bounding Box Topic
         new_blimp_node_handler.sub_bounding_box = self.create_subscription(BoundingBox, topic_bounding_box, new_blimp_node_handler.bounding_box_callback, 10)
+        
+        # Check for Bounding Box Topic
+        topic_logs = "/" + blimp_id + "/log"
 
+        # Subscribe to the Bounding Box Topic
+        new_blimp_node_handler.sub_logs = self.create_subscription(String, topic_logs, new_blimp_node_handler.logs_callback, 10)
+        
         # Check for Base Barometer Topic
         # topic_baseBarometer = "/" + blimp_id + "/baseBarometer"
 
         # Subscribe to the State Machine Topic
-        # new_blimp_node_handler.sub_baseBarometer = self.create_subscription(Float64, topic_baseBarometer, new_blimp_node_handler.baseBarometer_callback, qos_profile)
+        # new_blimp_node_handler.sub_baseBarometer = self.create_subscription(Float64, topic_baseBarometer, new_blimp_node_handler.baseBarometer_callback, 10)
 
         # self.connectBlimp(new_blimp_node_handler)
         new_blimp_node_handler.connect_blimp()
@@ -227,6 +233,7 @@ class BlimpNodeHandler:
         self.sub_image_raw = None
         self.sub_bounding_box = None
         self.sub_baseBarometer = None
+        self.sub_logs = None
 
         # Livestream Most Recent Frame
         self.frame = None
@@ -309,6 +316,7 @@ class BlimpNodeHandler:
         self.parent_node.destroy_subscription(self.sub_state_machine)
         self.parent_node.destroy_subscription(self.sub_image_raw)
         self.parent_node.destroy_subscription(self.sub_bounding_box)
+        self.parent_node.destroy_subscription(self.sub_logs)
         self.parent_node.destroy_subscription(self.sub_baseBarometer)
 
     # Continually Poll State Machine Data from Teensy
@@ -316,6 +324,14 @@ class BlimpNodeHandler:
         global blimps
         if self.blimp_id in blimps:
             blimps[self.blimp_id].state_machine = msg.data
+
+    # Continually Poll State Machine Data from Teensy
+    def logs_callback(self, msg):
+        global blimps
+        blimps[self.blimp_id].log = msg.data
+        if self.blimp_id in blimps:
+            # Emit the blimp's logs to the webpage
+            socketio.emit('logs', blimps[self.blimp_id].to_dict())
 
     # Continually Poll Image Raw Data from Pi
     def image_raw_callback(self, msg):
@@ -475,16 +491,19 @@ class BlimpNodeHandler:
     # Update Total Disconnection
     @socketio.on('kill_basestation')
     def kill_basestation():
-        try:
-            print('\nDestroying Basestation Node...\n')
-            global node
-            node.destroy_node()
-            rclpy.shutdown()
-            # barometer.close()
-            sys.exit(0)
-        except SystemExit:
-            print('\nTerminating Program...\n')
-            os.kill(current_pid, signal.SIGTERM)
+        print('\nDestroying Basestation Node...\n')
+        global node
+        node.destroy_node()
+        rclpy.shutdown()
+        socketio.emit("kill")
+        time.sleep(0.5)
+        # barometer.close()
+        print("Terminating threads gracefully...")
+        # global video_threads
+        # for t in video_threads:
+        #     t.join()
+        print('\nTerminating Program...\n')
+        os.kill(current_pid, signal.SIGTERM)
 
     # Update Blimp Class with Dictionary Data
     @socketio.on('update_blimp_dict')
@@ -598,9 +617,12 @@ def index():
 
 # Streaming Feeds/Pages
 def generate(feed_name):
+    global blimps
     while True:
-        # Yield the output frame in the byte format
-        yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(blimps[feed_name].frame) + b'\r\n')
+        if feed_name in blimps:
+            if blimps[feed_name].frame is not None:
+                # Yield the output frame in the byte format
+                yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(blimps[feed_name].frame) + b'\r\n')
 
 @app.route('/video_feed/<string:feed_name>')
 def video_feed(feed_name):
@@ -641,6 +663,15 @@ def catch1Page():
 def catch2Page():
     return render_template('Catch2.html')
 
+@app.route('/Logs')
+def logsPage():
+    return render_template('Logs.html')
+
+@app.route('/Documentation')
+def docsPage():
+    return render_template('Documentation.html')
+
+
 # ROS 2 Thread
 def ros_thread():
     rclpy.init()
@@ -660,7 +691,12 @@ def terminate(signal, frame):
     global node
     node.destroy_node()
     rclpy.shutdown()
+    socketio.emit("kill")
     # barometer.close()
+    print("Terminating threads gracefully...")
+    # global video_threads
+    # for t in video_threads:
+    #     t.join()
     print('\nTerminating Program...\n')
     os.kill(current_pid, signal.SIGTERM)
 
@@ -674,26 +710,39 @@ def check_wifi_ssid():
     else:
         return True
 
+# Main
 if __name__ == '__main__':
-    
     # if(check_wifi_ssid()):
         # Create init function for the following values
         # Initialize default value i.e. goal color value (default: 0)
         # Could make these read from a text file to make them permanent profiles
+
+        # Blimps
         global blimps
         blimps = {}
 
+        # All Autonomous
         global auto_panic
         auto_panic = False
 
+        # All Goal Colors
         global all_goal_color
         all_goal_color = False
 
         # Terminate if Ctrl+C Caught
         signal.signal(signal.SIGINT, terminate)
 
+        # Create and Start ROS 2 Thread
         ros_thread = threading.Thread(target=ros_thread)
         ros_thread.start()
 
+        # global video_threads
+        # video_threads = []
+        # for feed_name in ['BurnCreamBlimp', 'SillyAhBlimp', 'TurboBlimp', 'GameChamberBlimp', 'FiveGuysBlimp']:
+        #     t = threading.Thread(target=video_feed, args=(feed_name))
+        #     t.start()
+        #     video_threads.append(t)
+
+        # Start Web Application
         socketio.run(app, host='192.168.0.200', port=5000)
 
