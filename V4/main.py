@@ -45,6 +45,9 @@ class Basestation(Node):
     def __init__(self):
         super().__init__('Basestation')
 
+        # Start up Basestation
+        socketio.emit('start')
+
         # Number of Blimps
         self.num_blimps = 0
 

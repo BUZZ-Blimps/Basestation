@@ -21,6 +21,11 @@ socket.on('remove', (blimp_id) => {
   remove_blimp(blimp_id);
 });
 
+socket.on('start', () => {
+  window.location.reload();
+  console.log('Starting up Basestation');
+});
+
 socket.on('kill', () => {
   window.location.reload();
   console.log('Shutting down Basestation');
