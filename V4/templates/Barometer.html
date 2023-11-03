@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Documentation</title>
+    <title>Barometer Data</title>
     <link rel="icon" type="image/png" sizes="515x512" href="static/images/Blimp.png">
 
     <!-- Include external style sheet-->
@@ -30,11 +30,102 @@
         </ul>
     </nav>
     <!-- <div class="left-corner-text"> Return to Main Page <img  src="static/images/Xbox_Button_B.png" width="20" height="20" ></img> </div> -->
-    <h4>Documentation</h4>
+    <h4>Barometer Data</h4>
+    <div id="baseBarometer">Base Barometer: 100700.0</div>
+    <div id="blimps-container">
+        <!-- Blimp rows will be added here by JavaScript -->
+    </div>
 </body>
     <script>
         // Connect to SocketIO server
         const socket = io();
+
+        socket.on('barometer', (all_blimps) => {
+            //console.log(all_blimps)
+            let barometer = document.getElementById('baseBarometer');
+            newValue = "Base Barometer: " + all_blimps[Object.keys(all_blimps)[0]]["barometer"];
+            barometer.textContent = newValue;
+            update_barometer_data(all_blimps);
+        });
+
+        function update_barometer_data(blimps) {
+            const sortedKeys = Object.keys(blimps).sort();
+            const blimpsContainer = document.getElementById('blimps-container');
+            
+            // Get all current rows as a map for quick access
+            const rows = {};
+            blimpsContainer.querySelectorAll('.blimp-row').forEach(row => {
+                rows[row.dataset.blimpName] = row;
+            });
+
+            // Iterate through the sorted keys array
+            sortedKeys.forEach(function(key) {
+                let row = rows[key];
+                let button;
+                let height;
+                let z_velocity;
+
+                if (!row) {
+                    // Create a new row for each key
+                    row = document.createElement('div');
+                    row.className = 'blimp-row';
+                    row.dataset.blimpName = key; // Store the key in a data attribute
+
+                    // Create a span for the key text
+                    const name = document.createElement('span');
+                    name.className = 'blimp-name';
+                    name.textContent = key;
+                    row.appendChild(name);
+
+                    // Create a new button for each key
+                    button = document.createElement('button');
+                    button.id = `button_${key}`;
+                    button.className = 'barometer-calibration';
+                    button.textContent = 'Calibrate';
+                    button.style.backgroundColor = 'red';
+                    row.appendChild(button);
+
+                    height = document.createElement('span');
+                    height.className = 'blimp-height';
+                    height.textContent = blimps[key]["height"].toFixed(2);
+                    row.appendChild(height);
+
+                    z_velocity = document.createElement('span');
+                    z_velocity.className = 'blimp-z_velocity';
+                    z_velocity.textContent = blimps[key]["z_velocity"].toFixed(2);
+                    row.appendChild(z_velocity);
+
+                    // Append the new row to the container
+                    blimpsContainer.appendChild(row);
+                } else {
+                    // If the row already exists, find the button in it
+                    button = row.querySelector(`.barometer-calibration`);
+                    height = row.querySelector('.blimp-height');
+                    z_velocity = row.querySelector('.blimp-z_velocity');
+                }
+
+                // Set or update the height text content
+                height.textContent = 'Height: ' + blimps[key]["height"].toFixed(2);
+
+                // Set or update the height text content
+                z_velocity.textContent = 'Z-Velocity: ' + blimps[key]["z_velocity"].toFixed(2);
+
+                // Add or update the button event listener
+                button.onclick = function(event) {
+                    console.log('Barometer Calibrated for ' + key);
+                    button.style.backgroundColor = 'green';
+                    socket.emit('calibrate_barometer', key);
+                };
+            });
+
+            // Remove rows that no longer exist in the data
+            Object.keys(rows).forEach(existingKey => {
+                if (!blimps.hasOwnProperty(existingKey)) {
+                    const rowToDelete = rows[existingKey];
+                    blimpsContainer.removeChild(rowToDelete);
+                }
+            });
+        }
 
         let toggler = document.querySelector(".toggler");
 

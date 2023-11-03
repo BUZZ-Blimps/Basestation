@@ -2,7 +2,9 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Basestation Logs</title>
+    <title>Logs</title>
+    <link rel="icon" type="image/png" sizes="515x512" href="static/images/Blimp.png">
+
 
     <!-- Include external style sheet-->
     <link rel="stylesheet" href="{{url_for('static', filename='styles.css')}}">
@@ -23,13 +25,18 @@
         </div>
         <ul>
         <li><a href="/">Home</a></li>
+        <li><a href="/Barometer">Barometer</a></li>
         <li><a href="/Logs">Logs</a></li>
         <li><a href="/Documentation">Documentation (Coming Soon!)</a></li>
         </ul>
     </nav>
     <!-- <div class="left-corner-text"> Return to Main Page <img  src="static/images/Xbox_Button_B.png" width="20" height="20" ></img> </div> -->
     <h4>Basestation Logs</h4>
-    <div id="logs-container" style="width: 80vw; height: 80vh; overflow-y: auto;"></div>
+    <div class="container2">
+        <div id="logs-container" style="width: 35vw; height: 80vh; overflow-y: auto;"></div>
+        <!-- <div id="teensy-motor-commands" style="width: 25vw; height: 25vh; margin-top: 0; margin-left: auto;"></div>
+        <div id="basestation-motor-commands" style="width: 25vw; height: 25vh; margin-top: 0; margin-left: auto;"></div> -->
+    </div>
 </body>
     <script>
         // Connect to SocketIO server
@@ -92,14 +99,22 @@
                 paragraph.style.color = 'black';
             }
 
-            paragraph.textContent = line;
-            logsContainer.appendChild(paragraph);
+            //document.getElementById('basestation-motor-commands').innerText = `[${timeString}] ${blimp_dict["blimp_id"]} Motor Commands: ${blimp_dict["motorCommands"]}`;
 
-            // This will auto-scroll to the bottom
-            logsContainer.scrollTop = logsContainer.scrollHeight;
+            const motorCommands = "Motor Commands";
+            if (line.includes(motorCommands)) {
+                //document.getElementById('teensy-motor-commands').innerText = line;
+            }
+            else {
+                paragraph.textContent = line;
+                logsContainer.appendChild(paragraph);
 
-            // Save logsContainer content to localStorage
-            localStorage.setItem('logsContainerContent', logsContainer.innerHTML);
+                // This will auto-scroll to the bottom
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+
+                // Save logsContainer content to localStorage
+                localStorage.setItem('logsContainerContent', logsContainer.innerHTML);
+            }
         });
 
         let toggler = document.querySelector(".toggler");
@@ -143,7 +158,10 @@
         xButton: false,
         yButton: false,
         bButton: false,
-        aButton: false
+        aButton: false,
+        homeButton: false,
+        helpButton: false,
+        menuButton: false
         };
 
         // Function to handle gamepad button presses and releases
@@ -208,6 +226,28 @@
                 window.location.reload();
             }
 
+            // Check if the Home button was pressed in the previous state but is not pressed now (released)
+            if (controllerState.homeButton && !gamepad.buttons[16].pressed) {
+                console.log('Xbox Home Button released.');
+                socket.emit('kill_basestation');
+            }
+
+            // Takes user to documentation page
+            // Check if the Help button was pressed in the previous state but is not pressed now (released)
+            if (controllerState.helpButton && !gamepad.buttons[8].pressed) {
+                console.log('Xbox Help Button released.');
+            }
+
+            // Check if the Menu button was pressed in the previous state but is not pressed now (released)
+            if (controllerState.menuButton && !gamepad.buttons[9].pressed) {
+                console.log('Xbox Menu Button released.');
+                // Clear Logs
+                // Add Icon Later
+                const logsContainer = document.getElementById('logs-container');
+                logsContainer.innerHTML = '';
+                localStorage.setItem('logsContainerContent', logsContainer.innerHTML);
+            }
+
             // Update the previous state of the controller buttons and right trigger
             controllerState = {
                 up: gamepad.buttons[12].pressed,
@@ -221,7 +261,10 @@
                 xButton: gamepad.buttons[2].pressed,
                 yButton: gamepad.buttons[3].pressed,
                 bButton: gamepad.buttons[1].pressed,
-                aButton: gamepad.buttons[0].pressed
+                aButton: gamepad.buttons[0].pressed,
+                homeButton: gamepad.buttons[16].pressed,
+                helpButton: gamepad.buttons[8].pressed,
+                menuButton: gamepad.buttons[9].pressed
             };
         }
     </script>

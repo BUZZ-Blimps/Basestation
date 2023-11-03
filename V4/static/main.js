@@ -250,17 +250,16 @@ function update_basestation(blimp_dict) {
     }
 
     //Verify if controller is connected to this blimp
-    if(blimp_dict["connected"] || blimpList[Controller_1_currConnection])
+    if(blimp_dict["connected"] === 'True' || blimpList[Controller_1_currConnection] === blimp_dict['blimp_id'])
     {
+      socket.emit('update_total_disconnection');
       socket.emit('update_connection', blimp_dict['blimp_id']);
-      //console.log(blimp_id + " is connected");
       sortedNameRows[blimp_id].style.color = 'blue';
       sortedStateRows[blimp_id].style.color = 'blue';
     }
     else
     {
-      socket.emit('update_diconnection', blimp_dict['blimp_id']);
-      //console.log(blimp_id + " Not working");
+      socket.emit('update_disconnection', blimp_dict['blimp_id']);
       sortedNameRows[blimp_id].style.color = 'black';  
       sortedStateRows[blimp_id].style.color = 'black';
     }
@@ -383,7 +382,7 @@ function update_goal_button_color(blimp_dict, goal_color, goal_color_button) {
               blimp_dict["goal_color"] = 0;
           }
 
-          console.log(blimp_id, 'has a goal color:', goal_color)
+          console.log(blimp_id, 'has a goal color:', goal_color);
 
           // Get the goal color button for the specific blimp
           let goal_color_button = document.getElementById(`goal_color_button_${blimp_id}`);
@@ -869,5 +868,6 @@ function handleGamepadButtons(gamepad) {
 // Listen for the beforeunload event on the window
 window.addEventListener('beforeunload', function() {
   // Save connected_blimp_id to localStorage right before the page is unloaded
+  Controller_1_currConnection = -1;
   localStorage.setItem('Controller_1_currConnection', Controller_1_currConnection);
 });
