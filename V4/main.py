@@ -323,25 +323,33 @@ class BlimpNodeHandler:
             self.publish_barometer()
            
             # Check 1 Hz timer 
-            if (time.time() - self.one_hz_timer) >= 1.0:
-                # Reset timer
-                self.one_hz_timer = time.time()
+            # if (time.time() - self.one_hz_timer) >= 1.0:
+            #     # Reset timer
+            #     self.one_hz_timer = time.time()
                 
-                # Need to publish this as needed
-                self.publish_auto()
+            #     # Need to publish this as needed
+            #     self.publish_auto()
 
-                if (blimps[self.blimp_id].blimp_type == True):
-                    # If blimp is an attack blimp, publish the target color
-                    self.publish_target_color()
-                else:
-                    # Otherwise, publish catching blimp stuff
-                    self.publish_goal_color()
+            #     if (blimps[self.blimp_id].blimp_type == True):
+            #         # If blimp is an attack blimp, publish the target color
+            #         self.publish_target_color()
+            #     else:
+            #         # Otherwise, publish catching blimp stuff
+            #         self.publish_goal_color()
 
-                    # Need to publish these as needed!
-                    self.publish_grabbing()
-                    self.publish_shooting()
+            #         # Need to publish these as needed!
+            #         self.publish_grabbing()
+            #         self.publish_shooting()
+            if (blimps[self.blimp_id].blimp_type == True):
+                # If blimp is an attack blimp, publish the target color
+                self.publish_target_color()
+            else:
+                # Otherwise, publish catching blimp stuff
+                self.publish_goal_color()
 
-                
+                # Need to publish these as needed!
+                self.publish_grabbing()
+                self.publish_shooting()
 
     def create_publishers(self):
         topic_auto =            "/" + self.blimp_id + "/auto"
