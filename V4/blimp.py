@@ -11,6 +11,7 @@ class Blimp:
 
         # Auto 
         self.auto = False
+        self.update_auto_pub = False
 
         # Killed
         self.killed = False
@@ -20,15 +21,19 @@ class Blimp:
 
         # Grabbing
         self.grabbing = False
+        self.update_grabbing_pub = False
 
         # Shooting
         self.shooting = False
+        self.update_shooting_pub = False
 
         # Target Goal Color
         self.goal_color = 0 # 0: Orange, 1: Yellow
+        self.update_goal_color_pub = False
 
         # Target Color
         self.target_color = 0 # 0: Blue, 1: Red
+        self.update_target_color_pub = False
 
         # State Machine
         self.state_machine = 0

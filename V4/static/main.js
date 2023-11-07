@@ -32,7 +32,7 @@ socket.on('kill', () => {
 });
 
 // Catching Blimps before Attack Blimps
-var blimpOrder = ["BurnCreamBlimp", "SillyAhBlimp", "TurboBlimp", "GameChamberBlimp", "FiveGuysBlimp", "Catch1", "Catch2", "Yoshi", "Attack1", "Attack2"];
+var blimpOrder = ["BurnCreamBlimp", "SillyAhBlimp", "TurboBlimp", "GameChamberBlimp", "FiveGuysBlimp", "Catch1", "Catch2", 'Yoshi', 'Luigi', 'Geoph', ' Up Dog', "Attack1", "Attack2"];
 
 // Unordered List of Blimp Names
 
@@ -176,7 +176,7 @@ function update_basestation(blimp_dict) {
     // Target number is 1 (Attack Blimps)
     else {
       update_target_button_color(blimp_dict, target_color, target_color_1_button);
-      update_empty_button_color(blimp_dict, 'white', goal_color_button);
+      //update_empty_button_color(blimp_dict, 'white', goal_color_button);
     }
     // Sort the target rows based on your desired order
     sortedTargetRows = Array.from(targetButtonsContainer.querySelectorAll('[blimp_id]'));
