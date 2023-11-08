@@ -29,7 +29,7 @@ class Blimp(Node):
         self.pub_identify = self.create_publisher(String, '/identify', 10)
 
         # Create timer
-        timer_period = 0.01  # seconds
+        timer_period = 1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
     def identify_callback(self):
@@ -40,7 +40,7 @@ class Blimp(Node):
 
     def timer_callback(self):
         # Publish /blimpID
-        self.publish_blimpID()
+        #self.publish_blimpID()
 
         # Publish /state_machine
         self.publish_state_machine()

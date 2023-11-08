@@ -64,7 +64,7 @@ class Basestation(Node):
 
         # Create Barometer Timer
         self.barometer = None
-        self.barometerLoopSpeed = 200
+        self.barometerLoopSpeed = 100
         barometer_timer_period = 1.0/self.barometerLoopSpeed
         self.barometerTimer = self.create_timer(barometer_timer_period, self.barometerTimerLoop)
         
@@ -691,10 +691,14 @@ class BlimpNodeHandler:
         global blimps
         for blimp in blimps:
             if blimps[blimp].connected == True:
+                print(blimps[blimp].blimp_name + "connected")
                 blimps[blimp].motorCommands = motorCommands
+                break
                 #print(blimps[blimp].motorCommands)
             else:
+                print(blimps[blimp].blimp_name + "not connected")
                 blimps[blimp].motorCommands = [0.0, -0.0, 0.0, -0.0]
+                break
                 #print(blimps[blimp].motorCommands)
 
     # Update All Goal Colors

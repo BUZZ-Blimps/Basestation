@@ -584,12 +584,15 @@ window.addEventListener("click", event => {
 var controllerCheck = setInterval(pollController, 0);
 
 function pollController() {
-  var gamepads = navigator.getGamepads();
-  for (var i = 0; i < gamepads.length; i++) {
-    var gamepad = gamepads[i];
-    if (gamepad) {
-      moveDots(gamepad);
-      handleGamepadButtons(gamepad);
+  if (client_ip === ip_allowed) {
+    console.log(client_ip)
+    var gamepads = navigator.getGamepads();
+    for (var i = 0; i < gamepads.length; i++) {
+      var gamepad = gamepads[i];
+      if (gamepad) {
+        moveDots(gamepad);
+        handleGamepadButtons(gamepad);
+      }
     }
   }
 }
@@ -664,206 +667,206 @@ let controllerState = {
 
 // Function to handle gamepad button presses and releases
 function handleGamepadButtons(gamepad) {
+  if (client_ip === ip_allowed) {
+    blimpList = blimpList.sort((a, b) => {
+      let indexA = blimpOrder.indexOf(a);
+      let indexB = blimpOrder.indexOf(b);
 
-  blimpList = blimpList.sort((a, b) => {
-    let indexA = blimpOrder.indexOf(a);
-    let indexB = blimpOrder.indexOf(b);
+      if (indexA == -1 || indexB == -1) {
+          throw new Error('All items in listToSort must exist in referenceList');
+      }
 
-    if (indexA == -1 || indexB == -1) {
-        throw new Error('All items in listToSort must exist in referenceList');
+      return indexA - indexB;
+    });
+
+    var connected_blimp_id;
+
+    // Check if the D-pad Up button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.up && !gamepad.buttons[12].pressed) {
+        if (Controller_1_currConnection === -1 || Controller_1_currConnection === 0) {
+          Controller_1_currConnection = blimpList.length - 1;
+        }
+        else {
+          Controller_1_currConnection--;
+        }
+      connected_blimp_id = blimpList[Controller_1_currConnection];
+      for (let i = 0; i < blimpList.length; i++) {
+        socket.emit('update_disconnection', blimpList[i]);
+      }
+      if (typeof connected_blimp_id !== "undefined") {
+        socket.emit('update_connection', connected_blimp_id);
+      }  
+      console.log('Xbox D-Pad Up released.');
     }
-
-    return indexA - indexB;
-  });
-
-  var connected_blimp_id;
-
-  // Check if the D-pad Up button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.up && !gamepad.buttons[12].pressed) {
-      if (Controller_1_currConnection === -1 || Controller_1_currConnection === 0) {
-        Controller_1_currConnection = blimpList.length - 1;
+    // Check if the D-pad Down button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.down && !gamepad.buttons[13].pressed) {
+      if (Controller_1_currConnection !== blimpList.length - 1) {
+        Controller_1_currConnection++;
+        connected_blimp_id = blimpList[Controller_1_currConnection];
+        for (let i = 0; i < blimpList.length; i++) {
+          socket.emit('update_disconnection', blimpList[i]);
+        }
+        if (typeof connected_blimp_id !== "undefined") {
+          socket.emit('update_connection', connected_blimp_id);
+        }    
       }
       else {
-        Controller_1_currConnection--;
+        Controller_1_currConnection = 0;
+        connected_blimp_id = blimpList[Controller_1_currConnection];
+        for (let i = 0; i < blimpList.length; i++) {
+          socket.emit('update_disconnection', blimpList[i]);
+        }
+        if (typeof connected_blimp_id !== "undefined") {
+          socket.emit('update_connection', connected_blimp_id);
+        } 
       }
-    connected_blimp_id = blimpList[Controller_1_currConnection];
-    for (let i = 0; i < blimpList.length; i++) {
-      socket.emit('update_disconnection', blimpList[i]);
+      console.log('Xbox D-Pad Down released.');
     }
-    if (typeof connected_blimp_id !== "undefined") {
-      socket.emit('update_connection', connected_blimp_id);
-    }  
-    console.log('Xbox D-Pad Up released.');
-  }
-  // Check if the D-pad Down button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.down && !gamepad.buttons[13].pressed) {
-    if (Controller_1_currConnection !== blimpList.length - 1) {
-      Controller_1_currConnection++;
+    // Check if the D-pad Left button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.left && !gamepad.buttons[14].pressed) {
+      socket.emit('update_total_disconnection');
+      Controller_1_currConnection = -1;
+      console.log('Xbox D-Pad Left released.');
+    }
+    // Check if the D-pad Right button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.right && !gamepad.buttons[15].pressed) {
+      if (Controller_1_currConnection !== blimpList.length - 1) {
+        Controller_1_currConnection++;
+        connected_blimp_id = blimpList[Controller_1_currConnection];
+        for (let i = 0; i < blimpList.length; i++) {
+          socket.emit('update_disconnection', blimpList[i]);
+        }
+        if (typeof connected_blimp_id !== "undefined") {
+          socket.emit('update_connection', connected_blimp_id);
+        }    
+      }
+      else {
+        Controller_1_currConnection = 0;
+        connected_blimp_id = blimpList[Controller_1_currConnection];
+        for (let i = 0; i < blimpList.length; i++) {
+          socket.emit('update_disconnection', blimpList[i]);
+        }
+        if (typeof connected_blimp_id !== "undefined") {
+          socket.emit('update_connection', connected_blimp_id);
+        } 
+      }
+      console.log('Xbox D-Pad Right released.');
+    }
+    
+    // Check if the right trigger was pressed in the previous state but is not pressed now (released)
+    if (controllerState.rightTrigger && gamepad.buttons[7].value === 0) {
       connected_blimp_id = blimpList[Controller_1_currConnection];
-      for (let i = 0; i < blimpList.length; i++) {
-        socket.emit('update_disconnection', blimpList[i]);
-      }
       if (typeof connected_blimp_id !== "undefined") {
-        socket.emit('update_connection', connected_blimp_id);
-      }    
+        socket.emit('update_auto', connected_blimp_id);
+      }
+      console.log('Xbox Right Trigger released.');
     }
-    else {
-      Controller_1_currConnection = 0;
+
+    // Check if the left trigger was pressed in the previous state but is not pressed now (released)
+    if (controllerState.leftTrigger && gamepad.buttons[6].value === 0) {
+      socket.emit('update_auto_panic');
+      console.log('Xbox Left Trigger released.');
+    }
+
+    // Check if the right bumper was pressed in the previous state but is not pressed now (released)
+    if (controllerState.rightBumper && !gamepad.buttons[5].pressed) {
       connected_blimp_id = blimpList[Controller_1_currConnection];
-      for (let i = 0; i < blimpList.length; i++) {
-        socket.emit('update_disconnection', blimpList[i]);
-      }
       if (typeof connected_blimp_id !== "undefined") {
-        socket.emit('update_connection', connected_blimp_id);
-      } 
+        socket.emit('update_grabbing', connected_blimp_id);
+      }
+      console.log('Xbox Right Bumper released.');
     }
-    console.log('Xbox D-Pad Down released.');
-  }
-  // Check if the D-pad Left button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.left && !gamepad.buttons[14].pressed) {
-    socket.emit('update_total_disconnection');
-    Controller_1_currConnection = -1;
-    console.log('Xbox D-Pad Left released.');
-  }
-  // Check if the D-pad Right button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.right && !gamepad.buttons[15].pressed) {
-    if (Controller_1_currConnection !== blimpList.length - 1) {
-      Controller_1_currConnection++;
+
+    // Check if the left bumper was pressed in the previous state but is not pressed now (released)
+    if (controllerState.leftBumper && !gamepad.buttons[4].pressed) {
       connected_blimp_id = blimpList[Controller_1_currConnection];
-      for (let i = 0; i < blimpList.length; i++) {
-        socket.emit('update_disconnection', blimpList[i]);
-      }
       if (typeof connected_blimp_id !== "undefined") {
-        socket.emit('update_connection', connected_blimp_id);
-      }    
+        socket.emit('update_shooting', connected_blimp_id);
+      }
+      console.log('Xbox Left Bumper released.');
     }
-    else {
-      Controller_1_currConnection = 0;
+
+    // Check if the X button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.xButton && !gamepad.buttons[2].pressed) {
+      console.log('Xbox X Button released.');
+      socket.emit('update_all_target_colors');
+    }
+
+    // Check if the Y button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.yButton && !gamepad.buttons[3].pressed) {
+      console.log('Xbox Y Button released.');
+      socket.emit('update_all_goal_colors');
+    }
+
+    // Check if the B button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.bButton && !gamepad.buttons[1].pressed) {
+      console.log('Xbox B Button released.');
       connected_blimp_id = blimpList[Controller_1_currConnection];
-      for (let i = 0; i < blimpList.length; i++) {
-        socket.emit('update_disconnection', blimpList[i]);
-      }
       if (typeof connected_blimp_id !== "undefined") {
-        socket.emit('update_connection', connected_blimp_id);
-      } 
-    }
-    console.log('Xbox D-Pad Right released.');
-  }
-  
-  // Check if the right trigger was pressed in the previous state but is not pressed now (released)
-  if (controllerState.rightTrigger && gamepad.buttons[7].value === 0) {
-    connected_blimp_id = blimpList[Controller_1_currConnection];
-    if (typeof connected_blimp_id !== "undefined") {
-      socket.emit('update_auto', connected_blimp_id);
-    }
-    console.log('Xbox Right Trigger released.');
-  }
+        // Get all anchor elements on the page
+        var allLinks = document.getElementsByTagName("a");
 
-  // Check if the left trigger was pressed in the previous state but is not pressed now (released)
-  if (controllerState.leftTrigger && gamepad.buttons[6].value === 0) {
-    socket.emit('update_auto_panic');
-    console.log('Xbox Left Trigger released.');
-  }
-
-  // Check if the right bumper was pressed in the previous state but is not pressed now (released)
-  if (controllerState.rightBumper && !gamepad.buttons[5].pressed) {
-    connected_blimp_id = blimpList[Controller_1_currConnection];
-    if (typeof connected_blimp_id !== "undefined") {
-      socket.emit('update_grabbing', connected_blimp_id);
-    }
-    console.log('Xbox Right Bumper released.');
-  }
-
-  // Check if the left bumper was pressed in the previous state but is not pressed now (released)
-  if (controllerState.leftBumper && !gamepad.buttons[4].pressed) {
-    connected_blimp_id = blimpList[Controller_1_currConnection];
-    if (typeof connected_blimp_id !== "undefined") {
-      socket.emit('update_shooting', connected_blimp_id);
-    }
-    console.log('Xbox Left Bumper released.');
-  }
-
-  // Check if the X button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.xButton && !gamepad.buttons[2].pressed) {
-    console.log('Xbox X Button released.');
-    socket.emit('update_all_target_colors');
-  }
-
-  // Check if the Y button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.yButton && !gamepad.buttons[3].pressed) {
-    console.log('Xbox Y Button released.');
-    socket.emit('update_all_goal_colors');
-  }
-
-  // Check if the B button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.bButton && !gamepad.buttons[1].pressed) {
-    console.log('Xbox B Button released.');
-    connected_blimp_id = blimpList[Controller_1_currConnection];
-    if (typeof connected_blimp_id !== "undefined") {
-      // Get all anchor elements on the page
-      var allLinks = document.getElementsByTagName("a");
-
-      // Loop through each anchor element and extract the href attribute
-      for (var i = 0; i < allLinks.length; i++) {
-          var link = allLinks[i];
-          let blimp_id = link.getAttribute("blimp_id");
-          if (blimp_id === connected_blimp_id) {
-            link.click();
-          }
+        // Loop through each anchor element and extract the href attribute
+        for (var i = 0; i < allLinks.length; i++) {
+            var link = allLinks[i];
+            let blimp_id = link.getAttribute("blimp_id");
+            if (blimp_id === connected_blimp_id) {
+              link.click();
+            }
+        }
       }
     }
+
+    // Check if the A button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.aButton && !gamepad.buttons[0].pressed) {
+      console.log('Xbox A Button released.');
+      window.location.reload();
+    }
+
+    // Check if the Home button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.homeButton && !gamepad.buttons[16].pressed) {
+      console.log('Xbox Home Button released.');
+      socket.emit('kill_basestation');
+    }
+
+    // Takes user to documentation page
+    // Check if the Help button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.helpButton && !gamepad.buttons[8].pressed) {
+      console.log('Xbox Help Button released.');
+    }
+
+    // Check if the Menu button was pressed in the previous state but is not pressed now (released)
+    if (controllerState.menuButton && !gamepad.buttons[9].pressed) {
+      console.log('Xbox Menu Button released.');
+    }
+
+    // Update the previous state of the controller buttons and right trigger
+    controllerState = {
+      up: gamepad.buttons[12].pressed,
+      down: gamepad.buttons[13].pressed,
+      left: gamepad.buttons[14].pressed,
+      right: gamepad.buttons[15].pressed,
+      rightTrigger: gamepad.buttons[7].value !== 0,
+      leftTrigger: gamepad.buttons[6].value !== 0,
+      rightBumper: gamepad.buttons[5].pressed,
+      leftBumper: gamepad.buttons[4].pressed,
+      xButton: gamepad.buttons[2].pressed,
+      yButton: gamepad.buttons[3].pressed,
+      bButton: gamepad.buttons[1].pressed,
+      aButton: gamepad.buttons[0].pressed,
+      homeButton: gamepad.buttons[16].pressed,
+      helpButton: gamepad.buttons[8].pressed,
+      menuButton: gamepad.buttons[9].pressed
+    };
+
+    // Convert the values to Float64
+    var motorCommands = new Float64Array([leftStickX, leftStickY, rightStickX, rightStickY]);
+
+    // Convert the Float64Array to binary data
+    const binaryData = new Uint8Array(motorCommands.buffer)
+    // Add UI for only connected blimp eventually
+    socket.emit('update_motorCommands', binaryData);
   }
-
-  // Check if the A button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.aButton && !gamepad.buttons[0].pressed) {
-    console.log('Xbox A Button released.');
-    window.location.reload();
-  }
-
-  // Check if the Home button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.homeButton && !gamepad.buttons[16].pressed) {
-    console.log('Xbox Home Button released.');
-    socket.emit('kill_basestation');
-  }
-
-  // Takes user to documentation page
-  // Check if the Help button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.helpButton && !gamepad.buttons[8].pressed) {
-    console.log('Xbox Help Button released.');
-  }
-
-  // Check if the Menu button was pressed in the previous state but is not pressed now (released)
-  if (controllerState.menuButton && !gamepad.buttons[9].pressed) {
-    console.log('Xbox Menu Button released.');
-  }
-
-  // Update the previous state of the controller buttons and right trigger
-  controllerState = {
-    up: gamepad.buttons[12].pressed,
-    down: gamepad.buttons[13].pressed,
-    left: gamepad.buttons[14].pressed,
-    right: gamepad.buttons[15].pressed,
-    rightTrigger: gamepad.buttons[7].value !== 0,
-    leftTrigger: gamepad.buttons[6].value !== 0,
-    rightBumper: gamepad.buttons[5].pressed,
-    leftBumper: gamepad.buttons[4].pressed,
-    xButton: gamepad.buttons[2].pressed,
-    yButton: gamepad.buttons[3].pressed,
-    bButton: gamepad.buttons[1].pressed,
-    aButton: gamepad.buttons[0].pressed,
-    homeButton: gamepad.buttons[16].pressed,
-    helpButton: gamepad.buttons[8].pressed,
-    menuButton: gamepad.buttons[9].pressed
-  };
-
-  // Convert the values to Float64
-  var motorCommands = new Float64Array([leftStickX, leftStickY, rightStickX, rightStickY]);
-
-  // Convert the Float64Array to binary data
-  const binaryData = new Uint8Array(motorCommands.buffer)
-  
-  // Add UI for only connected blimp eventually
-  socket.emit('update_motorCommands', binaryData);
 }
 
 // Listen for the beforeunload event on the window
