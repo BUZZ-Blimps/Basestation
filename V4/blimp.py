@@ -76,6 +76,9 @@ class Blimp:
         # Last Message
         self.log = None
 
+        # Controller Connected to Blimp Number
+        self.controller_connected = -1
+
     def to_dict(self):
         return {
             "blimp_id": self.blimp_id,
@@ -94,7 +97,8 @@ class Blimp:
             "calibrateBarometer": self.calibrateBarometer,
             "height": self.height,
             "z_velocity": self.z_velocity,
-            "log": self.log
+            "log": self.log,
+            "controller_connected": self.controller_connected
         }
 
     def update_dict(self, data_dict):
@@ -132,3 +136,5 @@ class Blimp:
             self.z_velocity = data_dict["z_velocity"]
         if "log" in data_dict:
             self.log = data_dict["log"]
+        if "controller_connected" in data_dict:
+            self.log = data_dict["controller_connected"]

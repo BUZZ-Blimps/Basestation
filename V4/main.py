@@ -72,7 +72,7 @@ class Basestation(Node):
         self.topicName_identify = "/identify"
         self.identify_sub = self.create_subscription(String, self.topicName_identify, self.identify_callback, 10)
 
-        self.catching_blimp_ids = ['BurnCreamBlimp', 'SillyAhBlimp', 'TurboBlimp', 'GameChamberBlimp', 'FiveGuysBlimp', 'Catch1', 'Catch2']
+        self.catching_blimp_ids = ['BurnCreamBlimp', 'SillyAhBlimp', 'TurboBlimp', 'GameChamberBlimp', 'FiveGuysBlimp', 'SuperBeefBlimp', 'Catch1', 'Catch2']
         self.attack_blimp_ids = ['Yoshi', 'Luigi', 'Geoph', ' Up Dog', 'Attack1', 'Attack2']
 
         #         qos_profile = QoSProfile(
@@ -554,6 +554,7 @@ class BlimpNodeHandler:
             'TurboBlimp': 'Turbo Blimp',
             'GameChamberBlimp': 'Game Chamber Blimp',
             'FiveGuysBlimp': 'Five Guys Blimp',
+	        'SuperBeefBlimp': 'Super Beef Blimp',
             # Fake Blimps #
             'Catch1': 'Catch 1',
             'Catch2': 'Catch 2',
@@ -679,6 +680,13 @@ class BlimpNodeHandler:
         for blimp in blimps:
             blimps[blimp].connected = False
 
+    # Update Connection
+    @socketio.on('update_controller_connected')
+    def update_connection(data):
+        global blimps
+        for data[0] in blimps:
+            blimps[data[0]].controller_connected = data[1]
+
     # Update Motor Commands
     @socketio.on('update_motorCommands')
     def update_motorCommands(data):
@@ -691,14 +699,14 @@ class BlimpNodeHandler:
         global blimps
         for blimp in blimps:
             if blimps[blimp].connected == True:
-                print(blimps[blimp].blimp_name + "connected")
+                #print(blimps[blimp].blimp_name + "connected")
                 blimps[blimp].motorCommands = motorCommands
-                break
+                #break
                 #print(blimps[blimp].motorCommands)
             else:
-                print(blimps[blimp].blimp_name + "not connected")
+                #print(blimps[blimp].blimp_name + "not connected")
                 blimps[blimp].motorCommands = [0.0, -0.0, 0.0, -0.0]
-                break
+                #break
                 #print(blimps[blimp].motorCommands)
 
     # Update All Goal Colors
@@ -840,6 +848,10 @@ def gameChamberBlimpPage():
 @app.route('/FiveGuysBlimp')
 def fiveGuysBlimpPage():
     return render_template('FiveGuysBlimp.html')
+
+@app.route('/SuperBeefBlimp')
+def superBeefBlimpPage():
+    return render_template('SuperBeefBlimp.html')
 
 @app.route('/Catch1')
 def catch1Page():

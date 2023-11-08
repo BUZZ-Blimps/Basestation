@@ -32,7 +32,7 @@ socket.on('kill', () => {
 });
 
 // Catching Blimps before Attack Blimps
-var blimpOrder = ["BurnCreamBlimp", "SillyAhBlimp", "TurboBlimp", "GameChamberBlimp", "FiveGuysBlimp", "Catch1", "Catch2", 'Yoshi', 'Luigi', 'Geoph', ' Up Dog', "Attack1", "Attack2"];
+var blimpOrder = ["BurnCreamBlimp", "SillyAhBlimp", "TurboBlimp", "GameChamberBlimp", "FiveGuysBlimp", "SuperBeefBlimp", "Catch1", "Catch2", 'Yoshi', 'Luigi', 'Geoph', ' Up Dog', "Attack1", "Attack2"];
 
 // Unordered List of Blimp Names
 
@@ -60,6 +60,8 @@ var leftStickX = 0;
 var leftStickY = 0;
 var rightStickX = 0;
 var rightStickY = 0;
+
+var connected_blimp_id;
 
 //Keeps track of which blimp the controller is connected to
 var Controller_1_currConnection = localStorage.getItem('Controller_1_currConnection') ? parseInt(localStorage.getItem('Controller_1_currConnection')) : -1; // Default value if not set
@@ -250,16 +252,19 @@ function update_basestation(blimp_dict) {
     }
 
     //Verify if controller is connected to this blimp
-    if(blimp_dict["connected"] === 'True' || blimpList[Controller_1_currConnection] === blimp_dict['blimp_id'])
+    if(blimpList[Controller_1_currConnection] === blimp_dict['blimp_id'])
     {
-      socket.emit('update_total_disconnection');
-      socket.emit('update_connection', blimp_dict['blimp_id']);
+      if (client_ip === ip_allowed) {
+        socket.emit('update_connection', blimp_dict['blimp_id']);
+      }
       sortedNameRows[blimp_id].style.color = 'blue';
       sortedStateRows[blimp_id].style.color = 'blue';
     }
     else
     {
-      socket.emit('update_disconnection', blimp_dict['blimp_id']);
+      if (client_ip === ip_allowed) {
+        socket.emit('update_disconnection', blimp_dict['blimp_id']);
+      }
       sortedNameRows[blimp_id].style.color = 'black';  
       sortedStateRows[blimp_id].style.color = 'black';
     }
@@ -585,7 +590,6 @@ var controllerCheck = setInterval(pollController, 0);
 
 function pollController() {
   if (client_ip === ip_allowed) {
-    console.log(client_ip)
     var gamepads = navigator.getGamepads();
     for (var i = 0; i < gamepads.length; i++) {
       var gamepad = gamepads[i];
@@ -678,8 +682,6 @@ function handleGamepadButtons(gamepad) {
 
       return indexA - indexB;
     });
-
-    var connected_blimp_id;
 
     // Check if the D-pad Up button was pressed in the previous state but is not pressed now (released)
     if (controllerState.up && !gamepad.buttons[12].pressed) {
@@ -821,6 +823,8 @@ function handleGamepadButtons(gamepad) {
     if (controllerState.aButton && !gamepad.buttons[0].pressed) {
       console.log('Xbox A Button released.');
       window.location.reload();
+      Controller_1_currConnection = -1;
+      socket.emit('update_total_disconnection');
     }
 
     // Check if the Home button was pressed in the previous state but is not pressed now (released)
@@ -858,6 +862,11 @@ function handleGamepadButtons(gamepad) {
       helpButton: gamepad.buttons[8].pressed,
       menuButton: gamepad.buttons[9].pressed
     };
+
+    // if (typeof connected_blimp_id !== "undefined") {
+    //   var blimp_connected = [connected_blimp_id, Controller_1_currConnection]
+    //   socket.emit('update_controller_connected', blimp_connected);
+    // }
 
     // Convert the values to Float64
     var motorCommands = new Float64Array([leftStickX, leftStickY, rightStickX, rightStickY]);
