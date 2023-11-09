@@ -32,7 +32,7 @@ socket.on('kill', () => {
 });
 
 // Catching Blimps before Attack Blimps
-var blimpOrder = ["BurnCreamBlimp", "SillyAhBlimp", "TurboBlimp", "GameChamberBlimp", "FiveGuysBlimp", "SuperBeefBlimp", "Catch1", "Catch2", 'Yoshi', 'Luigi', 'Geoph', ' Up Dog', "Attack1", "Attack2"];
+var blimpOrder = ["BurnCreamBlimp", "SillyAhBlimp", "TurboBlimp", "GameChamberBlimp", "FiveGuysBlimp", "SuperBeefBlimp", "Catch1", "Catch2", 'Yoshi', 'Luigi', 'Geoph', ' Up Dog', 'ThisGuy', "Attack1", "Attack2"];
 
 // Unordered List of Blimp Names
 
@@ -862,11 +862,6 @@ function handleGamepadButtons(gamepad) {
       helpButton: gamepad.buttons[8].pressed,
       menuButton: gamepad.buttons[9].pressed
     };
-
-    // if (typeof connected_blimp_id !== "undefined") {
-    //   var blimp_connected = [connected_blimp_id, Controller_1_currConnection]
-    //   socket.emit('update_controller_connected', blimp_connected);
-    // }
 
     // Convert the values to Float64
     var motorCommands = new Float64Array([leftStickX, leftStickY, rightStickX, rightStickY]);

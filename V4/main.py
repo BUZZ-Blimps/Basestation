@@ -73,7 +73,7 @@ class Basestation(Node):
         self.identify_sub = self.create_subscription(String, self.topicName_identify, self.identify_callback, 10)
 
         self.catching_blimp_ids = ['BurnCreamBlimp', 'SillyAhBlimp', 'TurboBlimp', 'GameChamberBlimp', 'FiveGuysBlimp', 'SuperBeefBlimp', 'Catch1', 'Catch2']
-        self.attack_blimp_ids = ['Yoshi', 'Luigi', 'Geoph', ' Up Dog', 'Attack1', 'Attack2']
+        self.attack_blimp_ids = ['Yoshi', 'Luigi', 'Geoph', ' Up Dog', 'ThisGuy', 'Attack1', 'Attack2']
 
         #         qos_profile = QoSProfile(
         #     history=HistoryPolicy.KEEP_LAST,
@@ -564,7 +564,8 @@ class BlimpNodeHandler:
             'Geoph': 'Geoph',
             'Up Dog': 'Up Dog',
             'Attack1': 'Attack 1',
-            'Attack2': 'Attack 2'
+            'Attack2': 'Attack 2',
+	    'ThisGuy': 'This Guy'
         }
 
         return blimp_names_by_id[blimp_id]
@@ -679,13 +680,6 @@ class BlimpNodeHandler:
         global blimps
         for blimp in blimps:
             blimps[blimp].connected = False
-
-    # Update Connection
-    @socketio.on('update_controller_connected')
-    def update_connection(data):
-        global blimps
-        for data[0] in blimps:
-            blimps[data[0]].controller_connected = data[1]
 
     # Update Motor Commands
     @socketio.on('update_motorCommands')
