@@ -912,7 +912,7 @@ def terminate(sig, frame):
     except AttributeError:
         os.kill(current_pid, signal.SIGTERM)
 
-# Check Wifi
+# Check Wifi (Currently Not Used)
 def check_wifi_ssid():
     output = subprocess.check_output(["iwconfig", "2>/dev/null | grep 'ESSID:' | cut -d '\"' -f 2"], shell=True)
     ssid = output.decode('utf-8').strip()
@@ -924,34 +924,33 @@ def check_wifi_ssid():
 
 # Main
 if __name__ == '__main__':
-    # if(check_wifi_ssid()):
-        # Create init function for the following values
-        # Initialize default value i.e. goal color value (default: 0)
-        # Could make these read from a text file to make them permanent profiles
+    # Create init function for the following values
+    # Initialize default value i.e. goal color value (default: 0)
+    # Could make these read from a text file to make them permanent profiles
 
-        # Blimps
-        global blimps
-        blimps = {}
+    # Blimps
+    global blimps
+    blimps = {}
 
-        # All Autonomous
-        global auto_panic
-        auto_panic = False
+    # All Autonomous
+    global auto_panic
+    auto_panic = False
 
-        # All Goal Colors
-        global all_goal_color
-        all_goal_color = False
+    # All Goal Colors
+    global all_goal_color
+    all_goal_color = False
 
-        # All Target Colors
-        global all_target_color
-        all_target_color = False
+    # All Target Colors
+    global all_target_color
+    all_target_color = False
 
-        # Terminate if Ctrl+C Caught
-        signal.signal(signal.SIGINT, terminate)
+    # Terminate if Ctrl+C Caught
+    signal.signal(signal.SIGINT, terminate)
 
-        # Create and Start ROS 2 Thread
-        ros_thread = threading.Thread(target=ros_thread)
-        ros_thread.start()
+    # Create and Start ROS 2 Thread
+    ros_thread = threading.Thread(target=ros_thread)
+    ros_thread.start()
 
-        # Start Web Application
-        socketio.run(app, host='192.168.0.200', port=5000)
+    # Start Web Application
+    socketio.run(app, host='192.168.0.200', port=5000)
 
