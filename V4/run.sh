@@ -13,15 +13,15 @@ echo "Getting Logs..."
 ./freePort.sh
 
 # For Bounded Box Custom Messages
-source ~/GitHub/CatchingBlimp/Summer2023/ros2_stereo/install/setup.bash
+#source ~/GitHub/CatchingBlimp/Summer2023/ros2_stereo/install/setup.bash
 
 # Use -o flag to open website and run the program
 if [ "$1" == "-o" ]; then
     xdg-open "$URL" > /dev/null 2>&1;
-    python3 main.py
+    python3 main.py $IP
 # No flags just runs the programs
 else
-    python3 main.py
+    python3 main.py $IP
 fi
 
 

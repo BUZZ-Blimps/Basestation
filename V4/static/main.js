@@ -827,10 +827,10 @@ function handleGamepadButtons(gamepad) {
 
     // Check if the A button was pressed in the previous state but is not pressed now (released)
     if (controllerState.aButton && !gamepad.buttons[0].pressed) {
-      console.log('Xbox A Button released.');
-      window.location.reload();
       Controller_1_currConnection = -1;
       socket.emit('update_total_disconnection');
+      console.log('Xbox A Button released.');
+      window.location.reload();
     }
 
     // Check if the Home button was pressed in the previous state but is not pressed now (released)
