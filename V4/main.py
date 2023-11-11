@@ -9,7 +9,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 from std_msgs.msg import String, Int64, Bool, Float64, Float64MultiArray
-#from yolo_msgs.msg import BoundingBox # type: ignore
+from yolo_msgs.msg import BoundingBox # type: ignore
 
 # Livestream Packages
 from sensor_msgs.msg import Image
@@ -509,7 +509,7 @@ class BlimpNodeHandler:
             topic_bounding_box = "/" + self.blimp_id + "/bounding_box"
 
             # Subscribe to the Bounding Box Topic
-            #self.sub_bounding_box = self.parent_node.create_subscription(BoundingBox, topic_bounding_box, self.bounding_box_callback, qos_profile)
+            self.sub_bounding_box = self.parent_node.create_subscription(BoundingBox, topic_bounding_box, self.bounding_box_callback, qos_profile)
         elif blimps[self.blimp_id].show_image is False and self.sub_image_raw is not None:
             # Debugging
             # print('Destroying Image Subscriber')
