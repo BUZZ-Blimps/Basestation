@@ -76,6 +76,9 @@ class Blimp:
         # Last Message
         self.log = None
 
+        # Show Image
+        self.show_image = False
+
     def to_dict(self):
         return {
             "blimp_id": self.blimp_id,

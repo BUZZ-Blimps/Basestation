@@ -42,6 +42,10 @@
     <script>
         // Connect to SocketIO server
         const socket = io();
+
+        var blimp_id = 'FiveGuysBlimp';
+
+        socket.emit('show_image', blimp_id);
         
         socket.on('bounding_box', (bounding_box) => {
             document.getElementById('balloon-x-center').textContent = 'X-CENTER:  ' + bounding_box.balloon.x_center;
@@ -140,6 +144,7 @@
 
             // Check if the B button was pressed in the previous state but is not pressed now (released)
             if (controllerState.bButton && !gamepad.buttons[1].pressed) {
+                socket.emit('remove_image', blimp_id);
                 console.log('Xbox B Button released.');
                 window.close();
             }

@@ -57,7 +57,7 @@ class Basestation(Node):
         self.all_blimps = {}
 
         # Create timer
-        self.loopSpeed = 500
+        self.loopSpeed = 100
         timer_period = 1.0/self.loopSpeed
         self.timer = self.create_timer(timer_period, self.timerLoop)
         self.timeout = 5
@@ -75,16 +75,10 @@ class Basestation(Node):
         self.catching_blimp_ids = ['BurnCreamBlimp', 'SillyAhBlimp', 'TurboBlimp', 'GameChamberBlimp', 'FiveGuysBlimp', 'SuperBeefBlimp', 'Catch1', 'Catch2']
         self.attack_blimp_ids = ['Yoshi', 'Luigi', 'Geoph', ' Up Dog', 'ThisGuy', 'Attack1', 'Attack2']
 
-        #         qos_profile = QoSProfile(
-        #     history=HistoryPolicy.KEEP_LAST,
-        #     depth=1,
-        #     reliability=ReliabilityPolicy.BEST_EFFORT,
-        #     durability=DurabilityPolicy.VOLATILE
-        # )
-
     def identify_callback(self, msg):
         global blimps
 
+        # Debugging
         #print(msg.data)
 
         # Renitialize Barometer
@@ -106,8 +100,10 @@ class Basestation(Node):
             blimps[blimp_id].last_online = self.get_clock().now()
         else:
             # Otherwise, check its validity and create a handler for it
-            # Testing
+
+            # Debugging
             # self.get_logger().info('Node Name: "%s"' % nodeName)
+
             # Make sure node name is valid
             if self.check_node_name(blimp_id) == True:
                 print("ADDING BLIMP")
@@ -143,29 +139,11 @@ class Basestation(Node):
 
         # Subscribe to the State Machine Topic
         new_blimp_node_handler.sub_state_machine = self.create_subscription(Int64, topic_state_machine, new_blimp_node_handler.state_machine_callback, 10)
-
-        # Image Raw Topic
-        topic_image_raw = "/" + blimp_id + "/left/image_raw"
-
-        # Subscribe to the Image Raw Topic
-        qos_profile = QoSProfile(
-            history=HistoryPolicy.KEEP_LAST,
-            depth=1,
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.VOLATILE
-        )
-        new_blimp_node_handler.sub_image_raw = self.create_subscription(Image, topic_image_raw, new_blimp_node_handler.image_raw_callback, qos_profile)
-
-        # Check for Bounding Box Topic
-        topic_bounding_box = "/" + blimp_id + "/bounding_box"
-
-        # Subscribe to the Bounding Box Topic
-        new_blimp_node_handler.sub_bounding_box = self.create_subscription(BoundingBox, topic_bounding_box, new_blimp_node_handler.bounding_box_callback, qos_profile)
         
-        # Check for Bounding Box Topic
+        # Check for Logs Topic
         topic_logs = "/" + blimp_id + "/log"
 
-        # Subscribe to the Bounding Box Topic
+        # Subscribe to the Logs Topic
         new_blimp_node_handler.sub_logs = self.create_subscription(String, topic_logs, new_blimp_node_handler.logs_callback, 10)
         
         # Check for Base Barometer Topic
@@ -186,7 +164,7 @@ class Basestation(Node):
         # Subscribe to the State Machine Topic
         new_blimp_node_handler.sub_z_velocity = self.create_subscription(Float64, topic_z_velocity, new_blimp_node_handler.z_velocity_callback, 10)
 
-        # self.connectBlimp(new_blimp_node_handler)
+        # self.connectBlimp (new_blimp_node_handler)
         new_blimp_node_handler.connect_blimp()
 
         # Add New Blimp Node to Connected Blimp Nodes
@@ -280,7 +258,7 @@ class BlimpNodeHandler:
         # Identified Count
         self.identified_count = 0
 
-        #QoS profile for boolean latches
+        # QoS profile for boolean latches
         self.boolean_qos_profile = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
             depth=1,
@@ -300,6 +278,7 @@ class BlimpNodeHandler:
         self.sub_z_velocity = None
         self.sub_logs = None
 
+        # Catching and Attacking Blimp ROS2 Timers
         self.catching_motor_timer_hz = 10
         self.attack_motor_timer_hz = 10
         self.baro_timer_hz = 100
@@ -341,8 +320,10 @@ class BlimpNodeHandler:
         blimps[self.blimp_id] = blimp
 
     def update(self):
-        # Todo!!!: Change frequency of each publisher!
+
+        # Debugging
         # self.parent_node.get_logger().info("Updating")
+
         global blimps
         if self.blimp_id in blimps:
 
@@ -355,9 +336,9 @@ class BlimpNodeHandler:
                 self.publish_motorCommands()
                 self.motor_timer = now
 
-            #Differentiate catching and attack blimps
+            # Differentiate catching and attack blimps
             if (blimps[self.blimp_id].blimp_type == False):
-                #Catching-blimp specific
+                # Catching-blimp specific
                 if blimps[self.blimp_id].update_grabbing_pub:
                     self.publish_grabbing()
                     blimps[self.blimp_id].update_grabbing_pub = False
@@ -378,12 +359,15 @@ class BlimpNodeHandler:
                     self.publish_target_color()
                     blimps[self.blimp_id].update_target_color_pub = False
 
-                #Publish barometer to catching blimps on a timer
+                # Publish barometer to catching blimps on a timer
                 if self.parent_node.getElapsedTime(self.baro_timer) >= self.baro_timer_period:
                     self.publish_barometer()
                     self.baro_timer = now
+
+                # Check if user wants to view Livestream
+                self.update_image_subscriber()
             else:
-                #Attack blimp specific
+                # Attack blimp specific
                 if self.parent_node.getElapsedTime(self.attack_data_timer) >= self.data_timer_period:
                     self.publish_auto()
                     self.publish_target_color()
@@ -400,15 +384,14 @@ class BlimpNodeHandler:
         topic_baseBarometer =   "/" + self.blimp_id + "/baseBarometer"
         topic_calibrateBarometer =   "/" + self.blimp_id + "/calibrateBarometer"
 
-        bufferSize = 1
         self.pub_auto = self.parent_node.create_publisher(Bool, topic_auto, self.boolean_qos_profile)
         self.pub_goal_color = self.parent_node.create_publisher(Int64, topic_goal_color, self.boolean_qos_profile)
         self.pub_target_color = self.parent_node.create_publisher(Int64, topic_target_color, self.boolean_qos_profile)
         self.pub_killed = self.parent_node.create_publisher(Bool, topic_killed, self.boolean_qos_profile)
-        self.pub_motorCommands = self.parent_node.create_publisher(Float64MultiArray, topic_motorCommands, bufferSize)
+        self.pub_motorCommands = self.parent_node.create_publisher(Float64MultiArray, topic_motorCommands, 1)
         self.pub_grabbing = self.parent_node.create_publisher(Bool, topic_grabbing, self.boolean_qos_profile)
         self.pub_shooting = self.parent_node.create_publisher(Bool, topic_shooting, self.boolean_qos_profile)
-        self.pub_baseBarometer = self.parent_node.create_publisher(Float64, topic_baseBarometer, bufferSize)
+        self.pub_baseBarometer = self.parent_node.create_publisher(Float64, topic_baseBarometer, 1)
         self.pub_calibrateBarometer = self.parent_node.create_publisher(Bool, topic_calibrateBarometer, self.boolean_qos_profile)
 
     def destroy_publishers(self):
@@ -425,12 +408,15 @@ class BlimpNodeHandler:
     # Function to destroy subscribers for elegant behavior
     def destroy_subscribers(self):
         self.parent_node.destroy_subscription(self.sub_state_machine)
-        self.parent_node.destroy_subscription(self.sub_image_raw)
-        self.parent_node.destroy_subscription(self.sub_bounding_box)
         self.parent_node.destroy_subscription(self.sub_logs)
         self.parent_node.destroy_subscription(self.sub_baseBarometer)
         self.parent_node.destroy_subscription(self.sub_height)
         self.parent_node.destroy_subscription(self.sub_z_velocity)
+        try:
+            self.parent_node.destroy_subscription(self.sub_image_raw)
+            self.parent_node.destroy_subscription(self.sub_bounding_box)
+        except:
+            pass
 
     # Continually Poll State Machine Data from Teensy
     def state_machine_callback(self, msg):
@@ -481,7 +467,10 @@ class BlimpNodeHandler:
         global blimps
         try:
             data = self.parent_node.barometer.readline()  # Read a line of data from the serial port
+
+            # Debugging
             #print(data.decode('utf-8'))  # Assuming data is encoded as UTF-8
+
             for blimp in blimps:
                 blimps[blimp].barometer = float(data.decode('utf-8'))
         except:
@@ -545,8 +534,6 @@ class BlimpNodeHandler:
         return blimp.blimp_type
 
     def get_blimp_name(self, blimp_id):
-        # Blimp Name not Recognized (This should not happen!)
-        # self.blimp_id = 'Error'
         blimp_names_by_id = {
             # Catching Blimps #
             'BurnCreamBlimp': 'Burn Cream Blimp',
@@ -562,13 +549,52 @@ class BlimpNodeHandler:
             'Yoshi': 'Yoshi',
             'Luigi': 'Luigi',
             'Geoph': 'Geoph',
+            # Make "UpDog BlimpID have no spaces"
             'Up Dog': 'Up Dog',
+            'ThisGuy': 'This Guy',
             'Attack1': 'Attack 1',
-            'Attack2': 'Attack 2',
-	    'ThisGuy': 'This Guy'
+            'Attack2': 'Attack 2'
         }
 
         return blimp_names_by_id[blimp_id]
+    
+    def update_image_subscriber(self):
+        global blimps
+        if blimps[self.blimp_id].show_image is True and self.sub_image_raw is None:
+            # Debugging
+            # print('Creating Image Subscriber')
+            # Image Raw Topic
+            topic_image_raw = "/" + self.blimp_id + "/left/image_raw"
+
+            # Image Raw Topic QOS Profile
+            qos_profile = QoSProfile(
+                history=HistoryPolicy.KEEP_LAST,
+                depth=1,
+                reliability=ReliabilityPolicy.BEST_EFFORT,
+                durability=DurabilityPolicy.VOLATILE
+            )
+
+            # Subscribe to the Image Raw Topic
+            self.sub_image_raw = self.parent_node.create_subscription(Image, topic_image_raw, self.image_raw_callback, qos_profile)
+
+            # Check for Bounding Box Topic
+            topic_bounding_box = "/" + self.blimp_id + "/bounding_box"
+
+            # Subscribe to the Bounding Box Topic
+            self.sub_bounding_box = self.parent_node.create_subscription(BoundingBox, topic_bounding_box, self.bounding_box_callback, qos_profile)
+        elif blimps[self.blimp_id].show_image is False and self.sub_image_raw is not None:
+            # Debugging
+            # print('Destroying Image Subscriber')
+            try:
+                self.parent_node.destroy_subscription(self.sub_image_raw)
+                self.sub_image_raw = None
+            except:
+                pass
+            try:
+                self.parent_node.destroy_subscription(self.sub_bounding_box)
+                self.sub_bounding_box = None
+            except:
+                pass
 
     def publish_target_color(self):
         global blimps
@@ -631,8 +657,9 @@ class BlimpNodeHandler:
     # Update Total Disconnection
     @socketio.on('kill_basestation')
     def kill_basestation():
-        print('\nDestroying Basestation Node...\n')
+        global blimps
         global node
+        print('\nDestroying Basestation Node...\n')
         try:
             node.destroy_node()
         except rclpy.handle.InvalidHandle as e:
@@ -648,7 +675,6 @@ class BlimpNodeHandler:
                 blimps[blimp].parent_node.barometer.close()
             except:
                 pass
-        #barometer.close()
         print('\nTerminating Program...\n')
         os.kill(current_pid, signal.SIGTERM)
 
@@ -681,27 +707,34 @@ class BlimpNodeHandler:
         for blimp in blimps:
             blimps[blimp].connected = False
 
+    @socketio.on('show_image')
+    def show_image(data):
+        global blimps
+        if data in blimps:
+            blimps[data].show_image = True
+
+    @socketio.on('remove_image')
+    def remove_image(data):
+        global blimps
+        if data in blimps:
+            blimps[data].show_image = False
+
     # Update Motor Commands
     @socketio.on('update_motorCommands')
     def update_motorCommands(data):
-        #print('\n')
         array = np.frombuffer(data, dtype=np.float64)
         motorCommands = array.tolist()
-        #print('Received Data:', motorCommands)
-        #print('\n')
-        # Iterate through which blimp_name is connected
+
+        # Debugging
+        #print('\nReceived Data:', motorCommands, '\n')
+
+        # Iterate through which blimp is connected
         global blimps
         for blimp in blimps:
             if blimps[blimp].connected == True:
-                #print(blimps[blimp].blimp_name + "connected")
                 blimps[blimp].motorCommands = motorCommands
-                #break
-                #print(blimps[blimp].motorCommands)
             else:
-                #print(blimps[blimp].blimp_name + "not connected")
                 blimps[blimp].motorCommands = [0.0, -0.0, 0.0, -0.0]
-                #break
-                #print(blimps[blimp].motorCommands)
 
     # Update All Goal Colors
     @socketio.on('update_all_goal_colors')
@@ -771,7 +804,7 @@ class BlimpNodeHandler:
         if blimp_id in blimps:
             blimps[blimp_id].target_color = data['target_color']
 
-            #Set update flag
+            # Set update flag
             blimps[blimp_id].update_target_color_pub = True
 
     # Update Goal Color
@@ -782,7 +815,7 @@ class BlimpNodeHandler:
         if blimp_id in blimps:
             blimps[blimp_id].goal_color = data['goal_color']
 
-            #Set update flag
+            # Set update flag
             blimps[blimp_id].update_goal_color_pub = True
 
     # Calibrate Barometer
@@ -874,7 +907,10 @@ def ros_thread():
     global node
     node = Basestation()
 
-    rclpy.spin(node)
+    try:
+        rclpy.spin(node)
+    except:
+        pass
 
     try:
         node.destroy_node()
@@ -888,8 +924,9 @@ def ros_thread():
 
 # Terminate Code
 def terminate(sig, frame):
-    print('\nDestroying Basestation Node...\n')
+    global blimps
     global node
+    print('\nDestroying Basestation Node...\n')
     try:
         node.destroy_node()
     except rclpy.handle.InvalidHandle as e:
@@ -905,11 +942,10 @@ def terminate(sig, frame):
                 blimps[blimp].parent_node.barometer.close()
             except:
                 pass
-    #barometer.close()
     print('\nTerminating Program...\n')
     try:
         os.kill(current_pid, sig.SIGTERM)
-    except AttributeError:
+    except:
         os.kill(current_pid, signal.SIGTERM)
 
 # Check Wifi (Currently Not Used)
@@ -924,7 +960,10 @@ def check_wifi_ssid():
 
 # Main
 if __name__ == '__main__':
-    # Create init function for the following values
+    # May need if not using Steve
+    #if (check_wifi_ssid):
+
+    # Could create init function for the following values
     # Initialize default value i.e. goal color value (default: 0)
     # Could make these read from a text file to make them permanent profiles
 
@@ -952,5 +991,5 @@ if __name__ == '__main__':
     ros_thread.start()
 
     # Start Web Application
-    socketio.run(app, host='192.168.0.200', port=5000)
+    socketio.run(app, host='10.140.13.125', port=5000)
 

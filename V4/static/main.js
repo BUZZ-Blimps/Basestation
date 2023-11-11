@@ -1,5 +1,5 @@
 // IP Address Allowed
-const ip_allowed = '192.168.0.200';
+const ip_allowed = '10.140.13.125';
 
 // Connect to SocketIO server
 const socket = io();
@@ -7,16 +7,17 @@ const socket = io();
 // Receive Connection
 socket.on('connect', () => {
     // Client IP Address
-    //let client_ip = "{{ client_ip }}";
     console.log('Client connected with IP:', client_ip);
 });
 
 socket.on('update', (blimp_dict) => {
+    // Debugging
     //console.log(blimp_dict)
     update_basestation(blimp_dict);
 });
 
 socket.on('remove', (blimp_id) => {
+  // Debugging
   //console.log(blimp_id)
   remove_blimp(blimp_id);
 });
@@ -32,6 +33,7 @@ socket.on('kill', () => {
 });
 
 // Catching Blimps before Attack Blimps
+// Fix 'Up Dog' to 'UpDog'
 var blimpOrder = ["BurnCreamBlimp", "SillyAhBlimp", "TurboBlimp", "GameChamberBlimp", "FiveGuysBlimp", "SuperBeefBlimp", "Catch1", "Catch2", 'Yoshi', 'Luigi', 'Geoph', ' Up Dog', 'ThisGuy', "Attack1", "Attack2"];
 
 // Unordered List of Blimp Names
@@ -63,7 +65,7 @@ var rightStickY = 0;
 
 var connected_blimp_id;
 
-//Keeps track of which blimp the controller is connected to
+// Keeps track of which blimp the controller is connected to
 var Controller_1_currConnection = localStorage.getItem('Controller_1_currConnection') ? parseInt(localStorage.getItem('Controller_1_currConnection')) : -1; // Default value if not set
 
 function update_basestation(blimp_dict) {
@@ -178,7 +180,6 @@ function update_basestation(blimp_dict) {
     // Target number is 1 (Attack Blimps)
     else {
       update_target_button_color(blimp_dict, target_color, target_color_1_button);
-      //update_empty_button_color(blimp_dict, 'white', goal_color_button);
     }
     // Sort the target rows based on your desired order
     sortedTargetRows = Array.from(targetButtonsContainer.querySelectorAll('[blimp_id]'));
@@ -251,7 +252,7 @@ function update_basestation(blimp_dict) {
       sortedStateRows[blimp_id].textContent = state;
     }
 
-    //Verify if controller is connected to this blimp
+    // Verify if controller is connected to this blimp
     if(blimpList[Controller_1_currConnection] === blimp_dict['blimp_id'])
     {
       if (client_ip === ip_allowed) {
@@ -293,8 +294,6 @@ function update_target_button_color(blimp_dict, target_color, target_color_butto
         
         // Attach the click event listener to the button
         target_color_button.addEventListener('click', (event) => {
-            // Client IP Address
-            //let client_ip = client_ip;
             
             if (client_ip === ip_allowed) {
                 // Change the target color and the data
@@ -306,6 +305,7 @@ function update_target_button_color(blimp_dict, target_color, target_color_butto
                     blimp_dict["target_color"] = 0;
                 }
                 
+                // Debugging
                 console.log(blimp_id, 'has a target color:', target_color);
 
                 // Get the target color button for the specific blimp
@@ -332,6 +332,7 @@ function update_target_button_color(blimp_dict, target_color, target_color_butto
     }
 }
 
+// Function Not Used //
 function update_target_button_colors(blimp_dict, target_color_1, target_color_1_button, target_color_2, target_color_2_button) {
   // Get data from blimp dictionary
   let blimp_id = blimp_dict["blimp_id"];
@@ -374,8 +375,6 @@ function update_goal_button_color(blimp_dict, goal_color, goal_color_button) {
       
       // Attach the click event listener to the button
       goal_color_button.addEventListener('click', (event) => {
-        // Client IP Address
-        //let client_ip = "{{ client_ip }}";
 
         if (client_ip === ip_allowed) {
           // Change the goal color and the data
@@ -387,6 +386,7 @@ function update_goal_button_color(blimp_dict, goal_color, goal_color_button) {
               blimp_dict["goal_color"] = 0;
           }
 
+          // Debugging
           console.log(blimp_id, 'has a goal color:', goal_color);
 
           // Get the goal color button for the specific blimp
@@ -422,6 +422,7 @@ function update_goal_button_color(blimp_dict, goal_color, goal_color_button) {
     }
 }
 
+// Function Not Used //
 function update_empty_button_color(blimp_dict, goal_color, goal_color_button, goalButtonsContainer) {
   // Get data from blimp dictionary
   let blimp_id = blimp_dict["blimp_id"];
@@ -526,6 +527,8 @@ function get_state(number) {
   return state;
 }
 
+// Keyboard Use //
+
 var keys = { w: false, a: false, s: false, d: false };
 var dot = document.getElementById("dot1");
 
@@ -566,6 +569,8 @@ function moveDot() {
     if (keys['a'] && !keys['d']) dot.style.left = "25%";
     if (!keys['a'] && keys['d']) dot.style.left = "75%";
 }
+
+// End of Keyboard Use //
 
 var dot1 = document.getElementById('dot1');
 var dot2 = document.getElementById('dot2');
@@ -647,6 +652,7 @@ function moveDots(gamepad) {
   dot4.style.left = `${50 + rightStickX * 45}%`;
   dot4.style.top = `${50 + rightStickY * -45}%`;
 
+  // Debugging
   //console.log("Left Stick X: ", 50 + leftStickX * 45);
 }
 
