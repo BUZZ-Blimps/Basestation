@@ -1,5 +1,5 @@
 // IP Address Allowed
-const ip_allowed = '10.140.13.125';
+const ip_allowed = '192.168.0.200';
 
 // Connect to SocketIO server
 const socket = io();

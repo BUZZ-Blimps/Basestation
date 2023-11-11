@@ -674,7 +674,6 @@ class BlimpNodeHandler:
                 blimps[blimp].parent_node.barometer.close()
             except:
                 pass
-        #barometer.close()
         print('\nTerminating Program...\n')
         os.kill(current_pid, signal.SIGTERM)
 
@@ -914,10 +913,7 @@ def ros_thread():
     global node
     node = Basestation()
 
-    try:
-        rclpy.spin(node)
-    except:
-        pass
+    rclpy.spin(node)
 
     try:
         node.destroy_node()
@@ -948,13 +944,10 @@ def terminate(sig, frame):
                 blimps[blimp].parent_node.barometer.close()
             except:
                 pass
-    #barometer.close()
     print('\nTerminating Program...\n')
     try:
-        rclpy.shutdown()
         os.kill(current_pid, sig.SIGTERM)
     except AttributeError:
-        rclpy.shutdown()
         os.kill(current_pid, signal.SIGTERM)
 
 # Check Wifi (Currently Not Used)
