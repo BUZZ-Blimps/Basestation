@@ -59,7 +59,7 @@ class Blimp:
         self.bounding_box = None
 
         # Barometer Value
-        self.barometer = 100700.0
+        self.barometer = 99668.2 # Competition Default Value
 
         # Calibrate Barometer
         self.calibrateBarometer = False

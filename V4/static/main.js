@@ -1,5 +1,5 @@
 // IP Address Allowed
-const ip_allowed = '192.168.0.200';
+const ip_allowed = '192.168.0.205';
 
 // Connect to SocketIO server
 const socket = io();
@@ -8,17 +8,24 @@ const socket = io();
 socket.on('connect', () => {
     // Client IP Address
     console.log('Client connected with IP:', client_ip);
+
+    //Load current backend state
+    socket.emit('update_frontend');
 });
 
 socket.on('update', (blimp_dict) => {
+
     // Debugging
     //console.log(blimp_dict)
+
     update_basestation(blimp_dict);
 });
 
 socket.on('remove', (blimp_id) => {
+
   // Debugging
   //console.log(blimp_id)
+
   remove_blimp(blimp_id);
 });
 
@@ -33,8 +40,7 @@ socket.on('kill', () => {
 });
 
 // Catching Blimps before Attack Blimps
-// Fix 'Up Dog' to 'UpDog'
-var blimpOrder = ["BurnCreamBlimp", "SillyAhBlimp", "TurboBlimp", "GameChamberBlimp", "FiveGuysBlimp", "SuperBeefBlimp", "Catch1", "Catch2", 'Yoshi', 'Luigi', 'Geoph', ' Up Dog', 'ThisGuy', "Attack1", "Attack2"];
+var blimpOrder = ["BurnCreamBlimp", "SillyAhBlimp", "TurboBlimp", "GameChamberBlimp", "FiveGuysBlimp", "SuperBeefBlimp", "Catch1", "Catch2", 'Yoshi', 'Luigi', 'Geoph', 'ThisGuy', "Attack1", "Attack2"];
 
 // Unordered List of Blimp Names
 
@@ -322,7 +328,8 @@ function update_target_button_color(blimp_dict, target_color, target_color_butto
         // Create a div element that will be used to wrap the button and force it to a new line
         const buttonWrapper = document.createElement('div');
         buttonWrapper.appendChild(target_color_button);
-        buttonWrapper.setAttribute('blimp_id', blimp_id); // Store the blimp name
+        // Store the blimp name
+        buttonWrapper.setAttribute('blimp_id', blimp_id);
         
         // Center the button horizontally
         buttonWrapper.style.display = 'flex';
@@ -332,7 +339,7 @@ function update_target_button_color(blimp_dict, target_color, target_color_butto
     }
 }
 
-// Function Not Used //
+// Function Currently Not Used; Target Colors for Attack Blimps Hard Set from ML/on Teensy //
 function update_target_button_colors(blimp_dict, target_color_1, target_color_1_button, target_color_2, target_color_2_button) {
   // Get data from blimp dictionary
   let blimp_id = blimp_dict["blimp_id"];
@@ -422,7 +429,7 @@ function update_goal_button_color(blimp_dict, goal_color, goal_color_button) {
     }
 }
 
-// Function Not Used //
+// Function Not Used; Has Error; Not Needed Currently //
 function update_empty_button_color(blimp_dict, goal_color, goal_color_button, goalButtonsContainer) {
   // Get data from blimp dictionary
   let blimp_id = blimp_dict["blimp_id"];
@@ -503,7 +510,7 @@ function get_state(number) {
   let state;
 
   if (number === 0) {
-      state = "searching";
+      state = "searching"; // Default Value
   } else if (number === 1) {
       state = "approach";
   } else if (number === 2) {
@@ -521,60 +528,62 @@ function get_state(number) {
   } else if (number === 8) {
       state = "scored";
   } else {
-      state = "error"; // Default state if the number doesn't match any of the provided values
+      state = "error"; // Error, should not happen
   }
 
   return state;
 }
 
-// Keyboard Use //
+// Keyboard Use (Currently Not Used) //
 
-var keys = { w: false, a: false, s: false, d: false };
-var dot = document.getElementById("dot1");
+// var keys = { w: false, a: false, s: false, d: false };
+// var dot = document.getElementById("dot1");
 
-window.onkeydown = function(e) {
-    if (keys.hasOwnProperty(e.key.toLowerCase())) {
-        keys[e.key.toLowerCase()] = true;
-    }
-    moveDot();
-};
+// window.onkeydown = function(e) {
+//     if (keys.hasOwnProperty(e.key.toLowerCase())) {
+//         keys[e.key.toLowerCase()] = true;
+//     }
+//     moveDot();
+// };
 
-window.onkeyup = function(e) {
-    if (keys.hasOwnProperty(e.key.toLowerCase())) {
-        keys[e.key.toLowerCase()] = false;
-    }
-    moveDot();
-};
+// window.onkeyup = function(e) {
+//     if (keys.hasOwnProperty(e.key.toLowerCase())) {
+//         keys[e.key.toLowerCase()] = false;
+//     }
+//     moveDot();
+// };
 
-function moveDot() {
-    dot.style.left = "50%";
-    dot.style.top = "50%";
+// function moveDot() {
+//     dot.style.left = "50%";
+//     dot.style.top = "50%";
 
-    if (keys['w'] && keys['a'] && keys['s'] && keys['d']) return;
+//     if (keys['w'] && keys['a'] && keys['s'] && keys['d']) return;
 
-    if (keys['w'] && keys['s']) {
-        if (keys['a']) dot.style.left = "25%";
-        else if (keys['d']) dot.style.left = "75%";
-        return;
-    }
+//     if (keys['w'] && keys['s']) {
+//         if (keys['a']) dot.style.left = "25%";
+//         else if (keys['d']) dot.style.left = "75%";
+//         return;
+//     }
 
-    if (keys['a'] && keys['d']) {
-        if (keys['w']) dot.style.top = "25%";
-        else if (keys['s']) dot.style.top = "75%";
-        return;
-    }
+//     if (keys['a'] && keys['d']) {
+//         if (keys['w']) dot.style.top = "25%";
+//         else if (keys['s']) dot.style.top = "75%";
+//         return;
+//     }
 
-    if (keys['w'] && !keys['s']) dot.style.top = "25%";
-    if (!keys['w'] && keys['s']) dot.style.top = "75%";
-    if (keys['a'] && !keys['d']) dot.style.left = "25%";
-    if (!keys['a'] && keys['d']) dot.style.left = "75%";
-}
+//     if (keys['w'] && !keys['s']) dot.style.top = "25%";
+//     if (!keys['w'] && keys['s']) dot.style.top = "75%";
+//     if (keys['a'] && !keys['d']) dot.style.left = "25%";
+//     if (!keys['a'] && keys['d']) dot.style.left = "75%";
+// }
 
 // End of Keyboard Use //
 
+// Controller 1 UI Dots
 var dot1 = document.getElementById('dot1');
 var dot2 = document.getElementById('dot2');
 
+// Toggler
 let toggler = document.querySelector(".toggler");
 
 window.addEventListener("click", event => {
@@ -683,7 +692,8 @@ function handleGamepadButtons(gamepad) {
       let indexB = blimpOrder.indexOf(b);
 
       if (indexA == -1 || indexB == -1) {
-          throw new Error('All items in listToSort must exist in referenceList');
+        // Gamepad Error
+        throw new Error('All items in listToSort must exist in referenceList');
       }
 
       return indexA - indexB;
@@ -831,6 +841,7 @@ function handleGamepadButtons(gamepad) {
       socket.emit('update_total_disconnection');
       console.log('Xbox A Button released.');
       window.location.reload();
+      socket.emit('update_frontend');
     }
 
     // Check if the Home button was pressed in the previous state but is not pressed now (released)
