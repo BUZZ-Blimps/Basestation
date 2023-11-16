@@ -29,9 +29,17 @@ socket.on('remove', (blimp_id) => {
   remove_blimp(blimp_id);
 });
 
+socket.on('reload', () => {
+  window.location.reload();
+})
+
 socket.on('start', () => {
   window.location.reload();
   console.log('Starting up Basestation');
+});
+
+socket.on('kill_backend', () => {
+  socket.emit('kill_basestation');
 });
 
 socket.on('kill', () => {
@@ -260,7 +268,7 @@ function update_basestation(blimp_dict) {
     }
 
     //Update controller connection
-    if (blimp_dict['controlled']) {
+    if (blimp_dict['selected']) {
       sortedNameRows[blimp_id].style.color = 'blue';
       sortedStateRows[blimp_id].style.color = 'blue';
     } else {
@@ -291,28 +299,26 @@ function update_target_button_color(blimp_dict, target_color, target_color_butto
         // Attach the click event listener to the button
         target_color_button.addEventListener('click', (event) => {
             
-            if (client_ip === ip_allowed) {
-                // Change the target color and the data
-                if (target_color === 'blue') {
-                    target_color = 'red';
-                    blimp_dict["target_color"] = 1;
-                } else {
-                    target_color = 'blue';
-                    blimp_dict["target_color"] = 0;
-                }
-                
-                // Debugging
-                console.log(blimp_id, 'has a target color:', target_color);
+              // Change the target color and the data
+              // if (target_color === 'blue') {
+              //     target_color = 'red';
+              //     blimp_dict["target_color"] = 1;
+              // } else {
+              //     target_color = 'blue';
+              //     blimp_dict["target_color"] = 0;
+              // }
+              
+              // Debugging
+              // console.log(blimp_id, 'has a target color:', target_color);
 
-                // Get the target color button for the specific blimp
-                let target_color_button = document.getElementById(`target_color_1_button_${blimp_id}`);
-                
-                // Set target color of the button
-                target_color_button.style.backgroundColor = target_color;
-                
-                // Send the data to the backend to update over ROS
-                socket.emit('update_target_color', blimp_dict);
-            }
+              // Get the target color button for the specific blimp
+              // let target_color_button = document.getElementById(`target_color_1_button_${blimp_id}`);
+              
+              // Set target color of the button
+              // target_color_button.style.backgroundColor = target_color;
+              
+              // Send the data to the backend to update over ROS
+              socket.emit('update_all_target_colors');
         });
         
         // Create a div element that will be used to wrap the button and force it to a new line
@@ -373,28 +379,28 @@ function update_goal_button_color(blimp_dict, goal_color, goal_color_button) {
       // Attach the click event listener to the button
       goal_color_button.addEventListener('click', (event) => {
 
-        if (client_ip === ip_allowed) {
+        // if (client_ip === ip_allowed) {
           // Change the goal color and the data
-          if (goal_color === 'orange') {
-              goal_color = 'yellow';
-              blimp_dict["goal_color"] = 1;
-          } else {
-              goal_color = 'orange';
-              blimp_dict["goal_color"] = 0;
-          }
+          // if (goal_color === 'orange') {
+          //     goal_color = 'yellow';
+          //     blimp_dict["goal_color"] = 1;
+          // } else {
+          //     goal_color = 'orange';
+          //     blimp_dict["goal_color"] = 0;
+          // }
 
           // Debugging
-          console.log(blimp_id, 'has a goal color:', goal_color);
+          // console.log(blimp_id, 'has a goal color:', goal_color);
 
-          // Get the goal color button for the specific blimp
-          let goal_color_button = document.getElementById(`goal_color_button_${blimp_id}`);
+          // // Get the goal color button for the specific blimp
+          // let goal_color_button = document.getElementById(`goal_color_button_${blimp_id}`);
 
-          // Set goal color of the button
-          goal_color_button.style.backgroundColor = goal_color;
+          // // Set goal color of the button
+          // goal_color_button.style.backgroundColor = goal_color;
 
           // Send the data to the backend to update over ROS
-          socket.emit('update_goal_color', blimp_dict);
-        }
+          socket.emit('update_all_goal_colors');
+        // }
       });
 
       // Create a div element that will be used to wrap the button and force it to a new line
@@ -605,55 +611,55 @@ window.addEventListener("click", event => {
 //   }
 // }
 
-function moveDots(gamepad) {
-  // Gamepad.axes array contains the values for all axes of the controller.
-  // It's typical for the left stick to use axes 0 (X) and 1 (Y)
-  // and for the right stick to use axes 2 (X) and 3 (Y).
-  leftStickX = gamepad.axes[0];
-  leftStickY = gamepad.axes[1];
-  rightStickX = gamepad.axes[2];
-  rightStickY = gamepad.axes[3];
+// function moveDots(gamepad) {
+//   // Gamepad.axes array contains the values for all axes of the controller.
+//   // It's typical for the left stick to use axes 0 (X) and 1 (Y)
+//   // and for the right stick to use axes 2 (X) and 3 (Y).
+//   leftStickX = gamepad.axes[0];
+//   leftStickY = gamepad.axes[1];
+//   rightStickX = gamepad.axes[2];
+//   rightStickY = gamepad.axes[3];
 
-  // Define a dead zone threshold (adjust as needed)
-  const deadZero = 0.1;
-  const deadOne = 0.01;
+//   // Define a dead zone threshold (adjust as needed)
+//   const deadZero = 0.1;
+//   const deadOne = 0.01;
 
-  // Apply tolerance by checking if values are within the dead zone
-  leftStickX = Math.abs(leftStickX) < deadZero ? 0 : leftStickX;
-  leftStickY = Math.abs(leftStickY) < deadZero ? 0 : leftStickY;
-  rightStickX = Math.abs(rightStickX) < deadZero ? 0 : rightStickX;
-  rightStickY = Math.abs(rightStickY) < deadZero ? 0 : rightStickY;
+//   // Apply tolerance by checking if values are within the dead zone
+//   leftStickX = Math.abs(leftStickX) < deadZero ? 0 : leftStickX;
+//   leftStickY = Math.abs(leftStickY) < deadZero ? 0 : leftStickY;
+//   rightStickX = Math.abs(rightStickX) < deadZero ? 0 : rightStickX;
+//   rightStickY = Math.abs(rightStickY) < deadZero ? 0 : rightStickY;
 
-  leftStickX = leftStickX > 1 - deadOne ? 1 : leftStickX;
-  leftStickY = leftStickY > 1 - deadOne ? 1 : leftStickY;
-  rightStickX = rightStickX > 1 - deadOne ? 1 : rightStickX;
-  rightStickY = rightStickY > 1 - deadOne ? 1 : rightStickY;
+//   leftStickX = leftStickX > 1 - deadOne ? 1 : leftStickX;
+//   leftStickY = leftStickY > 1 - deadOne ? 1 : leftStickY;
+//   rightStickX = rightStickX > 1 - deadOne ? 1 : rightStickX;
+//   rightStickY = rightStickY > 1 - deadOne ? 1 : rightStickY;
 
-  leftStickX = leftStickX < -1 + deadOne ? -1 : leftStickX;
-  leftStickY = leftStickY < -1 + deadOne ? -1 : leftStickY;
-  rightStickX = rightStickX < -1 + deadOne ? -1 : rightStickX;
-  rightStickY = rightStickY < -1 + deadOne ? -1 : rightStickY;
+//   leftStickX = leftStickX < -1 + deadOne ? -1 : leftStickX;
+//   leftStickY = leftStickY < -1 + deadOne ? -1 : leftStickY;
+//   rightStickX = rightStickX < -1 + deadOne ? -1 : rightStickX;
+//   rightStickY = rightStickY < -1 + deadOne ? -1 : rightStickY;
 
-  leftStickX = leftStickX.toFixed(2);
-  leftStickY = leftStickY.toFixed(2);
-  rightStickX = rightStickX.toFixed(2);
-  rightStickY = rightStickY.toFixed(2);
+//   leftStickX = leftStickX.toFixed(2);
+//   leftStickY = leftStickY.toFixed(2);
+//   rightStickX = rightStickX.toFixed(2);
+//   rightStickY = rightStickY.toFixed(2);
 
-  // Multiply by -1 to Invert the Y-Axes
-  leftStickY = leftStickY * -1;
-  rightStickY = rightStickY * -1;
+//   // Multiply by -1 to Invert the Y-Axes
+//   leftStickY = leftStickY * -1;
+//   rightStickY = rightStickY * -1;
 
-  // Apply the joystick positions to the dot positions
-  // The joystick returns a value between -1 and 1.
-  // We shift this range to be 0 - 100% for use with the CSS styles.
-  dot3.style.left = `${50 + leftStickX * 45}%`;
-  dot3.style.top = `${50 + leftStickY * -45}%`;
-  dot4.style.left = `${50 + rightStickX * 45}%`;
-  dot4.style.top = `${50 + rightStickY * -45}%`;
+//   // Apply the joystick positions to the dot positions
+//   // The joystick returns a value between -1 and 1.
+//   // We shift this range to be 0 - 100% for use with the CSS styles.
+//   dot3.style.left = `${50 + leftStickX * 45}%`;
+//   dot3.style.top = `${50 + leftStickY * -45}%`;
+//   dot4.style.left = `${50 + rightStickX * 45}%`;
+//   dot4.style.top = `${50 + rightStickY * -45}%`;
 
-  // Debugging
-  //console.log("Left Stick X: ", 50 + leftStickX * 45);
-}
+//   // Debugging
+//   //console.log("Left Stick X: ", 50 + leftStickX * 45);
+// }
 
 // Initialize a variable to keep track of the previous state of the controller buttons and right trigger
 // let controllerState = {

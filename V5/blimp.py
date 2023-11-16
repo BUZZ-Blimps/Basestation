@@ -45,7 +45,7 @@ class Blimp:
         """
 
         # Controlled status
-        self.controlled = False  # Initially not controlled
+        self.selected = False  # Initially not selected
 
         # Blimp Livestream Current Frame
         self.frame = None
@@ -57,7 +57,7 @@ class Blimp:
         self.barometer = 99668.2 # Competition Default Value
 
         # Calibrate Barometer
-        self.calibrateBarometer = False
+        self.calibrate_barometer = False
 
         # Height
         self.height = None
@@ -74,6 +74,8 @@ class Blimp:
         # Show Image
         self.show_image = False
 
+        self.frontend_update_auto = False
+
     def to_dict(self):
         return {
             "blimp_id": self.id,
@@ -87,9 +89,9 @@ class Blimp:
             "goal_color": self.goal_color,
             "target_color": self.target_color,
             "state_machine": self.state_machine,
-            "controlled": self.controlled,
+            "selected": self.selected,
             "barometer": self.barometer,
-            "calibrateBarometer": self.calibrateBarometer,
+            "calibrateBarometer": self.calibrate_barometer,
             "height": self.height,
             "z_velocity": self.z_velocity,
             "log": self.log
@@ -118,8 +120,8 @@ class Blimp:
             self.target_color = data_dict["target_color"]
         if "state_machine" in data_dict:
             self.state_machine = data_dict["state_machine"]
-        if "controlled" in data_dict:
-            self.controlled = data_dict["controlled"]   
+        if "selected" in data_dict:
+            self.selected = data_dict["selected"]   
         if "barometer" in data_dict:
             self.barometer = data_dict["barometer"]
         if "calibrateBarometer" in data_dict:

@@ -12,6 +12,8 @@ from std_msgs.msg import String, Int64, Bool, Float64, Float64MultiArray
 from yolo_msgs.msg import BoundingBox # type: ignore
 from sensor_msgs.msg import Joy
 
+import launch.actions
+
 # Livestream Packages
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
@@ -63,9 +65,9 @@ class Basestation(Node):
 
         # Create Barometer Timer
         self.barometer = None
-        self.barometerLoopSpeed = 100
+        self.barometerLoopSpeed = 5
         barometer_timer_period = 1.0/self.barometerLoopSpeed
-        # self.barometerTimer = self.create_timer(barometer_timer_period, self.barometerTimerLoop)
+        self.barometerTimer = self.create_timer(barometer_timer_period, self.barometer_timer_loop)
         
         # Identify Topic for Teensy to Check if Basestation is On
         self.topicName_identify = "/identify"
@@ -107,8 +109,91 @@ class Basestation(Node):
         self.catching_blimp_ids = ['BurnCreamBlimp', 'SillyAhBlimp', 'TurboBlimp', 'GameChamberBlimp', 'FiveGuysBlimp', 'SuperBeefBlimp', 'Catch1', 'Catch2']
         self.attack_blimp_ids = ['Yoshi', 'Luigi', 'Geoph', 'ThisGuy', 'Attack1', 'Attack2']
 
-        self.controlled_blimp_id = ""
+        self.selected_blimp_id = ""
         self.auto_panic = False
+        self.goal_color = 0
+        self.target_color = 0
+
+    # Timer Functions #
+    def timerLoop(self):
+        # Update Blimp Nodes
+
+        global all_goal_color
+        global all_target_color
+
+        if self.goal_color != all_goal_color:
+            self.goal_color = all_goal_color
+            self.update_frontend()
+
+        if self.target_color != all_target_color:
+            self.target_color = all_target_color
+            self.update_frontend()
+
+        for blimp_node_handler in self.blimp_node_handlers:
+            if self.getElapsedTime(blimp_node_handler.blimp.last_online) > self.timeout:
+                self.get_logger().info('Removing blimp {}'.format(blimp_node_handler.blimp.id))
+                self.remove_blimp_node_handler(blimp_node_handler.blimp.id)
+
+        # for blimp_node_handler in self.blimp_node_handlers:
+        #     any_update = False
+        #     if self.frontend_update_goal:
+
+        #         self.goal_color = all_goal_color
+        #         blimp_node_handler.publish_goal_color()
+        #         self.frontend_update_goal = False
+        #         any_update = True
+
+        #     if self.frontend_update_target:
+        #         self.target_color = all_target_color
+        #         blimp_node_handler.publish_target_color()
+        #         self.frontend_update_target = False
+        #         any_update = True
+
+        #     if any_update:
+        #         blimp_node_handler.update_frontend()
+
+        # for blimp_node_handler in self.blimp_node_handlers:
+        #     blimp_node_handler.blimp.goal_color = self.goal_color
+
+    def barometer_timer_loop(self):
+
+        # Renitialize Barometer if needed
+        if self.barometer == None:
+            try:
+                self.barometer = serial.Serial('/dev/ttyACM0', 115200)
+                print('BAROMETER CONNECTED')
+            except:
+                try:
+                    self.barometer = serial.Serial('/dev/ttyACM1', 115200)
+                    print('BAROMETER CONNECTED')
+                except:
+                    print('BAROMETER NOT CONNECTED')
+        else:
+            #Read barometer data if available
+            if self.barometer.in_waiting:
+                # Read a line of data from the serial port
+                baro_reading = float(self.barometer.readline().decode('utf-8'))
+                self.barometer.flushInput()
+
+                all_blimps = {}
+                for blimp_node_handler in self.blimp_node_handlers:
+                    blimp_node_handler.blimp.barometer = baro_reading
+                    blimp_node_handler.publish_barometer()
+
+                    if blimp_node_handler.blimp.calibrate_barometer:
+                        blimp_node_handler.publish_calibrate_barometer()
+
+                        self.get_logger().info('calibrate barometer published')
+
+                        blimp_node_handler.blimp.calibrate_barometer = False
+
+                    all_blimps[blimp_node_handler.blimp.id] = blimp_node_handler.blimp.to_dict()
+
+                socketio.emit('barometer', all_blimps)
+
+                # Debugging
+                #print(data)  # Assuming data is encoded as UTF-8
+                # Emit Barometer Data
 
     def identify_callback(self, msg):
         global blimps
@@ -128,7 +213,7 @@ class Basestation(Node):
             # self.get_logger().info('Node Name: "%s"' % nodeName)
 
             # Make sure node name is valid
-            if self.check_node_name(blimp_id) == True:
+            if self.check_node_name(blimp_id):
                 self.create_blimp_node_handler(blimp_id)
                 blimps[blimp_id].last_online = self.get_clock().now()
 
@@ -146,7 +231,7 @@ class Basestation(Node):
             self.joy_state.axes[1] = msg.axes[1]
             # self.get_logger().info('Left joystick U/D')
 
-        # # 2: L trigger
+        # 2: L trigger
         if msg.axes[2] != self.joy_state.axes[2]:
             if self.joy_state.axes[2] > 0.5 and msg.axes[2] < -0.5:
                 #Pressed down
@@ -158,11 +243,11 @@ class Basestation(Node):
                 self.update_auto_panic()
                 self.joy_state.axes[2] = msg.axes[2]
 
+        # 5: R trigger
         if msg.axes[5] != self.joy_state.axes[5]:
             if self.joy_state.axes[5] > 0.5 and msg.axes[5] < -0.5:
-                #Pressed down
+                #Left trigger pressed down
                 self.joy_state.axes[5] = msg.axes[5]
-                # self.get_logger().info('Left trigger pressed')
             elif self.joy_state.axes[5] < -0.5 and msg.axes[5] > 0.5:
                 #Released
                 # self.get_logger().info('Right trigger released')
@@ -170,35 +255,23 @@ class Basestation(Node):
                 self.update_auto()
                 self.joy_state.axes[5] = msg.axes[5]
 
-        # # 6: Dpad R/L (not sure what these do - ask Austin)
         if msg.axes[6] != self.joy_state.axes[6]:
             if msg.axes[6] == 0:
                 if self.joy_state.axes[6] == 1:
-                    self.get_logger().info('Left DPad released')
+                    # self.get_logger().info('Left DPad released')
+                    self.disconnect_controller()
                 else:
-                    self.get_logger().info('Right DPad released')
-
+                    # self.get_logger().info('Right DPad released')
+                    self.control_first_blimp()
             self.joy_state.axes[6] = msg.axes[6]
-
-            # self.get_logger().info('Dpad R/L')
 
         # 7: Dpad U/D
         if msg.axes[7] != self.joy_state.axes[7]:
             if msg.axes[7] == 0:
                 #Update with the negative of what was sent bc of top-down list
-                self.update_controlled_blimp(-self.joy_state.axes[7])
-
-                #Update the frontend for all blimps to reflect the change
-                self.update_all_frontend()
-
-                # if self.joy_state.axes[7] == 1:
-                #     self.get_logger().info('Up DPad released')
-                # else:
-                #     self.get_logger().info('Down DPad released')
+                self.update_selected_blimp(-self.joy_state.axes[7])
 
             self.joy_state.axes[7] = msg.axes[7]
-
-
 
         for i in range(12):
             if msg.buttons[i] != self.joy_state.buttons[i]:
@@ -221,23 +294,43 @@ class Basestation(Node):
                     # ]
                     if i == 0:
                         #A button - reload page via emit (TODO)
+                        # self.disconnect_controller()
+                        socketio.emit('reload')
                         pass
                     elif i == 1:
-                        #B button - do nothing
+                        #B button - Stream?
                         pass
                     elif i == 2:
                         #X button
+                        self.update_target_colors()
                         pass
                     elif i == 3:
+                        #Y button - update goal
+                        self.update_goal_colors()
                         pass
+                    elif i == 4:
+                        #L bumper - shoot
+                        self.update_shoot()
+                    elif i == 5:
+                        #R bumper - catch
+                        self.update_grab()
+                    elif i == 11:
+                        self.get_logger().info('Killing the base station')
+                        socketio.emit('kill_backend')
 
                 self.joy_state.buttons[i] = msg.buttons[i]
 
         #Update the motor commands every time a joy update is received
         self.update_motor_commands()
 
-    def update_controlled_blimp(self, direction):
-        # print('updating controlled blimp {}'.format(direction))
+    def control_first_blimp(self):
+        num_blimps_connected = len(self.ordered_connected_blimps)
+        if num_blimps_connected > 0 and self.selected_blimp_id not in self.ordered_connected_blimps:
+            self.selected_blimp_id = self.ordered_connected_blimps[0]
+        self.update_handler_selected()
+
+    def update_selected_blimp(self, direction):
+        # print('updating selected blimp {}'.format(direction))
 
         #Make sure at least one blimp is currently connected, otherwise do nothing
         num_blimps_connected = len(self.ordered_connected_blimps)
@@ -245,14 +338,14 @@ class Basestation(Node):
             #First, get the index of the current connected blimp
             valid_index = False
             try:
-                index = self.ordered_connected_blimps.index(self.controlled_blimp_id)
+                index = self.ordered_connected_blimps.index(self.selected_blimp_id)
                 valid_index = True
             except ValueError:
-                #No blimp is currently controlled, so select corresponding endpoint
+                #No blimp is currently selected, so select corresponding endpoint
                 if direction > 0:
-                    self.controlled_blimp_id = self.ordered_connected_blimps[0]
+                    self.selected_blimp_id = self.ordered_connected_blimps[0]
                 else:
-                    self.controlled_blimp_id = self.ordered_connected_blimps[num_blimps_connected-1]
+                    self.selected_blimp_id = self.ordered_connected_blimps[num_blimps_connected-1]
 
             if valid_index:
                 if direction > 0:
@@ -267,21 +360,30 @@ class Basestation(Node):
                     else:
                         new_index = num_blimps_connected-1
             
-                self.controlled_blimp_id = self.ordered_connected_blimps[new_index]
+                self.selected_blimp_id = self.ordered_connected_blimps[new_index]
 
             #Update handlers to stay consistent
-            for blimp_node_handler in self.blimp_node_handlers:
-                if blimp_node_handler.blimp.id == self.controlled_blimp_id:
-                    blimp_node_handler.blimp.controlled = True
-                else:
-                    blimp_node_handler.blimp.controlled = False
+            self.update_handler_selected()
 
-            print('{} selected for control'.format(self.controlled_blimp_id))
+            print('{} selected for control'.format(self.selected_blimp_id))
+
+    def disconnect_controller(self):
+        self.selected_blimp_id = ""
+        self.update_handler_selected()
+    
+    def update_handler_selected(self):
+        for blimp_node_handler in self.blimp_node_handlers:
+            if blimp_node_handler.blimp.id == self.selected_blimp_id:
+                blimp_node_handler.blimp.selected = True
+            else:
+                blimp_node_handler.blimp.selected = False
+            #Update the frontend to reflect the change
+            blimp_node_handler.update_frontend()
 
     def update_motor_commands(self):
         for blimp_node_handler in self.blimp_node_handlers:
-            if blimp_node_handler.blimp.id == self.controlled_blimp_id:
-                left_stick_x = self.joy_state.axes[0]
+            if blimp_node_handler.blimp.id == self.selected_blimp_id:
+                left_stick_x = -self.joy_state.axes[0]
                 left_stick_y = self.joy_state.axes[1]
                 right_stick_x = self.joy_state.axes[3]
                 right_stick_y = self.joy_state.axes[4]
@@ -296,10 +398,43 @@ class Basestation(Node):
 
     def update_auto(self):
         for blimp_node_handler in self.blimp_node_handlers:
-            if blimp_node_handler.blimp.id == self.controlled_blimp_id:
+            if blimp_node_handler.blimp.id == self.selected_blimp_id:
                 blimp_node_handler.blimp.auto = not blimp_node_handler.blimp.auto
                 blimp_node_handler.publish_auto()
                 blimp_node_handler.update_frontend()
+
+    # Update Single Auto True
+    # @socketio.on('update_auto_true')
+    # def update_auto(data):
+    #     global blimps
+    #     if data in blimps:
+    #         blimps[data].auto = True
+    #         # Set update flag
+    #         blimps[data].update_auto_pub = True
+    # # Update Single Auto False
+    # @socketio.on('update_auto_false')
+    # def update_auto(data):
+    #     global blimps
+    #     if data in blimps:
+    #         blimps[data].auto = False
+    #         # Set update flag
+    #         blimps[data].update_auto_pub = True
+    # # Update All Auto
+    # @socketio.on('update_all_auto')
+    # def update_auto_panic():
+    #     global blimps
+    #     for blimp in blimps:
+    #         blimps[blimp].auto = True
+    #         # Set update flag
+    #         blimps[blimp].update_auto_pub = True
+    # # Update All Manual
+    # @socketio.on('update_all_manual')
+    # def update_auto_panic():
+    #     global blimps
+    #     for blimp in blimps:
+    #         blimps[blimp].auto = False
+    #         # Set update flag
+    #         blimps[blimp].update_auto_pub = True
 
     def update_auto_panic(self):
         self.auto_panic = not self.auto_panic
@@ -310,40 +445,43 @@ class Basestation(Node):
 
     def update_grab(self):
         for blimp_node_handler in self.blimp_node_handlers:
-            if blimp_node_handler.blimp.id == self.controlled_blimp_id:
+            if blimp_node_handler.blimp.id == self.selected_blimp_id:
                 blimp_node_handler.blimp.grabbing = not blimp_node_handler.blimp.grabbing
                 blimp_node_handler.publish_grabbing()
                 blimp_node_handler.update_frontend()
 
     def update_shoot(self):
         for blimp_node_handler in self.blimp_node_handlers:
-            if blimp_node_handler.blimp.id == self.controlled_blimp_id:
+            if blimp_node_handler.blimp.id == self.selected_blimp_id:
                 blimp_node_handler.blimp.shooting = not blimp_node_handler.blimp.shooting
                 blimp_node_handler.publish_shooting()
+                blimp_node_handler.update_frontend()
+
+    def update_goal_colors(self):
+        global all_goal_color
+        self.goal_color = 0 if self.goal_color == 1 else 1
+        all_goal_color = self.goal_color
+
+        for blimp_node_handler in self.blimp_node_handlers:
+            blimp_node_handler.blimp.goal_color = self.goal_color
+            blimp_node_handler.publish_goal_color()
+            blimp_node_handler.update_frontend()
+
+    def update_target_colors(self):
+        global all_target_color
+        self.target_color = 0 if self.target_color == 1 else 1
+        all_target_color = self.target_color
+
+        for blimp_node_handler in self.blimp_node_handlers:
+            #Only publish target colors for attack blimps
+            if blimp_node_handler.blimp.type == 1:
+                blimp_node_handler.blimp.target_color = self.target_color
+                blimp_node_handler.publish_target_color()
                 blimp_node_handler.update_frontend()
 
     def update_all_frontend(self):
         for blimp_node_handler in self.blimp_node_handlers:
             blimp_node_handler.update_frontend()
-
-    def update_blimp_node_handlers(self):
-        global blimps
-
-        # Finally, check for subscription timeout for all connected blimps
-        for blimp_node_handler in self.blimp_node_handlers:
-            if self.getElapsedTime(blimps[blimp_node_handler.blimp.id].last_online) > self.timeout:
-                self.get_logger().info('Removing blimp {}'.format(blimp_node_handler.blimp.id))
-                self.remove_blimp_node_handler(blimp_node_handler.blimp.id)
-            # else:
-                # Run handler update routine
-                # blimp_node_handler.update()
-
-        # Get All Current Blimps
-        for blimp in blimps:
-            self.all_blimps[blimp] = blimps[blimp].to_dict()
-
-        # Emit Barometer Data
-        socketio.emit('barometer', self.all_blimps)
     
     def create_blimp_node_handler(self, blimp_id):
         
@@ -431,8 +569,8 @@ class Basestation(Node):
             self.blimp_node_handlers[handler_id].destroy_subscribers()
             self.blimp_node_handlers[handler_id].destroy_publishers()
 
-            if self.blimp.controlled:
-                self.parent_node.controlled_blimp_id = ""
+            if self.blimp.selected:
+                self.parent_node.selected_blimp_id = ""
 
             # Remove blimp from list of connected blimps
             self.connected_blimps.remove(blimp_id)
@@ -456,41 +594,6 @@ class Basestation(Node):
         else:
             return False
 
-    # Timer Functions #
-    
-    def timerLoop(self):
-        # Update Blimp Nodes
-        self.update_blimp_node_handlers()
-
-    def barometerTimerLoop(self):
-        # Renitialize Barometer
-        if self.barometer == None:
-            try:
-                self.barometer = serial.Serial('/dev/ttyACM0', 115200)
-                print('BAROMETER CONNECTED')
-            except:
-                try:
-                    self.barometer = serial.Serial('/dev/ttyACM1', 115200)
-                    print('BAROMETER CONNECTED')
-                except:
-                    print('BAROMETER NOT CONNECTED')
-
-        for blimp_node_handler in self.blimp_node_handlers:
-            blimp_node_handler.publish_calibrateBarometer()
-
-        global blimps
-        if self.barometer is not None:
-                #Read serial data if available
-                if self.barometer.in_waiting:
-                    # Read a line of data from the serial port
-                    data = self.barometer.readline()
-
-                    # Debugging
-                    #print(data)  # Assuming data is encoded as UTF-8
-
-                    for blimp in blimps:
-                        blimps[blimp].barometer = float(data.decode('utf-8'))
-
     def getElapsedTime(self, prevTime):
         elapsedTime = self.get_clock().now() - prevTime
         elapsedTimeSec = elapsedTime.nanoseconds / 10**9
@@ -507,7 +610,7 @@ class BlimpNodeHandler:
         self.blimp.name = self.get_blimp_name(blimp_id)
 
         # Set the blimp type
-        self.blimp_type = self.get_blimp_type(blimp_id)
+        self.blimp.type = self.get_blimp_type(blimp_id)
 
         # Update the global blimp dictionary with this blimp
         global blimps
@@ -542,7 +645,6 @@ class BlimpNodeHandler:
         self.sub_state_machine = None
         self.sub_image_raw = None
         self.sub_bounding_box = None
-        self.sub_baseBarometer = None
         self.sub_height= None
         self.sub_z_velocity = None
         self.sub_logs = None
@@ -561,119 +663,6 @@ class BlimpNodeHandler:
         # Livestream Most Recent Frame
         self.frame = None
         self.bridge = CvBridge()
-
-        self.blimp_dict = {
-            "blimp_id": None,
-            "blimp_name": None,
-            "blimp_type": None,
-            "auto": None,
-            "killed": None,
-            "goal_color": None,
-            "target_color": None,
-            "state_machine": None,
-            "connected": None,
-            "barometer": None,
-            "calibrateBarometer": None,
-            "height": None,
-            "z_velocity": None,
-            "log": None
-        }
-
-    def update_handler_dict(self):
-        global blimps
-        global_blimp = blimps[self.blimp.id]
-        dict_updated = False
-
-        if global_blimp.blimp_id != self.blimp_dict["blimp_id"]:
-            # print('blimp_id updating')
-
-            dict_updated = True
-            self.blimp_dict["blimp_id"] = global_blimp.blimp_id
-
-        if global_blimp.blimp_name != self.blimp_dict["blimp_name"]:
-            # print('blimp_name updating')
-
-            dict_updated = True
-            self.blimp_dict["blimp_name"] = global_blimp.blimp_name
-
-        if global_blimp.blimp_type != self.blimp_dict["blimp_type"]:
-            # print('blimp_type updating')
-
-            dict_updated = True
-            self.blimp_dict["blimp_type"] = global_blimp.blimp_type
-
-        if global_blimp.auto != self.blimp_dict["auto"]:
-            # print('auto updating')
-
-            dict_updated = True
-            self.blimp_dict["auto"] = global_blimp.auto
-
-        if global_blimp.killed != self.blimp_dict["killed"]:
-            # print('killed updating')
-
-            dict_updated = True
-            self.blimp_dict["killed"] = global_blimp.killed
-
-        if global_blimp.goal_color != self.blimp_dict["goal_color"]:
-            # print('goal_color updating')
-
-            dict_updated = True
-            self.blimp_dict["goal_color"] = global_blimp.goal_color
-
-        if global_blimp.target_color != self.blimp_dict["target_color"]:
-            # print('target_color updating')
-
-            dict_updated = True
-            self.blimp_dict["target_color"] = global_blimp.target_color
-
-        if global_blimp.state_machine != self.blimp_dict["state_machine"]:
-            # print('state_machine updating')
-
-            dict_updated = True
-            self.blimp_dict["state_machine"] = global_blimp.state_machine
-
-        if global_blimp.controlled != self.blimp_dict["controlled"]:
-            # print('connected updating')
-
-            dict_updated = True
-            self.blimp_dict["controlled"] = global_blimp.controlled
-
-        # if global_blimp.barometer != self.blimp_dict["barometer"]:
-        #     # print('barometer updating')
-
-        #     #dict_updated = True
-        #     self.blimp_dict["barometer"] = global_blimp.barometer
-
-        # if global_blimp.calibrateBarometer != self.blimp_dict["calibrateBarometer"]:
-        #     # print('calibrateBarometer updating')
-
-        #     dict_updated = True
-        #     self.blimp_dict["calibrateBarometer"] = global_blimp.calibrateBarometer
-
-        # if global_blimp.height != self.blimp_dict["height"]:
-        #     # print('height updating')
-
-        #     #dict_updated = True
-        #     self.blimp_dict["height"] = global_blimp.height
-
-        # if global_blimp.z_velocity != self.blimp_dict["z_velocity"]:
-        #     print('z_velocity updating')
-
-        #     dict_updated = True
-        #     self.blimp_dict["z_velocity"] = global_blimp.z_velocity
-
-        if global_blimp.log != self.blimp_dict["log"]:
-            # print('log updating')
-
-            dict_updated = True
-            self.blimp_dict["log"] = global_blimp.log
-
-        #If the blimp dictionary was updated, emit it to the frontend
-        if dict_updated:
-            # print('emitting update')
-
-            # Emit the blimp data to the webpage
-            socketio.emit('update', blimps[self.blimp.id].to_dict())
 
     def update_frontend(self):
         socketio.emit('update', self.blimp.to_dict())
@@ -761,7 +750,7 @@ class BlimpNodeHandler:
     def create_publishers(self):
         topic_auto =            "/" + self.blimp.id + "/auto"
         topic_goal_color =      "/" + self.blimp.id + "/goal_color"
-        topic_target_color =      "/" + self.blimp.id + "/target_color"
+        topic_target_color =    "/" + self.blimp.id + "/target_color"
         topic_killed =          "/" + self.blimp.id + "/killed"
         topic_motor_commands =  "/" + self.blimp.id + "/motorCommands"
         topic_grabbing =        "/" + self.blimp.id + "/grabbing"
@@ -778,7 +767,7 @@ class BlimpNodeHandler:
         self.pub_grabbing = self.parent_node.create_publisher(Bool, topic_grabbing, self.boolean_qos_profile)
         self.pub_shooting = self.parent_node.create_publisher(Bool, topic_shooting, self.boolean_qos_profile)
         self.pub_baseBarometer = self.parent_node.create_publisher(Float64, topic_baseBarometer, bufferSize)
-        self.pub_calibrateBarometer = self.parent_node.create_publisher(Bool, topic_calibrateBarometer, self.boolean_qos_profile)
+        self.pub_calibrate_barometer = self.parent_node.create_publisher(Bool, topic_calibrateBarometer, self.boolean_qos_profile)
 
     def destroy_publishers(self):
         self.pub_auto.destroy()
@@ -789,11 +778,10 @@ class BlimpNodeHandler:
         self.pub_grabbing.destroy()
         self.pub_shooting.destroy()
         self.pub_baseBarometer.destroy()
-        self.pub_calibrateBarometer.destroy()
+        self.pub_calibrate_barometer.destroy()
 
     # Function to destroy subscribers for elegant behavior
     def destroy_subscribers(self):
-        global blimps
         self.parent_node.destroy_subscription(self.sub_state_machine)
         self.parent_node.destroy_subscription(self.sub_logs)
         self.parent_node.destroy_subscription(self.sub_height)
@@ -806,17 +794,13 @@ class BlimpNodeHandler:
 
     # Continually Poll State Machine Data from Teensy
     def state_machine_callback(self, msg):
-        global blimps
-        if self.blimp.id in blimps:
-            blimps[self.blimp.id].state_machine = msg.data
+        self.blimp.state_machine = msg.data
+        self.update_frontend()
 
     # Continually Poll State Machine Data from Teensy
     def logs_callback(self, msg):
-        global blimps
-        blimps[self.blimp.id].log = msg.data
-        if self.blimp.id in blimps:
-            # Emit the blimp's logs to the webpage
-            socketio.emit('logs', blimps[self.blimp.id].to_dict())
+        self.blimp.log = msg.data
+        socketio.emit('logs', self.blimp.to_dict())
 
     # Continually Poll Image Raw Data from Pi
     def image_raw_callback(self, msg):
@@ -1012,16 +996,11 @@ class BlimpNodeHandler:
         msg.data = self.blimp.barometer
         self.pub_baseBarometer.publish(msg)
 
-    def publish_calibrateBarometer(self):
-        global blimps
-        # Publish shooting value to the ROS topic
+    def publish_calibrate_barometer(self):
         msg = Bool()
-        msg.data = self.blimp.calibrateBarometer
-        self.pub_calibrateBarometer.publish(msg)
-        if self.blimp.calibrateBarometer == True:
-            self.blimp.calibrateBarometer = False
+        msg.data = self.blimp.calibrate_barometer
+        self.pub_calibrate_barometer.publish(msg)
 
-    # Update Total Disconnection
     @socketio.on('kill_basestation')
     def kill_basestation():
         print('\nDestroying Basestation Node...\n')
@@ -1074,18 +1053,18 @@ class BlimpNodeHandler:
     #         blimps[blimp].connected = False
 
     # Subscribe from Image
-    # @socketio.on('show_image')
-    # def show_image(data):
-    #     global blimps
-    #     if data in blimps:
-    #         blimps[data].show_image = True
+    @socketio.on('show_image')
+    def show_image(data):
+        global blimps
+        if data in blimps:
+            blimps[data].show_image = True
 
-    # Destroy Image Subscriber
-    # @socketio.on('remove_image')
-    # def remove_image(data):
-    #     global blimps
-    #     if data in blimps:
-    #         blimps[data].show_image = False
+    #Destroy Image Subscriber
+    @socketio.on('remove_image')
+    def remove_image(data):
+        global blimps
+        if data in blimps:
+            blimps[data].show_image = False
 
     # Update Motor Commands
     # @socketio.on('update_motor_commands')
@@ -1099,7 +1078,7 @@ class BlimpNodeHandler:
     #     # Iterate through which blimp_name is connected
     #     global blimps
     #     for blimp in blimps:
-    #         if blimps[blimp].controlled == True:
+    #         if blimps[blimp].selected == True:
 
     #             # Debugging
     #             #print(blimps[blimp].blimp_name + "connected")
@@ -1119,98 +1098,103 @@ class BlimpNodeHandler:
                 # Debugging
                 #print(blimps[blimp].motor_commands)
 
-    # Update All Goal Colors
-    # @socketio.on('update_all_goal_colors')
-    # def update_goal_colors():
-    #     global blimps
-    #     global all_goal_color
-    #     all_goal_color = not all_goal_color
-    #     for blimp in blimps:
-    #         blimps[blimp].goal_color = 1 if all_goal_color else 0
-    #         # Set update flag
-    #         blimps[blimp].update_goal_color_pub = True
+# Update All Goal Colors
+@socketio.on('update_all_goal_colors')
+def update_goal_colors():
+    global blimps
+    global all_goal_color
+    all_goal_color = not all_goal_color
 
-    # Update Grabbing
-    # @socketio.on('update_grabbing')
-    # def update_grabbing(data):
-    #     global blimps
-    #     if data in blimps:
-    #         blimps[data].grabbing = not blimps[data].grabbing
-    #         # Set update flag
-    #         blimps[data].update_grabbing_pub = True
+    for blimp in blimps:
+        blimps[blimp].goal_color = 1 if all_goal_color else 0
+        # Set update flag
+        blimps[blimp].update_goal_color_pub = True
 
-    # Update Shooting
-    @socketio.on('update_shooting')
-    def update_shooting(data):
-        global blimps
-        if data in blimps:
-            blimps[data].shooting = not blimps[data].shooting
-            # Set update flag
-            blimps[data].update_shooting_pub = True
+# Update Grabbing
+# @socketio.on('update_grabbing')
+# def update_grabbing(data):
+#     global blimps
+#     if data in blimps:
+#         blimps[data].grabbing = not blimps[data].grabbing
+#         # Set update flag
+#         blimps[data].update_grabbing_pub = True
 
-    # Update Shooting
-    @socketio.on('update_auto')
-    def update_auto(data):
-        global blimps
-        if data in blimps:
-            blimps[data].auto = not blimps[data].auto
-            # Set update flag
-            blimps[data].update_auto_pub = True
+# Update Shooting
+# @socketio.on('update_shooting')
+# def update_shooting(data):
+#     global blimps
+#     if data in blimps:
+#         blimps[data].shooting = not blimps[data].shooting
+#         # Set update flag
+#         blimps[data].update_shooting_pub = True
 
-    # Update Autonomous Mode
-    @socketio.on('update_auto_panic')
-    def update_auto_panic():
-        global blimps
-        global auto_panic
+# Update Autonomous
+@socketio.on('update_auto')
+def update_auto(data):
+    global blimps
+    if data in blimps:
+        blimps[data].auto = not blimps[data].auto
+        # Set update flag
+        blimps[data].update_auto_pub = True
 
-        auto_panic = not auto_panic
+# Update Autonomous Mode
+# @socketio.on('update_auto_panic')
+# def update_auto_panic():
+#     global blimps
+#     global auto_panic
+
+#     auto_panic = not auto_panic
+    
+#     for blimp in blimps:
+#         blimps[blimp].auto = auto_panic
+#         # Set update flag
+#         blimps[blimp].update_auto_pub = True
         
-        for blimp in blimps:
-            blimps[blimp].auto = auto_panic
-            # Set update flag
-            blimps[blimp].update_auto_pub = True
-        
-    # Update All Target Colors
-    @socketio.on('update_all_target_colors')
-    def update_target_colors():
-        global blimps
-        global all_target_color
+# Update All Target Colors
+@socketio.on('update_all_target_colors')
+def update_target_colors():
+    global blimps
+    global all_target_color
 
-        all_target_color = not all_target_color
+    all_target_color = not all_target_color
 
-        for blimp in blimps:
-            blimps[blimp].target_color = 1 if all_target_color else 0
-            # Set update flag
-            blimps[blimp].update_target_color_pub = True
+    for blimp in blimps:
+        blimps[blimp].target_color = 1 if all_target_color else 0
+        # Set update flag
+        blimps[blimp].update_target_color_pub = True
 
-    # Update Target Color
-    @socketio.on('update_target_color')
-    def update_target_color(data):
-        global blimps
-        blimp_id = data['blimp_id']
-        if blimp_id in blimps:
-            blimps[blimp_id].target_color = data['target_color']
+        # self.frontend_update_goal = False
+        # self.frontend_update_target = False
+        # self.frontend_update_auto = False
 
-            # Set update flag
-            blimps[blimp_id].update_target_color_pub = True
+# Update Target Color
+# @socketio.on('update_target_color')
+# def update_target_color(data):
+#     global blimps
+#     blimp_id = data['blimp_id']
+#     if blimp_id in blimps:
+#         blimps[blimp_id].target_color = data['target_color']
 
-    # Update Goal Color
-    @socketio.on('update_goal_color')
-    def update_goal_color(data):
-        global blimps
-        blimp_id = data['blimp_id']
-        if blimp_id in blimps:
-            blimps[blimp_id].goal_color = data['goal_color']
+#         # Set update flag
+#         blimps[blimp_id].frontend_update_target = True
 
-            # Set update flag
-            blimps[blimp_id].update_goal_color_pub = True
+# Update Goal Color
+@socketio.on('update_goal_color')
+def update_goal_color(data):
+    global blimps
+    blimp_id = data['blimp_id']
+    if blimp_id in blimps:
+        blimps[blimp_id].goal_color = data['goal_color']
 
-    # Calibrate Barometer
-    @socketio.on('calibrate_barometer')
-    def calibrate_barometer(data):
-        global blimps
-        if data in blimps:
-            blimps[data].calibrateBarometer = True
+        # Set update flag
+        blimps[blimp_id].frontend_update_goal = True
+
+# Calibrate Barometer
+@socketio.on('calibrate_barometer')
+def calibrate_barometer(data):
+    global blimps
+    if data in blimps:
+        blimps[data].calibrate_barometer = True
 
 # Handle user connection to webpage
 @socketio.on('connect')
@@ -1284,6 +1268,10 @@ def catch2Page():
 @app.route('/Barometer')
 def baroPage():
     return render_template('Barometer.html')
+
+@app.route('/Mode')
+def modePage():
+    return render_template('Mode.html')
 
 @app.route('/Logs')
 def logsPage():
