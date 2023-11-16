@@ -1,5 +1,5 @@
 // IP Address Allowed
-const ip_allowed = '192.168.0.205';
+const ip_allowed = '192.168.0.25';
 
 // Connect to SocketIO server
 const socket = io();
@@ -583,9 +583,8 @@ function get_state(number) {
 var dot1 = document.getElementById('dot1');
 var dot2 = document.getElementById('dot2');
 
-// Toggler
+// Sidebar Menu
 let toggler = document.querySelector(".toggler");
-
 window.addEventListener("click", event => {
   if(event.target.className == "toggler" || event.target.className == "toggle") {
     document.body.classList.toggle("show-nav");

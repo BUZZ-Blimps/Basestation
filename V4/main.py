@@ -57,7 +57,7 @@ class Basestation(Node):
         self.all_blimps = {}
 
         # Create timer
-        self.loopSpeed = 250 # Depends on CPU Speed (Future To-Do: Optimize Frontend/UI to run main loop faster)
+        self.loopSpeed = 100 # Depends on CPU Speed (Future To-Do: Optimize Frontend/UI to run main loop faster)
         timer_period = 1.0/self.loopSpeed
         self.timer = self.create_timer(timer_period, self.timerLoop)
         self.timeout = 5
@@ -116,6 +116,7 @@ class Basestation(Node):
 
         # Emit Barometer Data
         socketio.emit('barometer', self.all_blimps)
+        socketio.emit('mode', self.all_blimps)
     
     def create_blimp_node_handler(self, blimp_id):
         
@@ -217,7 +218,12 @@ class Basestation(Node):
                 self.barometer = serial.Serial('/dev/ttyACM0', 115200)
                 print('BAROMETER CONNECTED')
             except:
-                print('BAROMETER NOT CONNECTED')
+                try:
+                    self.barometer = serial.Serial('/dev/ttyACM1', 115200)
+                    print('BAROMETER CONNECTED')
+                except:
+                    print('BAROMETER NOT CONNECTED')
+
 
         for blimp_node_handler in self.blimp_node_handlers:
             blimp_node_handler.publish_calibrateBarometer()
@@ -724,7 +730,7 @@ class BlimpNodeHandler:
 
     def publish_target_color(self):
         global blimps
-        # Publish goal color value to the ROS topic
+        # Publish target color value to the ROS topic
         msg = Int64()
         msg.data = blimps[self.blimp_id].target_color
         self.pub_target_color.publish(msg)
@@ -918,6 +924,42 @@ class BlimpNodeHandler:
             # Set update flag
             blimps[data].update_auto_pub = True
 
+    # Update Single Auto True
+    @socketio.on('update_auto_true')
+    def update_auto(data):
+        global blimps
+        if data in blimps:
+            blimps[data].auto = True
+            # Set update flag
+            blimps[data].update_auto_pub = True
+
+    # Update Single Auto False
+    @socketio.on('update_auto_false')
+    def update_auto(data):
+        global blimps
+        if data in blimps:
+            blimps[data].auto = False
+            # Set update flag
+            blimps[data].update_auto_pub = True
+
+    # Update All Auto
+    @socketio.on('update_all_auto')
+    def update_auto_panic():
+        global blimps
+        for blimp in blimps:
+            blimps[blimp].auto = True
+            # Set update flag
+            blimps[blimp].update_auto_pub = True
+            
+    # Update All Manual
+    @socketio.on('update_all_manual')
+    def update_auto_panic():
+        global blimps
+        for blimp in blimps:
+            blimps[blimp].auto = False
+            # Set update flag
+            blimps[blimp].update_auto_pub = True
+
     # Update Autonomous Mode
     @socketio.on('update_auto_panic')
     def update_auto_panic():
@@ -1046,6 +1088,10 @@ def catch2Page():
 @app.route('/Barometer')
 def baroPage():
     return render_template('Barometer.html')
+
+@app.route('/Mode')
+def modePage():
+    return render_template('Mode.html')
 
 @app.route('/Logs')
 def logsPage():
