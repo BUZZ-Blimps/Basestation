@@ -81,18 +81,25 @@ class Blimp(Node):
         log_msg.data = 'Autonomous set to {}'.format(msg.data)
         self.pub_log.publish(log_msg)
 
+        self.get_logger().info(log_msg.data)
+
     def goal_callback(self, msg):
         log_msg = String()
         log_msg.data = 'Goal color set to {}'.format(msg.data)
         self.pub_log.publish(log_msg)
+
+        self.get_logger().info(log_msg.data)
 
     def target_callback(self, msg):
         log_msg = String()
         log_msg.data = 'Target color set to {}'.format(msg.data)
         self.pub_log.publish(log_msg)
 
+        self.get_logger().info(log_msg.data)
+
     def motor_callback(self, msg):
-        self.get_logger().info("motor")
+        m = msg.data
+        self.get_logger().info('{},{},{},{}'.format(m[0], m[1], m[2], m[3]))
 
     def grab_callback(self, msg):
         log_msg = String()
@@ -105,13 +112,11 @@ class Blimp(Node):
         self.pub_log.publish(log_msg)
 
     def base_baro_callback(self, msg):
-        self.get_logger().info("BARO")
+        pass
 
     def calibrate_callback(self, msg):
         log_msg = String()
         log_msg.data = 'Calibrate set to {}'.format(msg.data)
-
-        self.get_logger().info("CALIBRATE")
 
         self.pub_log.publish(log_msg)
 
@@ -119,7 +124,6 @@ class Blimp(Node):
         msg = Int64()
         msg.data = self.state_machine
         self.pub_state_machine.publish(msg)
-        # self.get_logger().info("Published: %s" % msg.data)
 
 def main(args=None):
     rclpy.init(args=args)

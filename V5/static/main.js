@@ -213,24 +213,27 @@ function update_basestation(blimp_dict) {
     // Clear the existing content of streamTableBody
     streamTableBody.innerHTML = '';
     
-    // Create hyperlink on basestation
-    var newRow = document.createElement('h3');
-    var newCell = document.createElement('h3');
-    var hyperlink = document.createElement('a');
+    if (blimp_dict['blimp_type'] === 1) {
+      // Create hyperlink on basestation
+      var newRow = document.createElement('h3');
+      var newCell = document.createElement('h3');
+      var hyperlink = document.createElement('a');
 
-    // Set the hyperlink attributes
-    hyperlink.href = "/" + blimp_id;
-    hyperlink.target = "_blank";  // This will open the link in a new tab/window
-    hyperlink.textContent = "View Stream";
-    hyperlink.setAttribute("blimp_id", blimp_id);
+      // Set the hyperlink attributes
+      hyperlink.href = "/" + blimp_id;
+      hyperlink.target = "_blank";  // This will open the link in a new tab/window
+      hyperlink.textContent = "View Stream";
+      hyperlink.setAttribute("blimp_id", blimp_id);
 
-    // Append the hyperlink to the newCell and then to the newRow
-    newCell.appendChild(hyperlink);
-    newRow.appendChild(newCell);
-    streamTableBody.appendChild(newRow);
+      // Append the hyperlink to the newCell and then to the newRow
+      newCell.appendChild(hyperlink);
+      newRow.appendChild(newCell);
+      streamTableBody.appendChild(newRow);
 
-    // Store the link in sortedLinkRows using blimp_id as the key
-    sortedLinkRows[blimp_id] = newRow;
+      // Store the link in sortedLinkRows using blimp_id as the key
+      sortedLinkRows[blimp_id] = newRow;
+
+    }
 
     // Sort the link rows based on the blimp names
     var sortedRows = Object.keys(sortedLinkRows).sort(function (a, b) {

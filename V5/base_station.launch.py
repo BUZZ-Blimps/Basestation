@@ -12,7 +12,8 @@ def generate_launch_description():
             name='joy_node',
             parameters=[
                 {'dev': '/dev/input/js0'},
-                {'coalesce_interval_ms': 10}
+                {'coalesce_interval_ms': 10},
+                {'autorepeat_rate': 20.0}
             ],
         )
     ])

@@ -42,14 +42,18 @@
     <script>
         // Connect to SocketIO server
         const socket = io();
+
         socket.on('mode', (all_blimps) => {
             update_mode(all_blimps);
         });
+
         // socket.on('remove', (blimp_id) => {
         //     // Debugging
         //     console.log(blimp_id)
+
         //     remove_blimp(blimp_id);
         // });
+
         // function remove_blimp(blimp_id) {
         //     const blimpsContainer = document.getElementById('blimps-container');
         //     const rows = {};
@@ -61,6 +65,7 @@
         //         }
         //     });
         // }
+
         // Add or update the all auto button event listener
         const allAutoButton = document.getElementById('all-auto-button');
         allAutoButton.onclick = function(event) {
@@ -75,6 +80,7 @@
             // Add your logic for the all manual button here
             socket.emit('update_all_manual');
         };
+
         function update_mode(blimps) {
             const sortedKeys = Object.keys(blimps).sort();
             const blimpsContainer = document.getElementById('blimps-container');
@@ -97,7 +103,9 @@
                     row = document.createElement('div');
                     row.className = 'blimp-row';
                     row.dataset.blimpName = key; // Store the key in a data attribute
+
                     console.log(key);
+
                     // Create a span for the key text
                     name = document.createElement('span');
                     name.className = 'blimp-name';
@@ -108,18 +116,22 @@
                     else {
                         //name.style.color = 'black';
                     }
+
                     // Mode
                     mode = document.createElement('span');
                     mode.className = 'blimp-mode';
                     mode.textContent = blimps[key]["auto"];
                     //row.appendChild(mode);
+
                     // if (mode === true) {
                     //     name.textContent = key + ' - A';
                     // }
                     // else {
                     //     name.textContent = key;
                     // }
+
                     row.appendChild(name);
+
                     // Create an auto button for each key
                     auto_button = document.createElement('button');
                     auto_button.id = `auto_button_${key}`;
@@ -127,6 +139,7 @@
                     auto_button.textContent = 'Auto';
                     auto_button.style.color = 'white';
                     auto_button.style.fontSize = '15px';
+
                     // Create a manual button for each key
                     manual_button = document.createElement('button');
                     manual_button.id = `manual_button_${key}`;
@@ -134,6 +147,7 @@
                     manual_button.textContent = 'Manual';
                     manual_button.style.color = 'white';
                     manual_button.style.fontSize = '15px';
+
                     if (mode !== null && blimps[key]["auto"] !== null) {
                         if (blimps[key]["auto"] === true) {
                             console.log('true');
@@ -146,8 +160,10 @@
                             manual_button.style.backgroundColor = 'green';
                         }
                     }
+                    
                     row.appendChild(auto_button);
                     row.appendChild(manual_button);
+
                     // Append the new row to the container
                     blimpsContainer.appendChild(row);
                 } else {
@@ -178,6 +194,7 @@
                         socket.emit('update_auto_true', key);
                     };
                 }
+                
                 if (manual_button) {
                     // Add or update the manual button event listener
                     manual_button.onclick = function(event) {
@@ -188,6 +205,7 @@
                     };
                 }
             });
+
             // Remove rows that no longer exist in the data
             Object.keys(rows).forEach(existingKey => {
                 if (!blimps.hasOwnProperty(existingKey)) {
@@ -196,6 +214,7 @@
                 }
             });
         }
+
         // Sidebar Menu
         let toggler = document.querySelector(".toggler");
         window.addEventListener("click", event => {
