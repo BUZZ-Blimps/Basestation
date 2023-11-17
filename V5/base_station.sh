@@ -13,7 +13,7 @@ echo "Getting Logs..."
 ./freePort.sh
 
 # For Bounded Box Custom Messages
-source $CATCHING_BLIMP_PATH/Summer2023/ros2_stereo/install/setup.bash
+#source $CATCHING_BLIMP_PATH/Summer2023/ros2_stereo/install/setup.bash
 
 # Use -o flag to open website and run the program
 if [ "$1" == "-o" ]; then

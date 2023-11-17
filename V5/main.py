@@ -9,7 +9,10 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 from std_msgs.msg import String, Int64, Bool, Float64, Float64MultiArray
-from yolo_msgs.msg import BoundingBox # type: ignore
+try:
+    from yolo_msgs.msg import BoundingBox # type: ignore
+except:
+    pass
 from sensor_msgs.msg import Joy
 
 import launch.actions
@@ -895,7 +898,10 @@ class BlimpNodeHandler:
             topic_bounding_box = "/" + self.blimp.id + "/bounding_box"
 
             # Subscribe to the Bounding Box Topic
-            self.sub_bounding_box = self.parent_node.create_subscription(BoundingBox, topic_bounding_box, self.bounding_box_callback, qos_profile)
+            try:
+                self.sub_bounding_box = self.parent_node.create_subscription(BoundingBox, topic_bounding_box, self.bounding_box_callback, qos_profile)
+            except:
+                pass
         elif blimps[self.blimp.id].show_image is False and self.sub_image_raw is not None:
 
             # Debugging
@@ -1335,4 +1341,7 @@ if __name__ == '__main__':
     ros_thread.start()
 
     # Start Web Application
-    socketio.run(app, allow_unsafe_werkzeug=True, host=sys.argv[1], port=5000)
+    try:
+        socketio.run(app, allow_unsafe_werkzeug=True, host=sys.argv[1], port=5000)
+    except:
+        socketio.run(app, host=sys.argv[1], port=5000)

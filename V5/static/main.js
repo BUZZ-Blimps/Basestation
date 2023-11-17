@@ -1,6 +1,3 @@
-// IP Address Allowed
-const ip_allowed = '192.168.0.205';
-
 // Connect to SocketIO server
 const socket = io();
 
@@ -9,7 +6,7 @@ socket.on('connect', () => {
     // Client IP Address
     console.log('Client connected with IP:', client_ip);
 
-    //Load current backend state
+    // Load current backend state
     socket.emit('update_frontend');
 });
 
