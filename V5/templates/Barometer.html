@@ -30,7 +30,7 @@
     </nav>
     <!-- <div class="left-corner-text"> Return to Main Page <img  src="static/images/Xbox_Button_B.png" width="20" height="20" ></img> </div> -->
     <h4>Barometer Data</h4>
-    <div id="baseBarometer">Base Barometer: NO BLIMPS CONNECTED</div>
+    <div id="baseBarometer">Base Barometer: NO BLIMPS ONLINE</div>
     <div id="blimps-container">
         <!-- Blimp rows will be added here by JavaScript -->
     </div>
@@ -74,7 +74,7 @@
                     // Create a new button for each key
                     button = document.createElement('button');
                     button.id = `button_${key}`;
-                    button.className = 'barometer-calibration';
+                    button.className = 'long-button';
                     button.textContent = 'Calibrate';
                     button.style.backgroundColor = 'red';
                     row.appendChild(button);
@@ -94,7 +94,7 @@
                     blimpsContainer.appendChild(row);
                 } else {
                     // If the row already exists, find the button in it
-                    button = row.querySelector(`.barometer-calibration`);
+                    button = row.querySelector(`.long-button`);
                     height = row.querySelector('.blimp-height');
                     z_velocity = row.querySelector('.blimp-z_velocity');
                 }
@@ -121,7 +121,8 @@
                 }
             });
         }
-        // Menu
+
+        // Sidebar Menu
         let toggler = document.querySelector(".toggler");
         window.addEventListener("click", event => {
         if(event.target.className == "toggler" || event.target.className == "toggle") {
