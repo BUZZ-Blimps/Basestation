@@ -104,17 +104,20 @@
                     row.className = 'blimp-row';
                     row.dataset.blimpName = key; // Store the key in a data attribute
 
-                    console.log(key);
+                    //console.log(key);
 
                     // Create a span for the key text
                     name = document.createElement('span');
                     name.className = 'blimp-name';
                     name.textContent = key;
-                    if (blimps[key]["connected"] === true) {
-                        //name.style.color = 'blue';
+                    if (blimps[key]["selected"] == true) {
+                        // Debugging
+                        console.log(key);
+                        console.log(blimps[key]["selected"]);
+                        name.style.color = 'blue';
                     }
                     else {
-                        //name.style.color = 'black';
+                        name.style.color = 'black';
                     }
 
                     // Mode

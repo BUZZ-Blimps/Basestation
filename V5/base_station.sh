@@ -9,6 +9,7 @@ echo ""
 echo "Running on $URL"
 echo ""
 echo "Getting Logs..."
+echo ""
 
 ./freePort.sh
 

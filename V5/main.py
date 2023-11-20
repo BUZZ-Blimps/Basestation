@@ -311,7 +311,8 @@ class Basestation(Node):
                         socketio.emit('reload')
                         pass
                     elif i == 1:
-                        #B button - Stream?
+                        #B button - Stream
+                        socketio.emit('view_stream', self.selected_blimp_id)
                         pass
                     elif i == 2:
                         #X button
@@ -401,6 +402,8 @@ class Basestation(Node):
                 right_stick_x = self.joy_state.axes[3]
                 right_stick_y = self.joy_state.axes[4]
                 controller_cmd = [left_stick_x, left_stick_y, right_stick_x, right_stick_y]
+                # Emit Motor Commands to Frontend
+                socketio.emit('motor_commands', controller_cmd)
                 blimp_node_handler.blimp.motor_commands = controller_cmd
                 blimp_node_handler.publish_motor_commands()
             else:
@@ -1253,14 +1256,13 @@ def ros_node():
     rclpy.init()
 
     global node
-    node = Basestation()
-    rclpy.spin(node)
 
-    # try:
-    #     rclpy.spin(node)
-    # except:
-    #     print('rclpy.spin failed')
-    #     pass
+    node = Basestation()
+
+    try:
+        rclpy.spin(node)
+    except:
+        pass
 
     try:
         node.destroy_node()
@@ -1274,7 +1276,7 @@ def ros_node():
 
 # Terminate Code
 def terminate(sig, frame):
-    print('\nDestroying Basestation Node...\n')
+    print('\nDestroying Basestation Node...')
     global node
     try:
         node.destroy_node()
@@ -1296,6 +1298,7 @@ def terminate(sig, frame):
         os.kill(current_pid, sig.SIGTERM)
     except AttributeError:
         os.kill(current_pid, signal.SIGTERM)
+    subprocess("kill -9 " + str(current_pid))
 
 # Check Wifi (Currently Not Used)
 def check_wifi_ssid():
@@ -1343,6 +1346,9 @@ if __name__ == '__main__':
 
     # Start Web Application
     try:
-        socketio.run(app, allow_unsafe_werkzeug=True, host=sys.argv[1], port=5000)
-    except:
         socketio.run(app, host=sys.argv[1], port=5000)
+    except:
+        try:
+            socketio.run(app, allow_unsafe_werkzeug=True, host=sys.argv[1], port=5000)
+        except:
+            pass
