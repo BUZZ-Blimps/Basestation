@@ -1247,9 +1247,9 @@ def modePage():
 def logsPage():
     return render_template('Logs.html')
 
-@app.route('/Documentation')
+@app.route('/Checklist')
 def docsPage():
-    return render_template('Documentation.html')
+    return render_template('Checklist.html')
 
 # ROS 2 Thread
 def ros_node():
