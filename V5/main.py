@@ -179,7 +179,8 @@ class Basestation(Node):
                     self.barometer = serial.Serial('/dev/ttyACM1', 115200)
                     print('BAROMETER CONNECTED')
                 except:
-                    print('BAROMETER NOT CONNECTED')
+                    pass
+                    #print('BAROMETER NOT CONNECTED')
         else:
             #Read barometer data if available
             if self.barometer.in_waiting:

@@ -210,7 +210,7 @@ function update_basestation(blimp_dict) {
     // Clear the existing content of streamTableBody
     streamTableBody.innerHTML = '';
     
-    if (blimp_dict['blimp_type'] === 1) {
+    if (blimp_dict['blimp_type'] === 0) {
       // Create hyperlink on basestation
       var newRow = document.createElement('h3');
       var newCell = document.createElement('h3');
