@@ -639,7 +639,8 @@ linkElement.addEventListener('click', function(event) {
     if (count === 0) {
       event.preventDefault();
       toggleFullScreen();
-      count = 1;
+      // Change to 1 for "fun"ctionality, change to 0 for functionality
+      count = 0;
     }
     else {
       toggleFullScreen();

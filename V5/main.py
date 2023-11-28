@@ -545,6 +545,23 @@ class Basestation(Node):
         # Subscribe to the State Machine Topic
         new_blimp_node_handler.sub_z_velocity = self.create_subscription(Float64, topic_z_velocity, new_blimp_node_handler.z_velocity_callback, 10)
 
+        # Image Raw Topic
+        topic_image_raw = "/" + blimp_id + "/sync/image_raw"
+
+        # Image Raw Topic QOS Profile
+        qos_profile = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.VOLATILE
+        )
+
+        # Subscribe to the Image Raw Topic
+        try:
+            new_blimp_node_handler.sub_image_raw = self.create_subscription(Image, topic_image_raw, new_blimp_node_handler.image_raw_callback, qos_profile)
+        except:
+            pass
+
         # Check for Base Barometer Topic
         # self.connectBlimp(new_blimp_node_handler)
         # new_blimp_node_handler.connect_blimp()
@@ -841,8 +858,18 @@ class BlimpNodeHandler:
                 cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
                 self.frame = cv_image
 
+                # if self.frame is not None:
+                #     flag, jpeg = cv2.imencode('.jpg', self.frame)
+                #     blimps[self.blimp.id].frame = jpeg
+
                 if self.frame is not None:
-                    flag, jpeg = cv2.imencode('.jpg', self.frame)
+                    # Resize the image to a smaller size, for example, to 50% of its original dimensions
+                    scaled_frame = cv2.resize(self.frame, None, fx=0.6, fy=0.6, interpolation=cv2.INTER_AREA)
+
+                    # Encode the scaled frame as JPEG
+                    flag, jpeg = cv2.imencode('.jpg', scaled_frame)
+
+                    # Assign the scaled JPEG frame to the blimp
                     blimps[self.blimp.id].frame = jpeg
                 
                 # Debugging
@@ -885,7 +912,7 @@ class BlimpNodeHandler:
             # print('Creating Image Subscriber')
 
             # Image Raw Topic
-            topic_image_raw = "/" + self.blimp.id + "/left/image_raw"
+            topic_image_raw = "/" + self.blimp.id + "/sync/image_raw"
 
             # Image Raw Topic QOS Profile
             qos_profile = QoSProfile(
@@ -896,7 +923,10 @@ class BlimpNodeHandler:
             )
 
             # Subscribe to the Image Raw Topic
-            self.sub_image_raw = self.parent_node.create_subscription(Image, topic_image_raw, self.image_raw_callback, qos_profile)
+            try:
+                self.sub_image_raw = self.parent_node.create_subscription(Image, topic_image_raw, self.image_raw_callback, qos_profile)
+            except:
+                pass
 
             # Check for Bounding Box Topic
             topic_bounding_box = "/" + self.blimp.id + "/bounding_box"
