@@ -81,5 +81,5 @@ In terms of communication between the frontend and backend for the basestation, 
 - Add more controller vibration functionality
 - Always keep a working version of the Basestation available. The Basestation in development should be developed on a dev branch instead of the main branch
 - Either
-    - Utilize easy ways to change the ROS_DOMAIN_ID on devices to have separate base stations running at once during testing and tuning at the competition or
-    - Implement Multi-controller functionality on the basestation
+     Utilize easy ways to change the ROS_DOMAIN_ID on devices to have separate base stations running at once during testing and tuning at the competition or
+     Implement Multi-controller functionality on the basestation
