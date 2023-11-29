@@ -9,7 +9,7 @@
 3. To connect to the web server on another device, verify you are on the same Wi-Fi network as the web server.
 
 ## Summary
-This repository contains the basestation code. The basestation is primarily used to view all available blimps and send commands to the currently connected blimp through the use of an Xbox controller or keyboard. A secondary feature of the basestation is the ability to view livestreams from each blimp, which is available through a hyperlink using the stream section of the main page on the basestation.
+This repository contains the basestation code. The basestation is primarily used to view all available blimps and send commands to the currently connected blimp through the use of an Xbox controller. A secondary feature of the basestation is the ability to view livestreams from each blimp, which is available through a hyperlink using the stream section of the main page on the basestation.
 
 The basestation uses Python with the Flask framework for the backend and HTML and JavaScript for the frontend. 
 <p align="center">
@@ -45,9 +45,32 @@ In terms of communication between the frontend and backend for the basestation, 
 2. Click the URL link provided in the terminal to navigate to the basestation.
 3. Connect a controller to the administrator's computer. 
 4. Activate a blimp to connect to the basestation by plugging in batteries for Orange Pi and Teensy. 
-5. Connect a controller to the blimp by using the Xbox controller's d-pad’s up or down arrows to select which blimp to connect to. 
+5. Connect a controller to the blimp by using the Xbox controller's d-pad to select which blimp to connect to. 
 6. As an administrator, select the corresponding goal color for catching blimps by toggling the "Goal" button by clicking it with a mouse or pressing “Y” on the controller. For attack blimps, they can toggle the “Target” button by clicking it with a mouse or pressing “X” on the controller. 
 7. Activate autonomous mode on the blimp by pressing “RT” on the controller. Press "LT" to send all the blimps into autonomous mode. 
 8. To maneuver manually, deactivate autonomous mode by pressing “RT” or "LT" again and using the left and right sticks on the controller. 
 9. Click the "View Stream" hyperlink for the corresponding blimp to navigate to the livestream for that blimp. 
-10. Use the sidebar menu to navigate to the Main, Logs, Barometer, or Documentation pages.
+10. Use the sidebar menu to navigate to the Main, Logs, Barometer, Mode, or Pre-Flight Checklist pages.
+
+## Future To-Do (Highest to Lowest Priority)
+
+### Communication Changes
+- Switch the blimp identification method to check each blimp's /state_machine topic at 1Hz and remove the /identify topic completely. This will act as the blimp's heartbeat and decrease connection issues for the basestation and blimps
+- Get a wireless controller and integrate with the Basestation
+- Remove sending strings from every ROS 2 topic, only send Integers and Bools
+- Move to a single /base_barometer topic for all blimps instead of each blimp having their own
+
+### Code Framework Changes
+- Switch frontend to React Native to allow for easier development of the frontend and potentially developing mobile applications. Reorganize frontend code into smaller, more modular JavaScript Files after switching to React Native
+- Organize backend code into smaller Python files if possible
+
+### Aesthetic Changes
+- Add timeout animation for blimps
+- Change Basestation main page to have one button for overall goal and target colors instead of blimps having individual buttons (Could put in the top right of the main page)
+- For the basestation main page, add catching shooting and autonomous on and off buttons to replace the target and goal color buttons
+
+### Ease of Use Changes
+- Add a button to start the vision code on another computer for a blimp (SSH's into a supercomputer and starts all Vision nodes and turns on the eyes after the final node is initialized)
+- Be able to change the state of the blimp from the basestation for testing (i.e. Testing scoring capability)
+- Add an IMU data page
+- Add a Tuning Page for Teensy Variables that can get updated over ROS from the Basestation
