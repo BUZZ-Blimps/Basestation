@@ -20,7 +20,7 @@ The basestation uses Python with the Flask framework for the backend and HTML an
 </p>
 </p>
 
-## Communication
+## Communication Overview
 The basestation uses a communication network called ROS 2 to publish and subscribe to data. When data is being published (sent) by a device with ROS 2, other devices with ROS 2 can subscribe (access) that data. For our use case, this allows the basestation to know when a blimp is online since a blimp ID is being published by the blimps, which the basestation subscribes to. This communication network allows for bidirectional communication between the basestation and blimps.
 
 In terms of communication between the frontend and backend for the basestation, we use Flask's SocketIO library to have ROS 2 data appear on our UI.
@@ -32,14 +32,14 @@ In terms of communication between the frontend and backend for the basestation, 
 </p>
 </p>
 
-## Basestation Requirements
+## Requirements
 
 - A device with the Ubuntu 20.04 Operating System (https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview)
 - Python 3.8.10 installed on the device (https://www.python.org/downloads/release/python-3810/)
 - ROS2-Foxy installed on the device (https://docs.ros.org/en/foxy/Installation.html)
 - Pip install the following packages: Rclpy, Flask, Flask-SocketIO, Simple-Websocket, OpenCV-Python, Pyserial, and Numpy
 
-## How to Use Basestation
+## How to Use
 
 1. Run “./run.sh” within a terminal to startup basestation.
 2. Click the URL link provided in the terminal to navigate to the basestation.
