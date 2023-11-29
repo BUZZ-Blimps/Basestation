@@ -16,7 +16,7 @@ The basestation uses Python with the Flask framework for the backend and HTML an
   
 ![basestation_main_page](https://github.com/SWAMP-Blimps/Basestation/assets/56363833/1d5f02be-7292-46ce-9468-db5c454bfb45)
 <p align="center">
-<em>Figure 2. Basestation UI</em>
+<em>Figure 1. Basestation UI</em>
 </p>
 </p>
 
@@ -28,7 +28,7 @@ In terms of communication between the frontend and backend for the basestation, 
   
 ![image](https://github.com/SWAMP-Blimps/Basestation/assets/56363833/8c45b3cc-ed2a-42b6-883f-abc7fef2104d)
 <p align="center">
-<em>Figure 3. A high-level overview of how the basestation and blimps handle communication</em>
+<em>Figure 2. A high-level overview of how the basestation and blimps handle communication</em>
 </p>
 </p>
 
