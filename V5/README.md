@@ -71,6 +71,11 @@ In terms of communication between the frontend and backend for the basestation, 
 
 ### Ease of Use Changes
 - Add a button to start the vision code on another computer for a blimp (SSH's into a supercomputer and starts all Vision nodes and turns on the eyes after the final node is initialized)
-- Be able to change the state of the blimp from the basestation for testing (i.e. Testing scoring capability)
+- Be able to change the state of the blimp from the basestation for testing (i.e., Testing scoring capability)
 - Add an IMU data page
 - Add a Tuning Page for Teensy Variables that can get updated over ROS from the Basestation
+
+### Suggestions
+- Get a steam deck and get the basestation running on it for the pilot to use
+- Be able to quickly switch between pages on the basestation using the controller
+- Add more controller vibration functionality
