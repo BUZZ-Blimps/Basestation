@@ -52,7 +52,7 @@ In terms of communication between the frontend and backend for the basestation, 
 9. Click the "View Stream" hyperlink for the corresponding blimp to navigate to the livestream for that blimp. 
 10. Use the sidebar menu to navigate to the Main, Logs, Barometer, Mode, or Pre-Flight Checklist pages.
 
-## Future To-Do (Highest to Lowest Priority)
+## To-Do (Highest to Lowest Priority)
 
 ### Communication Changes
 - Switch the blimp identification method to check each blimp's /state_machine topic at 1Hz and remove the /identify topic completely. This will act as the blimp's heartbeat and decrease connection issues for the basestation and blimps
