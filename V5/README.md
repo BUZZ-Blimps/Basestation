@@ -14,7 +14,7 @@ This repository contains the basestation code. The basestation is primarily used
 The basestation uses Python with the Flask framework for the backend and HTML and JavaScript for the frontend. 
 <p align="center">
   
-![image](https://github.com/SWAMP-Blimps/Basestation/assets/56363833/2c4e7395-a5e6-49cd-baed-64f4a1ac6f45)
+![basestation_main_page](https://github.com/SWAMP-Blimps/Basestation/assets/56363833/1d5f02be-7292-46ce-9468-db5c454bfb45)
 <p align="center">
 <em>Figure 2. Basestation UI</em>
 </p>
