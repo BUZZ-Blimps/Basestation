@@ -79,3 +79,5 @@ In terms of communication between the frontend and backend for the basestation, 
 - Get a steam deck and get the basestation running on it for the pilot to use
 - Be able to quickly switch between pages on the basestation using the controller
 - Add more controller vibration functionality
+- Always keep a working version of the Basestation available. The Basestation in development should be developed on a dev branch instead of the main branch
+- Either 1. Utilize easy ways to change the ROS_DOMAIN_ID on devices to have separate base stations running at once during testing and tuning at the competition or 2. Implement Multi-controller functionality on the basestation
