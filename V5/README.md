@@ -6,7 +6,7 @@
 ./run.sh
 ```
 2. Open the webpage URL provided in the terminal.
-3. To connect to the web server, verify you are on the same Wi-Fi network as the web server.
+3. To connect to the web server on another device, verify you are on the same Wi-Fi network as the web server.
 
 ## Summary
 This repository contains the basestation code. The basestation is primarily used to view all available blimps and send commands to the currently connected blimp through the use of an Xbox controller or keyboard. A secondary feature of the basestation is the ability to view livestreams from each blimp, which is available through a hyperlink using the stream section of the main page on the basestation.
