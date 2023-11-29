@@ -2,7 +2,7 @@
 
 ## Summary
 - The basestation is used as an interface between human operators and blimps
-- [BasestationV4](V4) is the latest working version (Web-based UI with ROS2)
+- [BasestationV5](V5) is the latest working version (Web-based UI with ROS2)
   
 ![Screenshot](https://github.com/SWAMP-Blimps/Basestation/assets/116739351/7a92a1f9-1ac5-49fb-bf95-2db0ca944dee)
 
