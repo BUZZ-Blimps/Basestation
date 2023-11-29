@@ -1,6 +1,6 @@
 # BasestationV5 Guide 🌐📡🎮
 
-## Startup Tutorial (Basic)
+## Basic Startup Tutorial
 1. To host the web server, open a terminal in the V5 directory and run the command:
 ```bash
 ./run.sh
