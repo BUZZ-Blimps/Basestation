@@ -83,3 +83,4 @@ In terms of communication between the frontend and backend for the basestation, 
 - Complete one of the following to have multiple pilots for testing
     * Utilize easy ways to change the ROS_DOMAIN_ID on devices to have separate base stations running at once during testing and tuning at the competition
     * Implement Multi-controller functionality on the basestation
+- Think of the future of the basestation as creating a video game
