@@ -38,6 +38,7 @@ In terms of communication between the frontend and backend for the basestation, 
 - Python 3.8.10 installed on the device (https://www.python.org/downloads/release/python-3810/)
 - ROS2-Foxy installed on the device (https://docs.ros.org/en/foxy/Installation.html)
 - Pip install the following packages: Rclpy, Flask, Flask-SocketIO, Simple-Websocket, OpenCV-Python, Pyserial, and Numpy
+    - `pip3 install -r 'requirements.txt'`
 
 ## How to Use
 
