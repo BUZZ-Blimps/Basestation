@@ -68,7 +68,7 @@ class Basestation(Node):
 
         # Create Barometer Timer
         self.barometer = None
-        self.barometerLoopSpeed = 5
+        self.barometerLoopSpeed = 5 # Hz
         barometer_timer_period = 1.0/self.barometerLoopSpeed
         self.barometerTimer = self.create_timer(barometer_timer_period, self.barometer_timer_loop)
         
@@ -123,6 +123,8 @@ class Basestation(Node):
 
     # Timer Functions #
     def timer_loop(self):
+        self.get_logger().info("len(blimp_node_handlers) = " + str(len(self.blimp_node_handlers)))
+
         self.loop_count = self.loop_count + 1
 
         # Update Blimp Nodes
@@ -147,9 +149,19 @@ class Basestation(Node):
 
         all_blimps = {}
         for blimp_node_handler in self.blimp_node_handlers:
+            self.get_logger().info("Updating blimp " + str(blimp_node_handler.blimp.name) + "; len(blimp_node_handlers)=" + str(len(self.blimp_node_handlers)) + ":")
+            for blimp_node_handler2 in self.blimp_node_handlers:
+                self.get_logger().info("\t- " + blimp_node_handler2.blimp.name)
+
             if self.getElapsedTime(blimp_node_handler.blimp.last_online) > self.timeout:
                 self.get_logger().info('Removing blimp {}'.format(blimp_node_handler.blimp.id))
+                self.get_logger().info("\tF1")
                 self.remove_blimp_node_handler(blimp_node_handler.blimp.id)
+                self.get_logger().info("\tF2")
+                self.get_logger().info("\tNew len(blimp_node_handlers)=" + str(len(self.blimp_node_handlers)) + ":")
+                for blimp_node_handler2 in self.blimp_node_handlers:
+                    self.get_logger().info("\t\t- " + blimp_node_handler2.blimp.name)
+                continue
 
             #Update auto state
             if blimp_node_handler.blimp.frontend_update_auto == True:
@@ -163,7 +175,11 @@ class Basestation(Node):
                 blimp_node_handler.publish_target_color()
                 self.loop_count = 0
 
+            self.get_logger().info("F3")
+
             all_blimps[blimp_node_handler.blimp.id] = blimp_node_handler.blimp.to_dict()
+            self.get_logger().info("F4")
+        self.get_logger().info("F5")
 
         socketio.emit('mode', all_blimps)
 
@@ -181,6 +197,14 @@ class Basestation(Node):
                 except:
                     pass
                     #print('BAROMETER NOT CONNECTED')
+            
+            all_blimps = {}
+            for blimp_node_handler in self.blimp_node_handlers:
+                blimp_node_handler.blimp.barometer = -69
+                blimp_node_handler.publish_barometer()
+                all_blimps[blimp_node_handler.blimp.id] = blimp_node_handler.blimp.to_dict()
+            socketio.emit('barometer', all_blimps)
+
         else:
             #Read barometer data if available
             if self.barometer.in_waiting:
@@ -1056,7 +1080,7 @@ class BlimpNodeHandler:
     def publish_barometer(self):
         # Publish barometer value to the ROS topic
         msg = Float64()
-        msg.data = self.blimp.barometer
+        msg.data = float(self.blimp.barometer)
         self.pub_baseBarometer.publish(msg)
 
     def publish_calibrate_barometer(self):
