@@ -32,6 +32,7 @@ import serial
 import numpy as np
 import subprocess
 import json # Currently not used (Potential future use)
+import traceback
 
 # Blimp Class
 from blimp import Blimp
@@ -123,8 +124,7 @@ class Basestation(Node):
 
     # Timer Functions #
     def timer_loop(self):
-        self.get_logger().info("len(blimp_node_handlers) = " + str(len(self.blimp_node_handlers)))
-
+        self.get_logger().info("len(blimp_node_handlers) = " + str(len(self.blimp_node_handlers)) + ", len(blimps) = " + str(len(blimps)))
         self.loop_count = self.loop_count + 1
 
         # Update Blimp Nodes
@@ -148,20 +148,19 @@ class Basestation(Node):
             self.publish_all_auto()
 
         all_blimps = {}
+        # It's dangerous to iterate over a list this way since we're removing items from that list
         for blimp_node_handler in self.blimp_node_handlers:
-            self.get_logger().info("Updating blimp " + str(blimp_node_handler.blimp.name) + "; len(blimp_node_handlers)=" + str(len(self.blimp_node_handlers)) + ":")
-            for blimp_node_handler2 in self.blimp_node_handlers:
-                self.get_logger().info("\t- " + blimp_node_handler2.blimp.name)
+        # blimp_node_handler_index = 0
+        # while blimp_node_handler_index < len(self.blimp_node_handlers):
+        #     blimp_node_handler = self.blimp_node_handlers[blimp_node_handler_index]
 
             if self.getElapsedTime(blimp_node_handler.blimp.last_online) > self.timeout:
-                self.get_logger().info('Removing blimp {}'.format(blimp_node_handler.blimp.id))
-                self.get_logger().info("\tF1")
                 self.remove_blimp_node_handler(blimp_node_handler.blimp.id)
-                self.get_logger().info("\tF2")
-                self.get_logger().info("\tNew len(blimp_node_handlers)=" + str(len(self.blimp_node_handlers)) + ":")
-                for blimp_node_handler2 in self.blimp_node_handlers:
-                    self.get_logger().info("\t\t- " + blimp_node_handler2.blimp.name)
+                # blimp_node_handler_index += 0 # We removed this item, don't increment (Unnecessary line, included for explanation)
                 continue
+            else:
+                # blimp_node_handler_index += 1 # We didn't remove this item, increment to next item!
+                pass
 
             #Update auto state
             if blimp_node_handler.blimp.frontend_update_auto == True:
@@ -175,13 +174,10 @@ class Basestation(Node):
                 blimp_node_handler.publish_target_color()
                 self.loop_count = 0
 
-            self.get_logger().info("F3")
 
             all_blimps[blimp_node_handler.blimp.id] = blimp_node_handler.blimp.to_dict()
-            self.get_logger().info("F4")
-        self.get_logger().info("F5")
 
-        socketio.emit('mode', all_blimps)
+        socketio.emit('mode', all_blimps) # commented
 
     def barometer_timer_loop(self):
 
@@ -203,7 +199,7 @@ class Basestation(Node):
                 blimp_node_handler.blimp.barometer = -69
                 blimp_node_handler.publish_barometer()
                 all_blimps[blimp_node_handler.blimp.id] = blimp_node_handler.blimp.to_dict()
-            socketio.emit('barometer', all_blimps)
+            socketio.emit('barometer', all_blimps) # commented
 
         else:
             #Read barometer data if available
@@ -226,7 +222,7 @@ class Basestation(Node):
 
                     all_blimps[blimp_node_handler.blimp.id] = blimp_node_handler.blimp.to_dict()
 
-                socketio.emit('barometer', all_blimps)
+                socketio.emit('barometer', all_blimps) # commented
 
                 # Debugging
                 #print(data)  # Assuming data is encoded as UTF-8
@@ -736,7 +732,9 @@ class BlimpNodeHandler:
         self.bridge = CvBridge()
 
     def update_frontend(self):
-        socketio.emit('update', self.blimp.to_dict())
+        pass
+        self.parent_node.get_logger().info("Dict: " + str(self.blimp.to_dict()))
+        socketio.emit('update', self.blimp.to_dict()) # commented
 
     # def update(self):
 
@@ -841,15 +839,28 @@ class BlimpNodeHandler:
         self.pub_calibrate_barometer = self.parent_node.create_publisher(Bool, topic_calibrateBarometer, self.boolean_qos_profile)
 
     def destroy_publishers(self):
-        self.pub_auto.destroy()
-        self.pub_goal_color.destroy()
-        self.pub_target_color.destroy()
-        self.pub_killed.destroy()
-        self.pub_motor_commands.destroy()
-        self.pub_grabbing.destroy()
-        self.pub_shooting.destroy()
-        self.pub_baseBarometer.destroy()
-        self.pub_calibrate_barometer.destroy()
+        # publisher.destroy is allegedly unsafe, use node.destroy_publisher(publisher) instead
+        # From ROS2 rolling python docs: https://docs.ros.org/en/rolling/p/rclpy/rclpy.publisher.html
+
+        # self.pub_auto.destroy()
+        # self.pub_goal_color.destroy()
+        # self.pub_target_color.destroy()
+        # self.pub_killed.destroy()
+        # self.pub_motor_commands.destroy()
+        # self.pub_grabbing.destroy()
+        # self.pub_shooting.destroy()
+        # self.pub_baseBarometer.destroy()
+        # self.pub_calibrate_barometer.destroy()
+
+        self.parent_node.destroy_publisher(self.pub_auto)
+        self.parent_node.destroy_publisher(self.pub_goal_color)
+        self.parent_node.destroy_publisher(self.pub_target_color)
+        self.parent_node.destroy_publisher(self.pub_killed)
+        self.parent_node.destroy_publisher(self.pub_motor_commands)
+        self.parent_node.destroy_publisher(self.pub_grabbing)
+        self.parent_node.destroy_publisher(self.pub_shooting)
+        self.parent_node.destroy_publisher(self.pub_baseBarometer)
+        self.parent_node.destroy_publisher(self.pub_calibrate_barometer)
 
     # Function to destroy subscribers for elegant behavior
     def destroy_subscribers(self):
@@ -871,7 +882,7 @@ class BlimpNodeHandler:
     # Continually Poll State Machine Data from Teensy
     def logs_callback(self, msg):
         self.blimp.log = msg.data
-        socketio.emit('logs', self.blimp.to_dict())
+        socketio.emit('logs', self.blimp.to_dict()) # commented
 
     # Continually Poll Image Raw Data from Pi
     def image_raw_callback(self, msg):
@@ -918,7 +929,8 @@ class BlimpNodeHandler:
     def height_callback(self, msg):
         global blimps
         if self.blimp.id in blimps:
-            if msg.data is not None:
+            if msg.data is not None and str(msg.data) is not "nan":
+                self.parent_node.get_logger().info("Height received: " + str(msg.data) + ", type=" + str(type(msg.data)))
                 blimps[self.blimp.id].height = msg.data
 
     # Continually Poll Z Velocity Data from Teensy
@@ -1228,7 +1240,8 @@ def handle_connect():
 def update_frontend_display():
     global blimps
     for blimp in blimps:
-        socketio.emit('update', blimps[blimp].to_dict())
+        print(blimps[blimp].to_dict())
+        socketio.emit('update', blimps[blimp].to_dict()) # commented
 
 # Main Basestation Page
 @app.route('/')
@@ -1312,11 +1325,12 @@ def ros_node():
     global node
 
     node = Basestation()
+    traceback_logger = rclpy.logging.get_logger('basestation_traceback_logger')
 
     try:
         rclpy.spin(node)
-    except:
-        pass
+    except Exception as error:
+        traceback_logger.error(traceback.format_exc())
 
     try:
         node.destroy_node()
