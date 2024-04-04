@@ -929,7 +929,7 @@ class BlimpNodeHandler:
     def height_callback(self, msg):
         global blimps
         if self.blimp.id in blimps:
-            if msg.data is not None and str(msg.data) is not "nan":
+            if msg.data is not None and str(msg.data) != "nan":
                 self.parent_node.get_logger().info("Height received: " + str(msg.data) + ", type=" + str(type(msg.data)))
                 blimps[self.blimp.id].height = msg.data
 
