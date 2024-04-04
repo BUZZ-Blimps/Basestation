@@ -196,7 +196,7 @@ class Basestation(Node):
             
             all_blimps = {}
             for blimp_node_handler in self.blimp_node_handlers:
-                blimp_node_handler.blimp.barometer = -69
+                blimp_node_handler.blimp.barometer = 0 # -69
                 blimp_node_handler.publish_barometer()
                 all_blimps[blimp_node_handler.blimp.id] = blimp_node_handler.blimp.to_dict()
             socketio.emit('barometer', all_blimps) # commented
@@ -732,8 +732,6 @@ class BlimpNodeHandler:
         self.bridge = CvBridge()
 
     def update_frontend(self):
-        pass
-        self.parent_node.get_logger().info("Dict: " + str(self.blimp.to_dict()))
         socketio.emit('update', self.blimp.to_dict()) # commented
 
     # def update(self):
