@@ -10,12 +10,11 @@ void setup() {
   
   while (true) {
      BerryIMU.IMU_read();
-     Serial.println(BerryIMU.alt);
-
+     Serial.println(BerryIMU.comp_press);
      delay(100);
   } 
 }
 
 void loop() {
-
+  
 }
