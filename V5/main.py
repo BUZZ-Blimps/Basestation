@@ -180,19 +180,19 @@ class Basestation(Node):
         socketio.emit('mode', all_blimps) # commented
 
     def barometer_timer_loop(self):
-
         # Renitialize Barometer if needed
         if self.barometer == None:
             try:
                 self.barometer = serial.Serial('/dev/ttyACM0', 115200)
-                print('BAROMETER CONNECTED')
-            except:
+                self.get_logger().info('BAROMETER CONNECTED')
+            except Exception as e:
+                self.get_logger().error(str(e))
                 try:
                     self.barometer = serial.Serial('/dev/ttyACM1', 115200)
-                    print('BAROMETER CONNECTED')
-                except:
-                    pass
-                    #print('BAROMETER NOT CONNECTED')
+                    self.get_logger().info('BAROMETER CONNECTED')
+                except Exception as e:
+                    self.get_logger().error(str(e))
+                    self.get_logger().info('BAROMETER NOT CONNECTED')
             
             all_blimps = {}
             for blimp_node_handler in self.blimp_node_handlers:
@@ -225,7 +225,7 @@ class Basestation(Node):
                 socketio.emit('barometer', all_blimps) # commented
 
                 # Debugging
-                #print(data)  # Assuming data is encoded as UTF-8
+                # self.get_logger().info(f'baro reading: {baro_reading}')
                 # Emit Barometer Data
 
     def identify_callback(self, msg):
