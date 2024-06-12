@@ -1,5 +1,0 @@
-  File "/home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/ROS2Helper.py", line 152
-    self.blimp.lastHeartbeatDetected = time.time()w
-                                                  ^
-SyntaxError: invalid syntax
-
