@@ -1,5 +1,0 @@
-  File "/home/coreblimp1/GitHub/Basestation/V3_ws/install/BasestationV3/lib/python3.8/site-packages/BasestationV3/Input.py", line 1
-    import .Text
-           ^
-SyntaxError: invalid syntax
-
