@@ -110,7 +110,7 @@ class Basestation(Node):
             "Arrow out of box"
         ]
 
-        self.catching_blimp_ids = ['BurnCreamBlimp', 'SillyAhBlimp', 'TurboBlimp', 'GameChamberBlimp', 'FiveGuysBlimp', 'SuperBeefBlimp', 'Catch1', 'Catch2']
+        self.catching_blimp_ids = ['BurnCreamBlimp', 'SillyAhBlimp', 'TurboBlimp', 'GameChamberBlimp', 'FiveGuysBlimp', 'SuperBeefBlimp', 'Catch1', 'Catch2', 'GravyLongWayBlimp']
         self.attack_blimp_ids = ['Yoshi', 'Luigi', 'Geoph', 'ThisGuy', 'Attack1', 'Attack2']
 
         self.selected_blimp_id = ""
@@ -1037,6 +1037,7 @@ class BlimpNodeHandler:
             'GameChamberBlimp': 'Game Chamber',
             'FiveGuysBlimp': 'Five Guys',
 	        'SuperBeefBlimp': 'Super Beef',
+            'GravyLongWayBlimp' : 'Gravy Long',
             # Attacking Blimps #
             'Yoshi': 'Yoshi',
             'Geoph': 'Geoph',
